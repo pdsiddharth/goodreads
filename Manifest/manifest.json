@@ -1,0 +1,135 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.5",
+  "version": "1.0.0",
+  "id": "c1b50ba4-a9fc-46ed-ae5c-c4060461f88b",
+  "packageName": "com.microsoft.teams.apptemplates.goodreads",
+  "developer": {
+    "name": "Contoso",
+    "websiteUrl": "<website url>",
+    "privacyUrl": "<privacy url>",
+    "termsOfUseUrl": "<terms of use url>"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Template Base",
+    "full": "Teams App Template Base"
+  },
+  "description": {
+    "short": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics.",
+    "full": "Encourage and introduce your co-workers to a widespread knowledge-based sharing of posts, videos, or topics with a bite-sized information on how it influenced them and learn together in Teams."
+  },
+  "accentColor": "#FFFFFF",
+  "configurableTabs": [
+    {
+      "configurationUrl": "<configurable tab url>",
+      "canUpdateConfiguration": true,
+      "scopes": [ "team" ]
+    }
+  ],
+  "staticTabs": [
+    {
+      "entityId": "<A unique identifier for the entity that the tab displays>",
+      "name": "Discover",
+      "contentUrl": "<content url>",
+      "websiteUrl": "<website url>",
+      "scopes": [ "personal" ]
+    },
+    {
+      "entityId": "<A unique identifier for the entity that the tab displays>",
+      "name": "Private list",
+      "contentUrl": "<content url>",
+      "websiteUrl": "<website url>",
+      "scopes": [ "personal" ]
+    }
+  ],
+  "bots": [
+    {
+      "botId": "<<botId>>",
+      "scopes": [ "personal", "team" ],
+      "commandLists": [
+        {
+          "scopes": [ "personal" ],
+          "commands": [
+            {
+              "title": "Help",
+              "description": "Displays the supported commands."
+            }
+          ]
+        },
+        {
+          "scopes": [ "team" ],
+          "commands": [
+            {
+              "title": "Preferences",
+              "description": "Used to set up or edit the digest preferences in the team."
+            }
+          ]
+        }
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "composeExtensions": [
+    {
+      "botId": "<<botId>>",
+      "canUpdateConfiguration": false,
+      "commands": [
+        {
+          "id": "allItems",
+          "title": "All",
+          "description": "Show all created posts.",
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "allItems",
+              "description": "Enter a keyword or category"
+            }
+          ],
+          "initialRun": true
+        },
+        {
+          "id": "postedByMe",
+          "title": "Posted by me",
+          "description": "Show all posts created by current user.",
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "postedByMe",
+              "description": "Enter a keyword or category"
+            }
+          ],
+          "initialRun": true
+        },
+        {
+          "id": "popularReads",
+          "title": "Popular",
+          "description": "Show popular posts.",
+          "parameters": [
+            {
+              "name": "searchText",
+              "title": "popularReads",
+              "description": "Enter a keyword or category"
+            }
+          ],
+          "initialRun": true
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "<<appDomain>>"
+  ],
+  "webApplicationInfo": {
+    "id": "<Azure aad client id>",
+    "resource": "<ApplicationIdURI>"
+  }
+}
