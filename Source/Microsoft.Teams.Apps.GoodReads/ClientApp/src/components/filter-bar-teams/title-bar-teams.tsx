@@ -41,7 +41,7 @@ class TitleBar extends React.Component<IFilterBarProps, IFilterBarState> {
             isOpen: false,
             sharedByAuthorList: [],
             tagsList: [],
-            showSolidFilter:false
+            showSolidFilter: false
         }
     }
 
@@ -57,7 +57,9 @@ class TitleBar extends React.Component<IFilterBarProps, IFilterBarState> {
     componentWillReceiveProps(nextProps: IFilterBarProps) {
         if (nextProps.hideFilterbar !== this.props.hideFilterbar) {
             if (nextProps.hideFilterbar === true) {
-                this.setState({ isOpen: false })
+                this.setState({ isOpen: false });
+                this.getTeamAuthors();
+                this.getTeamConfigTags();
             }
         }
     }
@@ -85,7 +87,7 @@ class TitleBar extends React.Component<IFilterBarProps, IFilterBarState> {
             });
         }
     }
-    
+
     changeOpenState = () => {
         this.setState({ showSolidFilter: !this.state.showSolidFilter });
         this.setState({ isOpen: !this.state.isOpen });

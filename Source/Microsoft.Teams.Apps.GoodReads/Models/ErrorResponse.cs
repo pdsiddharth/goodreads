@@ -6,7 +6,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Error response class.
+    /// A class that represents error response model.
     /// </summary>
     public class ErrorResponse
     {

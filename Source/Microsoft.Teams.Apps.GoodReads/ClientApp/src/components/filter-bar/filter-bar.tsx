@@ -4,7 +4,9 @@
 
 import * as React from "react";
 import { Flex, Input, Status, Text } from "@fluentui/react-northstar";
-import { CloseIcon, SearchIcon } from "@fluentui/react-icons-northstar";
+import { CloseIcon } from "@fluentui/react-icons-northstar";
+import { Icon } from "@fluentui/react/lib/Icon";
+import { initializeIcons } from "@uifabric/icons";
 import PopupMenuWrapper from "../../components/popup-menu/popup-menu-wrapper";
 import { WithTranslation, withTranslation } from "react-i18next";
 import { TFunction } from "i18next";
@@ -40,13 +42,14 @@ interface IFilterBarState {
     sortBy: Array<IRadioGroupItem>;
     selectedSortBy: string;
     searchText: string;
+    screenWidth: number;
 }
 
 class FilterBar extends React.Component<IFilterBarProps, IFilterBarState> {
     localize: TFunction;
     constructor(props: IFilterBarProps) {
         super(props);
-
+        initializeIcons();
         this.localize = this.props.t;
         const postTypes: Array<ICheckBoxItem> = getLocalizedPostTypes(this.localize).map((postType: IPostType) => {
             return {
@@ -70,7 +73,19 @@ class FilterBar extends React.Component<IFilterBarProps, IFilterBarState> {
                 return { isChecked: false, key: index, title: value, checkboxLabel: <Text content={value} /> };
             }),
             sortBy: sortBy,
-            searchText: ""
+            searchText: "",
+            screenWidth: 800
+        }
+    }
+
+    componentDidMount() {
+        window.addEventListener("resize", this.resize.bind(this));
+        this.resize();
+    }
+
+    resize = () =>{
+        if (window.innerWidth !== this.state.screenWidth) {
+            this.setState({ screenWidth: window.innerWidth });
         }
     }
 
@@ -172,22 +187,43 @@ class FilterBar extends React.Component<IFilterBarProps, IFilterBarState> {
     public render(): JSX.Element {
         if (this.props.isVisible) {
             return (
-                <Flex gap="gap.small" vAlign="center" className="filter-bar-wrapper">
-                    <div className="searchbar-wrapper">
-                        <Input className="searchbar-input" value={this.state.searchText} inverted fluid icon={<SearchIcon />} iconPosition="start" placeholder={this.localize("filterByKeywordPlaceholder")} onChange={this.onSearchStateChange} />
-                    </div>
-                    <Flex.Item push>
-                        <div></div>
-                    </Flex.Item>
-                    <div className="filter-bar-item-container">
-                        <PopupMenuWrapper title={this.localize("type")} showSearchBar={false} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.typeList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTypeCheckboxStateChange} />
-                        <PopupMenuWrapper title={this.localize("sharedBy")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.sharedByList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onSharedByCheckboxStateChange} />
-                        <PopupMenuWrapper title={this.localize("tagsLabel")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.tagsList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
-                        <PopupMenuWrapper title={this.localize("sortBy")} selectedSortBy={this.state.selectedSortBy} radioGroup={this.state.sortBy} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
-                    </div>
-                    <div>
-                        <CloseIcon className="close-icon" onClick={this.onCloseIconClick} />
-                    </div>
+                <Flex>
+                    {this.state.screenWidth > 750 && <Flex gap="gap.small" vAlign="center" className="filter-bar-wrapper">
+                        <div className="searchbar-wrapper">
+                            <Input className="searchbar-input" value={this.state.searchText} inverted fluid icon={<Icon iconName="Filter" className="filter-icon" />} iconPosition="start" placeholder={this.localize("filterByKeywordPlaceholder")} onChange={this.onSearchStateChange} />
+                        </div>
+                        <Flex.Item push>
+                            <div></div>
+                        </Flex.Item>
+                        <div className="filter-bar-item-container">
+                            <PopupMenuWrapper title={this.localize("type")} showSearchBar={false} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.typeList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTypeCheckboxStateChange} />
+                            <PopupMenuWrapper title={this.localize("sharedBy")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.sharedByList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onSharedByCheckboxStateChange} />
+                            <PopupMenuWrapper title={this.localize("tagsLabel")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.tagsList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
+                            <PopupMenuWrapper title={this.localize("sortBy")} selectedSortBy={this.state.selectedSortBy} radioGroup={this.state.sortBy} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
+                        </div>
+                        <div>
+                            <CloseIcon className="close-icon" onClick={this.onCloseIconClick} />
+                        </div>
+                    </Flex>}
+
+                    {this.state.screenWidth <= 750 && <Flex gap="gap.small" vAlign="start" className="filter-bar-wrapper">
+                        <Flex.Item grow>
+                            <Flex column gap="gap.small" vAlign="stretch">
+                                <div className="searchbar-wrapper-mobile">
+                                    <Input value={this.state.searchText} inverted fluid icon={<Icon iconName="Filter" className="filter-icon" />} iconPosition="start" placeholder={this.localize("filterByKeywordPlaceholder")} onChange={this.onSearchStateChange} />
+                                </div>
+                                <Flex>
+                                    <PopupMenuWrapper title={this.localize("type")} showSearchBar={false} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.typeList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTypeCheckboxStateChange} />
+                                    <PopupMenuWrapper title={this.localize("sharedBy")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.sharedByList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onSharedByCheckboxStateChange} />
+                                    <PopupMenuWrapper title={this.localize("tagsLabel")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.tagsList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
+                                    <PopupMenuWrapper title={this.localize("sortBy")} selectedSortBy={this.state.selectedSortBy} radioGroup={this.state.sortBy} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
+                                </Flex>
+                            </Flex>
+                        </Flex.Item>
+                        <Flex.Item push>
+                            <CloseIcon className="close-icon" onClick={this.onCloseIconClick} />
+                        </Flex.Item>
+                    </Flex>}
                 </Flex>
             );
         }

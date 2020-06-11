@@ -5,52 +5,52 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     /// <summary>
-    /// Team post search scope.
+    /// A enum  that represent the search scope for search service.
     /// </summary>
     public enum TeamPostSearchScope
     {
         /// <summary>
-        /// All items for team post.
+        /// Represents all team posts.
         /// </summary>
         AllItems,
 
         /// <summary>
-        /// Posted by me team posts.
+        /// Represents posts created by current user.
         /// </summary>
         PostedByMe,
 
         /// <summary>
-        /// Popular team posts.
+        /// Represents popular posts based on the number of votes.
         /// </summary>
         Popular,
 
         /// <summary>
-        /// Get tags while configuring team preference.
+        /// Represents configured team tags.
         /// </summary>
         TeamPreferenceTags,
 
         /// <summary>
-        /// Get team posts as per the configured tags in a particular team.
+        /// Represents filtered posts as per the configured tags in a particular team.
         /// </summary>
         FilterAsPerTeamTags,
 
         /// <summary>
-        /// Get team posts based on the updated date.
+        /// Represents posts based on the date range to send digest notification.
         /// </summary>
         FilterPostsAsPerDateRange,
 
         /// <summary>
-        /// Get unique user names who created the posts to show on filter bar drop-down list.
+        /// Represents unique user names who created the posts to show on filter bar drop-down list.
         /// </summary>
         UniqueUserNames,
 
         /// <summary>
-        /// Get team posts as per the search text for title field.
+        /// Represents posts as per the search text for title field.
         /// </summary>
         SearchTeamPostsForTitleText,
 
         /// <summary>
-        /// Get team posts as per the applied filters.
+        /// Represents posts as per the applied filters.
         /// </summary>
         FilterTeamPosts,
     }

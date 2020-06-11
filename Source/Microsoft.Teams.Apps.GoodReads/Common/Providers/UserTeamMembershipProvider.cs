@@ -17,7 +17,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which stores user team membership data in Microsoft Azure Table storage.
+    /// Implements storage provider which helps to create, get, update or delete user team membership data in Microsoft Azure Table storage.
     /// </summary>
     public class UserTeamMembershipProvider : BaseStorageProvider, IUserTeamMembershipProvider
     {
@@ -42,10 +42,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, UserTeamMembershipEntityName, logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
@@ -91,7 +88,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
                 teamId);
 
             string combinedFilter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, teamIdCondition);
-
             var userTeamMembershipEntities = await this.GetWithFilterAsync(combinedFilter);
 
             if (userTeamMembershipEntities != null)
@@ -150,11 +146,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             string combinedFilter = TableQuery.CombineFilters(partitionKeyFilter, TableOperators.And, teamIdCondition);
 
             TableQuery<UserTeamMembershipEntity> query = new TableQuery<UserTeamMembershipEntity>().Where(combinedFilter);
-
             var queryResult = await this.GoodReadsCloudTable.ExecuteQuerySegmentedAsync(query, null);
+
             if (queryResult.Any())
             {
-                return queryResult?.FirstOrDefault();
+                return queryResult.First();
             }
 
             return null;
@@ -164,7 +160,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Delete user team membership data in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="entity">Represents user team membership entity object.</param>
-        /// <returns>A task that represents user team membership data is deleted.</returns>
+        /// <returns>A boolean that represents user team membership data is successfully deleted or not.</returns>
         private async Task<bool> DeleteEntityAsync(UserTeamMembershipEntity entity)
         {
             if (entity == null)
@@ -174,6 +170,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
 
             var operation = TableOperation.Delete(entity);
             var result = await this.GoodReadsCloudTable.ExecuteAsync(operation);
+
             return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
         }
 
@@ -181,7 +178,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Stores or update user team membership details data in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="entity">Holds user team membership entity data.</param>
-        /// <returns>A task that represents user team membership entity data is saved or updated.</returns>
+        /// <returns>A boolean that represents user team membership entity is successfully saved/updated or not.</returns>
         private async Task<bool> UpserUsertTeamMembershipPostAsync(UserTeamMembershipEntity entity)
         {
             var result = await this.StoreOrUpdateEntityAsync(entity);

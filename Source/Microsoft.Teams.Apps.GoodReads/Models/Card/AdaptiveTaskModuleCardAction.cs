@@ -7,7 +7,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models.Card
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Defines model for opening task module.
+    /// A class that represents the adaptive submit action model.
     /// </summary>
     public class AdaptiveTaskModuleCardAction
     {

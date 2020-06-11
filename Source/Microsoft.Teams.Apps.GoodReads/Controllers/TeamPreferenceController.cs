@@ -98,6 +98,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to retrieve list of team preference.");
+
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError("Error while getting the team preference from Microsoft Azure Table storage.");
@@ -132,6 +134,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to add team preference.");
+
                 if (string.IsNullOrEmpty(teamPreferenceEntity?.TeamId))
                 {
                     this.logger.LogError("Error while creating or updating team preference details data in Microsoft Azure Table storage.");
@@ -145,7 +149,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                 }
 
                 this.RecordEvent(RecordTeamPreferenceHTTPPostCall);
-                var teamPreferenceDetail = this.teamPreferenceStorageHelper.GetTeamPreferenceModel(teamPreferenceEntity);
+                var teamPreferenceDetail = this.teamPreferenceStorageHelper.CreateTeamPreferenceModel(teamPreferenceEntity);
 
                 return this.Ok(await this.teamPreferenceStorageProvider.UpsertTeamPreferenceAsync(teamPreferenceDetail));
             }
@@ -166,13 +170,15 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to get list of unique tags to show while configuring the preference.");
+
                 if (string.IsNullOrEmpty(searchText))
                 {
                     this.logger.LogError("Error while getting the list of unique tags from Microsoft Azure Table storage.");
                     return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while getting the list of unique tags from Microsoft Azure Table storage.");
                 }
 
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.TeamPreferenceTags, searchText, userObjectId: null);
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.TeamPreferenceTags, searchText, userObjectId: null);
                 var uniqueTags = this.teamPreferenceStorageHelper.GetUniqueTags(teamPosts, searchText);
                 this.RecordEvent(RecordTeamPreferenceTagsHTTPGetCall);
 

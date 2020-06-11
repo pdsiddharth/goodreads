@@ -5,7 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models.Configuration
 {
     /// <summary>
-    /// Class which will help to provide Microsoft Azure Table storage settings for Good Reads app.
+    /// A class which helps to provide Microsoft Azure Table storage settings for Share Now app.
     /// </summary>
     public class StorageSetting : BotSetting
     {

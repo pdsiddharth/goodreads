@@ -8,24 +8,24 @@ import RadioGroupWrapper from "../radiogroup-wrapper";
 import "../../styles/popup-menu.css";
 
 interface IPopupMenuRadiogroupContentProps {
-	content: any,
-	selectedValue: string,
-	onRadiogroupStateChange: (selectedValue: string) => void
+    content: any,
+    selectedValue: string,
+    onRadiogroupStateChange: (selectedValue: string) => void
 }
 
 const PopupMenuRadiogroupContent: React.FunctionComponent<IPopupMenuRadiogroupContentProps> = props => {
 
-	return (
-		<>
-			<div className="content-items-wrapper radio-popup-content">
-				<div className="content-items-body">
-					{
-						<RadioGroupWrapper selectedItem={props.selectedValue} radioItems={props.content.radioGroupItems} onChange={props.onRadiogroupStateChange} />
-					}
-				</div>
-			</div>
-		</>
-	);
+    return (
+        <>
+            <div className="content-items-wrapper radio-popup-content">
+                <div className="content-items-body">
+                    {
+                        <RadioGroupWrapper selectedItem={props.selectedValue} radioItems={props.content.radioGroupItems} onChange={props.onRadiogroupStateChange} />
+                    }
+                </div>
+            </div>
+        </>
+    );
 }
 
 export default React.memo(PopupMenuRadiogroupContent);

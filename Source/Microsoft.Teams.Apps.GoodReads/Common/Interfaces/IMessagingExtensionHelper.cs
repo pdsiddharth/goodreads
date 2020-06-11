@@ -33,6 +33,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
         /// </summary>
         /// <param name="query">Contains Messaging Extension query keywords.</param>
         /// <returns>A value of the searchText parameter.</returns>
-        string GetSearchQueryString(MessagingExtensionQuery query);
+        string GetSearchResult(MessagingExtensionQuery query);
     }
 }

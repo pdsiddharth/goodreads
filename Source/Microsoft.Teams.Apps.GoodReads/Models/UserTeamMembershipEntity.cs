@@ -9,7 +9,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// User team membership data entity class.
+    /// A class that represents user team membership entity.
     /// </summary>
     public class UserTeamMembershipEntity : TableEntity
     {
@@ -24,7 +24,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         }
 
         /// <summary>
-        /// Gets or sets the user's AadObjectId.
+        /// Gets or sets Azure Active Directory id of user.
         /// </summary>
         public string UserAadObjectId { get; set; }
 

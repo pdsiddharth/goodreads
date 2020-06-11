@@ -5,7 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     /// <summary>
-    /// Class which will help to provide Telemetry settings for Good Reads application.
+    /// A class which helps to provide Telemetry settings for Share Now application.
     /// </summary>
     public class TelemetrySetting
     {

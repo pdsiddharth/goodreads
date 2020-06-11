@@ -13,7 +13,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Implements user storage helper which is responsible for storing, updating or deleting team post data in Microsoft Azure Table storage.
+    /// Implements team post storage helper which helps to construct the model, create search query for team post.
     /// </summary>
     public class TeamPostStorageHelper : ITeamPostStorageHelper
     {
@@ -33,18 +33,18 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Get team post details model.
+        /// Create team post model data.
         /// </summary>
         /// <param name="teamPostEntity">Team post detail.</param>
         /// <param name="userId">User Azure active directory id.</param>
-        /// <param name="userName">The user name.</param>
+        /// <param name="userName">Author who created the post.</param>
         /// <returns>A task that represents team post entity data.</returns>
-        public TeamPostEntity GetTeamPostModel(TeamPostEntity teamPostEntity, string userId, string userName)
+        public TeamPostEntity CreateTeamPostModel(TeamPostEntity teamPostEntity, string userId, string userName)
         {
+            teamPostEntity = teamPostEntity ?? throw new ArgumentNullException(nameof(teamPostEntity));
+
             try
             {
-                teamPostEntity = teamPostEntity ?? throw new ArgumentNullException(nameof(teamPostEntity));
-
                 teamPostEntity.PostId = Guid.NewGuid().ToString();
                 teamPostEntity.UserId = userId;
                 teamPostEntity.CreatedByName = userName;
@@ -62,15 +62,16 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Get updated team post details to Microsoft Azure Table storage.
+        /// Create updated team post model data for Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamPostEntity">Team post detail.</param>
         /// <returns>A task that represents team post entity updated data.</returns>
-        public TeamPostEntity GetUpdatedTeamPostModel(TeamPostEntity teamPostEntity)
+        public TeamPostEntity CreateUpdatedTeamPostModel(TeamPostEntity teamPostEntity)
         {
+            teamPostEntity = teamPostEntity ?? throw new ArgumentNullException(nameof(teamPostEntity));
+
             try
             {
-                teamPostEntity = teamPostEntity ?? throw new ArgumentNullException(nameof(teamPostEntity));
                 teamPostEntity.UpdatedDate = DateTime.UtcNow;
                 teamPostEntity.IsRemoved = false;
 
@@ -113,17 +114,17 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Exception occurred while preparing the team preference entity model data");
+                this.logger.LogError(ex, "Exception occurred while preparing the team preference entities list.");
                 throw;
             }
         }
 
         /// <summary>
-        /// Get tags query to fetch team posts as per the configured tags.
+        /// Get tags to fetch team posts as per the configured tags.
         /// </summary>
         /// <param name="tags">Tags of a configured team post.</param>
-        /// <returns>Represents tags query to fetch team posts.</returns>
-        public string GetTagsQuery(string tags)
+        /// <returns>Represents tags to fetch team posts.</returns>
+        public string GetTags(string tags)
         {
             try
             {
@@ -156,7 +157,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         /// </summary>
         /// <param name="teamPosts">Represents a collection of team posts.</param>
         /// <returns>Represents team posts.</returns>
-        public IEnumerable<string> GetFilteredUserNames(IEnumerable<TeamPostEntity> teamPosts)
+        public IEnumerable<string> GetAuthorNamesAsync(IEnumerable<TeamPostEntity> teamPosts)
         {
             try
             {
@@ -172,7 +173,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Get user names query to fetch team posts as per the selected filter.
+        /// Get combined query to fetch team posts as per the selected filter.
         /// </summary>
         /// <param name="postTypes">Post type like: Blog post or Other.</param>
         /// <param name="sharedByNames">User names selected in filter.</param>

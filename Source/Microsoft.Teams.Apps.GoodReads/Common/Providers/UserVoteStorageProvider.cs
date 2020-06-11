@@ -6,6 +6,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which stores user vote data in Microsoft Azure Table storage.
+    /// Implements storage provider which helps to create, get, update or delete user vote data in Microsoft Azure Table storage.
     /// </summary>
     public class UserVoteStorageProvider : BaseStorageProvider, IUserVoteStorageProvider
     {
@@ -24,11 +25,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Represents user vote entity name.
         /// </summary>
         private const string UserVoteEntityName = "UserVoteEntity";
-
-        /// <summary>
-        /// Represents row key string.
-        /// </summary>
-        private const string RowKey = "RowKey";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserVoteStorageProvider"/> class.
@@ -41,10 +37,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, UserVoteEntityName, logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
@@ -56,7 +49,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         {
             await this.EnsureInitializedAsync();
 
-            string partitionKeyCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, userId);
+            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, userId);
             string userIdCondition = TableQuery.GenerateFilterCondition(nameof(UserVoteEntity.UserId), QueryComparisons.Equal, userId);
             string combinedFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, userIdCondition);
 
@@ -82,7 +75,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Stores or update user votes data in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="voteEntity">Holds user vote entity data.</param>
-        /// <returns>A task that represents user vote entity data is saved or updated.</returns>
+        /// <returns>A boolean that represents user vote entity is successfully saved/updated or not.</returns>
         public async Task<bool> UpsertUserVoteAsync(UserVoteEntity voteEntity)
         {
             var result = await this.StoreOrUpdateEntityAsync(voteEntity);
@@ -94,22 +87,22 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// </summary>
         /// <param name="postId">Represents post id.</param>
         /// <param name="userId">Represent Azure Active Directory id of user.</param>
-        /// <returns>A task that represents user vote data is deleted.</returns>
+        /// <returns>A boolean that represents user vote data is successfully deleted or not.</returns>
         public async Task<bool> DeleteEntityAsync(string postId, string userId)
         {
             postId = postId ?? throw new ArgumentNullException(nameof(postId));
             await this.EnsureInitializedAsync();
 
-            string postIdCondition = TableQuery.GenerateFilterCondition(RowKey, QueryComparisons.Equal, postId);
-            string userIdCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, userId);
+            string postIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, postId);
+            string userIdCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, userId);
             string combinedFilter = TableQuery.CombineFilters(postIdCondition, TableOperators.And, userIdCondition);
 
             TableQuery<UserVoteEntity> query = new TableQuery<UserVoteEntity>().Where(combinedFilter);
             var queryResult = await this.GoodReadsCloudTable.ExecuteQuerySegmentedAsync(query, null);
-            TableOperation deleteOperation = TableOperation.Delete(queryResult?.Results[0]);
-            await this.GoodReadsCloudTable.ExecuteAsync(deleteOperation);
+            TableOperation deleteOperation = TableOperation.Delete(queryResult?.Results.First());
+            var result = await this.GoodReadsCloudTable.ExecuteAsync(deleteOperation);
 
-            return true;
+            return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
         }
 
         /// <summary>

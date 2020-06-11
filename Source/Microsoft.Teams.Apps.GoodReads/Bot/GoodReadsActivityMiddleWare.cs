@@ -1,4 +1,4 @@
-﻿// <copyright file="GoodReadsActivityMiddleWare.cs" company="Microsoft">
+﻿// <copyright file="GoodReadsActivityMiddleware.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,17 +15,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Represents middleware that can operate on incoming activities.
+    /// A class that represents middleware that can operate on incoming activities.
     /// </summary>
     public class GoodReadsActivityMiddleware : IMiddleware
     {
         /// <summary>
-        /// Represents unique id of a Tenant.
-        /// </summary>
-        private readonly string tenantId;
-
-        /// <summary>
-        /// Represents a set of key/value application configuration properties for Good Reads Bot.
+        /// Represents a set of key/value application configuration properties for Share Now Bot.
         /// </summary>
         private readonly IOptions<BotSetting> options;
 
@@ -43,7 +38,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logger = logger;
-            this.tenantId = this.options.Value.TenantId;
         }
 
         /// <summary>
@@ -82,7 +76,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// <returns>True if context is from expected tenant else false.</returns>
         private bool IsActivityFromExpectedTenant(ITurnContext turnContext)
         {
-            return turnContext.Activity.Conversation.TenantId == this.tenantId;
+            return turnContext.Activity.Conversation.TenantId == this.options.Value.TenantId;
         }
     }
 }

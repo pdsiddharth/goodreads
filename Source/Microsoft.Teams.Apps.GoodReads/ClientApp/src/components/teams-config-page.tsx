@@ -134,12 +134,12 @@ class TeamsConfigPage extends React.Component<ITeamConfigDetailsProps, ITeamConf
     showTagsAlreadyAddedError() {
         if (this.state.showTagError) {
             if (this.state.tagsList.length === Resources.tagsMaxCountPreferences)
-                
-            return (
-                <Flex gap="gap.smaller" className="tag-error-maxfive-config">
-                    <Text content={this.localize("preferenceTagCountError")} />
-                </Flex>
-            )
+
+                return (
+                    <Flex gap="gap.smaller" className="tag-error-maxfive-config">
+                        <Text content={this.localize("preferenceTagCountError")} />
+                    </Flex>
+                )
             else {
                 return (
                     <Flex gap="gap.smaller" className="tag-error-label-config">
@@ -396,16 +396,16 @@ class TeamsConfigPage extends React.Component<ITeamConfigDetailsProps, ITeamConf
                 <div className="config-container" ref={nodeConfig => this.nodeConfig = nodeConfig}>
                     <Flex gap="gap.smaller" className="tag-searchbox-label">
                         <Text content={this.localize("tagsLabel")} />
-                        {this.showTagsAlreadyAddedError()}
+                        <Flex.Item push>
+                            {this.showTagsAlreadyAddedError()}
+                        </Flex.Item>
                     </Flex>
-                    <div className="search-div">
-                        <Flex gap="gap.smaller" className="input-search-config">
-                            <Flex.Item push>
-                                <Input onKeyDown={(event: any) => this.onEnterKeyPress(event)} icon={<SearchIcon onClick={(event: any) => this.filterSavedTags(this.state.searchText)} key="search" className="search-icon" />} fluid onChange={(event: any) => this.getInputValue(event.target.value)} placeholder={this.localize("searchPlaceholder")} />
-                            </Flex.Item>
-                        </Flex>
+                    <Flex className="search-div">
+                        <Input onKeyDown={(event: any) => this.onEnterKeyPress(event)} icon={<SearchIcon onClick={(event: any) => this.filterSavedTags(this.state.searchText)} key="search" className="search-icon" />} fluid onChange={(event: any) => this.getInputValue(event.target.value)} placeholder={this.localize("searchPlaceholder")} />
+                    </Flex>
+                    <Flex>
                         {this.showSuggestedTags()}
-                    </div>
+                    </Flex>
 
                     <Flex gap="gap.smaller" className="tags-flex-preferences" vAlign="center">
                         {this.showTags()}

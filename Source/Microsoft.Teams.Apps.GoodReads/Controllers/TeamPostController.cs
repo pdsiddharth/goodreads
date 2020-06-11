@@ -152,7 +152,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
 
             try
             {
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.AllItems, searchQuery: null, userObjectId: null, count: Constants.LazyLoadPerPagePostCount, skip: skipRecords);
+                this.logger.LogInformation("Call to retrieve list of team posts.");
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.AllItems, searchQuery: null, userObjectId: null, count: Constants.LazyLoadPerPagePostCount, skip: skipRecords);
                 this.RecordEvent(RecordTeamPostHTTPGetCall);
 
                 return this.Ok(teamPosts);
@@ -174,7 +175,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
-                var updatedTeamPostEntity = this.teamPostStorageHelper.GetTeamPostModel(teamPostEntity, this.UserAadId, this.UserName);
+                this.logger.LogInformation("Call to add team posts details.");
+                var updatedTeamPostEntity = this.teamPostStorageHelper.CreateTeamPostModel(teamPostEntity, this.UserAadId, this.UserName);
                 var result = await this.teamPostStorageProvider.UpsertTeamPostAsync(updatedTeamPostEntity);
 
                 if (result)
@@ -202,9 +204,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         [HttpPut]
         public async Task<IActionResult> PutAsync([FromBody] TeamPostEntity teamPostEntity)
         {
+            teamPostEntity = teamPostEntity ?? throw new ArgumentNullException(nameof(teamPostEntity));
+
             try
             {
-                teamPostEntity = teamPostEntity ?? throw new NullReferenceException(nameof(teamPostEntity));
+                this.logger.LogInformation("Call to update team post details.");
 
                 if (string.IsNullOrEmpty(teamPostEntity.PostId))
                 {
@@ -212,7 +216,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                     return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while updating team post details data");
                 }
 
-                var updatedTeamPostEntity = this.teamPostStorageHelper.GetUpdatedTeamPostModel(teamPostEntity);
+                var updatedTeamPostEntity = this.teamPostStorageHelper.CreateUpdatedTeamPostModel(teamPostEntity);
                 var result = await this.teamPostStorageProvider.UpsertTeamPostAsync(updatedTeamPostEntity);
 
                 if (result)
@@ -241,7 +245,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
-                postId = postId ?? throw new NullReferenceException(nameof(postId));
+                this.logger.LogInformation("Call to delete team post details.");
+
+                postId = postId ?? throw new ArgumentNullException(nameof(postId));
 
                 var teamPostEntity = await this.teamPostStorageProvider.GetTeamPostEntityAsync(postId);
                 teamPostEntity.IsRemoved = true;
@@ -276,6 +282,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
 
             try
             {
+                this.logger.LogInformation("Call to get filtered team post details.");
+
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError("Error while fetching filtered team posts as per the configured tags from Microsoft Azure Table storage.");
@@ -293,17 +301,17 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                 // Get tags based on the teamid for which tags has configured.
                 var teamTagEntity = await this.teamTagStorageProvider.GetTeamTagsDataAsync(teamId);
 
-                if (string.IsNullOrEmpty(teamTagEntity?.Tags))
+                if (teamTagEntity == null || string.IsNullOrEmpty(teamTagEntity.Tags))
                 {
                     return this.Ok(teamPosts);
                 }
 
                 // Prepare query based on the tags and get the data using search service.
-                var tagsQuery = this.teamPostStorageHelper.GetTagsQuery(teamTagEntity?.Tags);
-                teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.FilterAsPerTeamTags, tagsQuery, userObjectId: null, count: Constants.LazyLoadPerPagePostCount, skip: skipRescords);
+                var tagsQuery = this.teamPostStorageHelper.GetTags(teamTagEntity.Tags);
+                teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.FilterAsPerTeamTags, tagsQuery, userObjectId: null, count: Constants.LazyLoadPerPagePostCount, skip: skipRescords);
 
                 // Filter the data based on the configured tags.
-                var filteredTeamPosts = this.teamPostStorageHelper.GetFilteredTeamPostsAsPerTags(teamPosts, teamTagEntity?.Tags);
+                var filteredTeamPosts = this.teamPostStorageHelper.GetFilteredTeamPostsAsPerTags(teamPosts, teamTagEntity.Tags);
                 this.RecordEvent(RecordFilteredTeamPostsHTTPGetCall);
 
                 return this.Ok(filteredTeamPosts);
@@ -324,12 +332,14 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.UniqueUserNames, searchQuery: null, userObjectId: null);
-                var filteredTeamPosts = this.teamPostStorageHelper.GetFilteredUserNames(teamPosts);
+                this.logger.LogInformation("Call to get unique names.");
+
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.UniqueUserNames, searchQuery: null, userObjectId: null);
+                var authorNames = this.teamPostStorageHelper.GetAuthorNamesAsync(teamPosts);
 
                 this.RecordEvent(RecordUniqueUserNamesHTTPGetCall);
 
-                return this.Ok(filteredTeamPosts);
+                return this.Ok(authorNames);
             }
             catch (Exception ex)
             {
@@ -351,7 +361,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
 
             try
             {
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.SearchTeamPostsForTitleText, searchText, userObjectId: null, skip: skipRescords, count: Constants.LazyLoadPerPagePostCount);
+                this.logger.LogInformation("Call to get list of team posts.");
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.SearchTeamPostsForTitleText, searchText, userObjectId: null, skip: skipRescords, count: Constants.LazyLoadPerPagePostCount);
                 this.RecordEvent(RecordSearchedTeamPostsForTitleHTTPGetCall);
 
                 return this.Ok(teamPosts);
@@ -382,7 +393,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
 
             try
             {
-                // Filer can apply from a team or from personal scope Discover tab, so team id can be empty.
+                this.logger.LogInformation("Call to get team posts as per the applied filters.");
+
+                // Team id will be empty when called from personal scope Discover tab.
                 if (!string.IsNullOrEmpty(teamId))
                 {
                     teamTagEntity = await this.teamTagStorageProvider.GetTeamTagsDataAsync(teamId);
@@ -391,9 +404,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                     tags = tagsList != null && tagsList.Any() ? string.Join(';', tagsList) : teamTagEntity?.Tags;
                 }
 
-                var tagsQuery = string.IsNullOrEmpty(tags) ? "*" : this.teamPostStorageHelper.GetTagsQuery(tags);
+                var tagsQuery = string.IsNullOrEmpty(tags) ? "*" : this.teamPostStorageHelper.GetTags(tags);
                 var filterQuery = this.teamPostStorageHelper.GetFilterSearchQuery(postTypes, sharedByNames);
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.FilterTeamPosts, tagsQuery, userObjectId: null, sortBy: sortBy, filterQuery: filterQuery, count: Constants.LazyLoadPerPagePostCount, skip: skipRecords);
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.FilterTeamPosts, tagsQuery, userObjectId: null, sortBy: sortBy, filterQuery: filterQuery, count: Constants.LazyLoadPerPagePostCount, skip: skipRecords);
 
                 this.RecordEvent(RecordAppliedFiltersTeamPostsHTTPGetCall);
 
@@ -420,6 +433,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
 
             try
             {
+                this.logger.LogInformation("Call to get list of posts as per the configured tags and title.");
+
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError("Error while fetching search posts as per the title and configured tags from Microsoft Azure Table storage.");
@@ -427,9 +442,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                 }
 
                 var teamTagEntity = await this.teamTagStorageProvider.GetTeamTagsDataAsync(teamId);
-                var tagsQuery = string.IsNullOrEmpty(teamTagEntity?.Tags) ? "*" : this.teamPostStorageHelper.GetTagsQuery(teamTagEntity.Tags);
+                var tagsQuery = string.IsNullOrEmpty(teamTagEntity?.Tags) ? "*" : this.teamPostStorageHelper.GetTags(teamTagEntity.Tags);
                 var filterQuery = $"search.ismatch('{tagsQuery}', 'Tags')";
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.SearchTeamPostsForTitleText, searchText, userObjectId: null, count: Constants.LazyLoadPerPagePostCount, skip: skipRecords, filterQuery: filterQuery);
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.SearchTeamPostsForTitleText, searchText, userObjectId: null, count: Constants.LazyLoadPerPagePostCount, skip: skipRecords, filterQuery: filterQuery);
                 this.RecordEvent(RecordSearchPostsHTTPGetCall);
 
                 return this.Ok(teamPosts);
@@ -451,6 +466,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to get unique author names.");
+
                 var names = new List<string>();
 
                 // Get tags based on the teamid for which tags has configured.
@@ -461,12 +478,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                     return this.Ok(names);
                 }
 
-                var tagsQuery = this.teamPostStorageHelper.GetTagsQuery(teamTagEntity.Tags);
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.FilterAsPerTeamTags, tagsQuery, null, null);
-                var filteredTeamPosts = this.teamPostStorageHelper.GetFilteredUserNames(teamPosts);
+                var tagsQuery = this.teamPostStorageHelper.GetTags(teamTagEntity.Tags);
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.FilterAsPerTeamTags, tagsQuery, null, null);
+                var authorNames = this.teamPostStorageHelper.GetAuthorNamesAsync(teamPosts);
                 this.RecordEvent(RecordAuthorNamesHTTPGetCall);
 
-                return this.Ok(filteredTeamPosts);
+                return this.Ok(authorNames);
             }
             catch (Exception ex)
             {

@@ -8,7 +8,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models.Card
     using Newtonsoft.Json;
 
     /// <summary>
-    /// List card root class.
+    /// A class that represents list card model.
     /// </summary>
     public class ListCard
     {
@@ -19,7 +19,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models.Card
         public string Title { get; set; }
 
         /// <summary>
-        /// Gets or sets list items.
+        /// Gets or sets items of list card.
         /// </summary>
         [JsonProperty("items")]
 #pragma warning disable CA2227 // Getting error to make collection property as read only but needs to assign values.
@@ -27,7 +27,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models.Card
 #pragma warning restore CA2227
 
         /// <summary>
-        /// Gets or sets buttons.
+        /// Gets or sets action buttons on list card.
         /// </summary>
         [JsonProperty("buttons")]
 #pragma warning disable CA2227 // Getting error to make collection property as read only but needs to assign values.

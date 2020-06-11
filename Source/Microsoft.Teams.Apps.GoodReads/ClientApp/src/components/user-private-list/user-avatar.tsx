@@ -14,6 +14,7 @@ interface IUserAvatarProps extends WithTranslation {
     title: string;
     postType: string;
     showFullName: boolean;
+    avatarColor: string;
 }
 
 
@@ -30,8 +31,8 @@ class UserAvatar extends React.Component<IUserAvatarProps> {
     public render(): JSX.Element {
         return (
             <Flex vAlign="center">
-                <div className="user-avatar" style={{ backgroundColor: generateColor() }}>
-                    <Text content={getInitials(this.props.content)} title={this.props.content} />
+                <div className="user-avatar" style={{ backgroundColor: this.props.avatarColor }}>
+                    <Text className="initials-color" content={getInitials(this.props.content)} title={this.props.content} />
                 </div>
                 {this.props.showFullName && <>&nbsp;<Text className="author-name" title={this.props.content} content={this.props.content} /></>}
             </Flex>

@@ -25,7 +25,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Polly.Retry;
 
     /// <summary>
-    /// Class handles sending notification to channels.
+    /// A class that handles sending notification to different channels.
     /// </summary>
     public class DigestNotificationHelper : IDigestNotificationHelper
     {
@@ -73,12 +73,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         private readonly IBotFrameworkHttpAdapter adapter;
 
         /// <summary>
-        /// Tenant id.
-        /// </summary>
-        private readonly string tenantId;
-
-        /// <summary>
-        /// Represents a set of key/value application configuration properties for Good reads bot.
+        /// Represents a set of key/value application configuration properties for Share Now bot.
         /// </summary>
         private readonly IOptions<BotSetting> botOptions;
 
@@ -117,7 +112,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         /// </summary>
         /// <param name="logger">Instance to send logs to the Application Insights service.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
-        /// <param name="botOptions">A set of key/value application configuration properties for Good reads bot.</param>
+        /// <param name="botOptions">A set of key/value application configuration properties for Share Now bot.</param>
         /// <param name="adapter">Bot adapter.</param>
         /// <param name="microsoftAppCredentials">MicrosoftAppCredentials of bot.</param>
         /// <param name="teamPreferenceStorageProvider">Storage provider for team preference.</param>
@@ -143,7 +138,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             this.adapter = adapter;
             this.appId = microsoftAppCredentials != null ? microsoftAppCredentials.MicrosoftAppId : throw new ArgumentNullException(nameof(microsoftAppCredentials));
             this.teamPreferenceStorageProvider = teamPreferenceStorageProvider;
-            this.tenantId = this.botOptions.Value.TenantId;
             this.teamPostSearchService = teamPostSearchService;
             this.teamPostStorageHelper = teamPostStorageHelper;
             this.userTeamMembershipProvider = userTeamMembershipProvider;
@@ -155,20 +149,22 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
 
         /// <summary>
         /// Send notification in channels on weekly or monthly basis as per the configured preference in different channels.
+        /// Fetch data based on the date range and send it accordingly.
         /// </summary>
-        /// <param name="fromDate">Start date from which data should fetch.</param>
-        /// <param name="toDate">End date till when data should fetch.</param>
+        /// <param name="startDate">Start date from which data should fetch.</param>
+        /// <param name="endDate">End date till when data should fetch.</param>
         /// <param name="digestFrequency">Digest frequency text for notification like Monthly/Weekly.</param>
         /// <returns>A task that sends notification in channel.</returns>
-        public async Task SendNotificationInChannelAsync(DateTime fromDate, DateTime toDate, string digestFrequency)
+        public async Task SendNotificationInChannelAsync(DateTime startDate, DateTime endDate, string digestFrequency)
         {
-            this.logger.LogInformation($"Send notification Timer trigger function executed at: {DateTime.UtcNow}");
+            digestFrequency = digestFrequency ?? throw new ArgumentNullException(nameof(digestFrequency));
+
             try
             {
-                digestFrequency = digestFrequency ?? throw new ArgumentNullException(nameof(digestFrequency));
+                this.logger.LogInformation($"Send notification Timer trigger function executed at: {DateTime.UtcNow}");
 
-                var teamPosts = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.FilterPostsAsPerDateRange, searchQuery: null, userObjectId: null);
-                var filteredTeamPosts = this.teamPostStorageHelper.GetTeamPostsInDateRangeAsync(teamPosts, fromDate, toDate);
+                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.FilterPostsAsPerDateRange, searchQuery: null, userObjectId: null);
+                var filteredTeamPosts = this.teamPostStorageHelper.GetTeamPostsInDateRangeAsync(teamPosts, startDate, endDate);
 
                 if (filteredTeamPosts.Any())
                 {
@@ -202,7 +198,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                 }
                 else
                 {
-                    this.logger.LogInformation($"There is no digest data available to send at this time range from: {0} till {1}", fromDate, toDate);
+                    this.logger.LogInformation($"There is no digest data available to send at this time range from: {0} till {1}", startDate, endDate);
                 }
             }
             catch (Exception ex)
@@ -233,11 +229,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                     ChannelId = Channel,
                     Bot = new ChannelAccount() { Id = $"28:{this.appId}" },
                     ServiceUrl = serviceUrl,
-                    Conversation = new ConversationAccount() { ConversationType = ChannelConversationType, IsGroup = true, Id = teamsChannelId, TenantId = this.tenantId },
+                    Conversation = new ConversationAccount() { ConversationType = ChannelConversationType, IsGroup = true, Id = teamsChannelId, TenantId = this.botOptions.Value.TenantId },
                 };
 
                 this.logger.LogInformation($"sending notification to channelId- {teamsChannelId}");
 
+                // Retry it in addition to the original call.
                 await this.retryPolicy.ExecuteAsync(async () =>
                 {
                     try

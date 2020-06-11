@@ -8,7 +8,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
     using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.RetryPolicies;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
@@ -98,17 +97,10 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// <returns>Asynchronous task which represents table is created if its not existing.</returns>
         private async Task InitializeAsync()
         {
-            // Exponential retry policy with backoff of 3 seconds and 5 retries.
-            var exponentialRetryPolicy = new TableRequestOptions()
-            {
-                RetryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(3), 5),
-            };
-
             try
             {
                 CloudStorageAccount storageAccount = CloudStorageAccount.Parse(this.connectionString);
                 CloudTableClient cloudTableClient = storageAccount.CreateCloudTableClient();
-                cloudTableClient.DefaultRequestOptions = exponentialRetryPolicy;
                 this.GoodReadsCloudTable = cloudTableClient.GetTableReference(this.TableName);
                 await this.GoodReadsCloudTable.CreateIfNotExistsAsync();
             }

@@ -9,12 +9,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Class which represents user private post model.
+    /// A class that represents user private post model.
     /// </summary>
     public class UserPrivatePostEntity : TableEntity
     {
         /// <summary>
-        /// Gets or sets unique value for each user.
+        /// Gets or sets unique Azure Active Directory id of user.
         /// </summary>
         public string UserId
         {

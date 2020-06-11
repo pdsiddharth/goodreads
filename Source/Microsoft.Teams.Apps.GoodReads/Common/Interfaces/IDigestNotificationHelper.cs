@@ -14,11 +14,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
     {
         /// <summary>
         /// Send notification in channels on Weekly or Monthly basis as per the configured preference in different channels.
+        /// Fetch data based on the date range and send it accordingly.
         /// </summary>
-        /// <param name="fromDate">Start date from which data should fetch.</param>
-        /// <param name="toDate">End date till when data should fetch.</param>
+        /// <param name="startDate">Start date from which data should fetch.</param>
+        /// <param name="endDate">End date till when data should fetch.</param>
         /// <param name="digestFrequency">Digest frequency text for notification like Monthly/Weekly.</param>
         /// <returns>A task that sends notification in channel.</returns>
-        Task SendNotificationInChannelAsync(DateTime fromDate, DateTime toDate, string digestFrequency);
+        Task SendNotificationInChannelAsync(DateTime startDate, DateTime endDate, string digestFrequency);
     }
 }

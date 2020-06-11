@@ -17,7 +17,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which stores team preferences data in Microsoft Azure Table storage.
+    /// Implements storage provider which helps to create, get or update team preferences data in Microsoft Azure Table storage.
     /// </summary>
     public class TeamPreferenceStorageProvider : BaseStorageProvider, ITeamPreferenceStorageProvider
     {
@@ -25,11 +25,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Represents team preference entity name.
         /// </summary>
         private const string TeamPreferenceEntityName = "TeamPreferenceEntity";
-
-        /// <summary>
-        /// Represents row key string.
-        /// </summary>
-        private const string RowKey = "RowKey";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TeamPreferenceStorageProvider"/> class.
@@ -42,10 +37,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, TeamPreferenceEntityName, logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
@@ -58,8 +50,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             teamId = teamId ?? throw new ArgumentNullException(nameof(teamId));
             await this.EnsureInitializedAsync();
 
-            string partitionKeyCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, TeamPreferenceEntityName);
-            string teamIdCondition = TableQuery.GenerateFilterCondition(RowKey, QueryComparisons.Equal, teamId);
+            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPreferenceEntityName);
+            string teamIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, teamId);
             var combinedTeamFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, teamIdCondition);
 
             TableQuery<TeamPreferenceEntity> query = new TableQuery<TeamPreferenceEntity>().Where(combinedTeamFilter);
@@ -77,7 +69,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         {
             await this.EnsureInitializedAsync();
 
-            var partitionKeyCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, TeamPreferenceEntityName);
+            var partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPreferenceEntityName);
             var digestFrequencyCondition = TableQuery.GenerateFilterCondition(nameof(TeamPreferenceEntity.DigestFrequency), QueryComparisons.Equal, digestFrequency);
             var combinedFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, digestFrequencyCondition);
 
@@ -104,7 +96,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Stores or update team preference data in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamPreferenceEntity">Represents team preference entity object.</param>
-        /// <returns>A task that represents team preference entity data is saved or updated.</returns>
+        /// <returns>A boolean that represents team preference entity is successfully saved/updated or not.</returns>
         public async Task<bool> UpsertTeamPreferenceAsync(TeamPreferenceEntity teamPreferenceEntity)
         {
             var result = await this.StoreOrUpdateEntityAsync(teamPreferenceEntity);

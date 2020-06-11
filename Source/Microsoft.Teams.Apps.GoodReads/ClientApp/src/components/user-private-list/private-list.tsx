@@ -68,6 +68,7 @@ class PrivateListWrapperPage extends React.Component<WithTranslation, IPrivateLi
     async componentDidMount() {
         this.setState({ isLoading: true });
         this.getUserPrivateListPosts();
+        window.addEventListener("resize", this.update.bind(this));
         this.update();
     }
 
@@ -75,9 +76,9 @@ class PrivateListWrapperPage extends React.Component<WithTranslation, IPrivateLi
     * get screen width real time
     */
     update = () => {
-        this.setState({
-            screenWidth: window.innerWidth
-        });
+        if (window.innerWidth !== this.state.screenWidth) {
+            this.setState({ screenWidth: window.innerWidth });
+        }
     };
 
     /**

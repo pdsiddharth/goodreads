@@ -18,7 +18,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which stores team posts data in Microsoft Azure Table storage.
+    /// Implements storage provider which helps to create, get, update or delete team posts data in Microsoft Azure Table storage.
     /// </summary>
     public class TeamPostStorageProvider : BaseStorageProvider, ITeamPostStorageProvider
     {
@@ -26,11 +26,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Represents team post entity name.
         /// </summary>
         private const string TeamPostEntityName = "TeamPostEntity";
-
-        /// <summary>
-        /// Represents row key string.
-        /// </summary>
-        private const string RowKey = "RowKey";
 
         /// <summary>
         /// Represent a column name.
@@ -48,10 +43,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, TeamPostEntityName, logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
@@ -63,7 +55,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         {
             await this.EnsureInitializedAsync();
 
-            string teamPostCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, TeamPostEntityName);
+            string teamPostCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPostEntityName);
             string isRemovedCondition = TableQuery.GenerateFilterConditionForBool(IsRemovedColumnName, QueryComparisons.Equal, isRemoved);
             var combinedFilter = TableQuery.CombineFilters(teamPostCondition, TableOperators.And, isRemovedCondition);
 
@@ -100,9 +92,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
                 return null;
             }
 
-            string postIdCondition = TableQuery.GenerateFilterCondition(RowKey, QueryComparisons.Equal, postId);
+            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPostEntityName);
+            string postIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, postId);
+            var combinedPartitionFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, postIdCondition);
+
             string isRemovedCondition = TableQuery.GenerateFilterConditionForBool(IsRemovedColumnName, QueryComparisons.Equal, false);
-            var combinedFilter = TableQuery.CombineFilters(postIdCondition, TableOperators.And, isRemovedCondition);
+            var combinedFilter = TableQuery.CombineFilters(combinedPartitionFilter, TableOperators.And, isRemovedCondition);
 
             TableQuery<TeamPostEntity> query = new TableQuery<TeamPostEntity>().Where(combinedFilter);
             var queryResult = await this.GoodReadsCloudTable.ExecuteQuerySegmentedAsync(query, null);
@@ -114,7 +109,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Stores or update team post details data in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamPostEntity">Holds team post detail entity data.</param>
-        /// <returns>A task that represents team post entity data is saved or updated.</returns>
+        /// <returns>A boolean that represents team post entity data is successfully saved/updated or not.</returns>
         public async Task<bool> UpsertTeamPostAsync(TeamPostEntity teamPostEntity)
         {
             var result = await this.StoreOrUpdateEntityAsync(teamPostEntity);
@@ -128,7 +123,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// <returns>A task that represent collection to hold team posts data.</returns>
         public async Task<IEnumerable<TeamPostEntity>> GetFilteredUserPrivatePostsAsync(IEnumerable<string> postIds)
         {
-            postIds = postIds ?? throw new NullReferenceException(nameof(postIds));
+            postIds = postIds ?? throw new ArgumentNullException(nameof(postIds));
             await this.EnsureInitializedAsync();
 
             string teamPostCondition = this.CreateUserPrivatePostsFilter(postIds);
@@ -158,17 +153,16 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Delete team posts which is soft deleted and isRemoved = true in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamPostsIds">A collection of team post ids.</param>
-        /// <returns>A task that represents team posts are deleted.</returns>
+        /// <returns>A boolean that represents team posts are deleted successfully or not.</returns>
         public async Task<bool> DeleteTeamPostEntitiesAsync(IEnumerable<string> teamPostsIds)
         {
-            teamPostsIds = teamPostsIds ?? throw new NullReferenceException(nameof(teamPostsIds));
-
+            teamPostsIds = teamPostsIds ?? throw new ArgumentNullException(nameof(teamPostsIds));
             await this.EnsureInitializedAsync();
 
             foreach (var postId in teamPostsIds)
             {
-                var partitionKeyCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, TeamPostEntityName);
-                string postIdCondition = TableQuery.GenerateFilterCondition(RowKey, QueryComparisons.Equal, postId);
+                var partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPostEntityName);
+                string postIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, postId);
                 var combinedFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, postIdCondition);
 
                 TableQuery<TeamPostEntity> query = new TableQuery<TeamPostEntity>().Where(combinedFilter);

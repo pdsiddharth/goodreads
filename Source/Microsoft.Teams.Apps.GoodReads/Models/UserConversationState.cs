@@ -5,7 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     /// <summary>
-    /// User conversation state model class.
+    /// A class that represents user conversation state model.
     /// </summary>
     public class UserConversationState
     {
@@ -13,6 +13,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         /// Gets or sets a value indicating whether the welcome card is sent to user or not.
         /// </summary>
         /// <remark>Value is null when bot is installed for first time.</remark>
-        public bool? IsWelcomeCardSent { get; set; }
+        public bool IsWelcomeCardSent { get; set; }
     }
 }

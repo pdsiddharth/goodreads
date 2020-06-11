@@ -10,7 +10,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Class which represents team tag entity model.
+    /// A class that represents team tag entity model.
     /// </summary>
     public class TeamTagEntity : TableEntity
     {

@@ -8,6 +8,7 @@ import { TrashCanIcon } from "@fluentui/react-icons-northstar";
 import { useTranslation } from 'react-i18next';
 import Resources from "../../constants/resources";
 import Tag from "../card-view/tag";
+import { generateColor } from "../../helpers/helper";
 import TypeLabel from "../card-view/type-label";
 import UserAvatar from "./user-avatar";
 
@@ -33,7 +34,7 @@ interface IPrivateListTableProps {
 
 const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props => {
     const localize = useTranslation().t;
-
+    const authorAvatarBackground = new Array<any>();
     const privateListTableHeader = {
         key: "header",
         items: [
@@ -46,6 +47,19 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
         ],
     };
 
+    const getAuthorColor = (userId: string) => {
+        let searchedAuthor = authorAvatarBackground.find((author) => author.id === userId);
+        if (searchedAuthor) {
+            return searchedAuthor.color;
+        }
+        else {
+            const color = generateColor();
+            authorAvatarBackground.push({ id: userId, color: color });
+            return color;
+        }
+    }
+
+
     let privateListTableRows = props.privateListData.map((userPost: IUserPrivatePost, index: number) => (
         {
             key: index,
@@ -53,7 +67,7 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
                 { content: <Text className="user-heading" onClick={() => props.onTitleClick(userPost.contentUrl)} title={userPost.title} content={userPost.title} />, truncateContent: true },
                 { content: <Text content={userPost.description} title={userPost.description} />, truncateContent: true, },
                 {
-                    content: <UserAvatar showFullName={true} postType={userPost.type} content={userPost.createdByName} title={userPost.createdByName} />, truncateContent: true, className: "table-user-cell"
+                    content: <UserAvatar avatarColor={getAuthorColor(userPost.createdByName)} showFullName={true} postType={userPost.type} content={userPost.createdByName} title={userPost.createdByName} />, truncateContent: true, className: "table-user-cell"
                 },
                 {
                     content:
@@ -119,6 +133,7 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
                 },
                 {
                     content: <Dialog
+                        className="dialog-container-private-list"
                         cancelButton={localize("cancel")}
                         confirmButton={localize("confirm")}
                         content={localize("deleteConfirmBodyText")}
@@ -134,28 +149,42 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
     let privateListListViewItems = props.privateListData.map((userPost: IUserPrivatePost, index: number) => (
         {
             key: index,
-            media: <UserAvatar showFullName={false} postType={userPost.type} content={userPost.createdByName} title={userPost.createdByName} />,
-            header: <Text className="user-heading" onClick={() => props.onTitleClick(userPost.contentUrl)} title={userPost.title} content={userPost.title} />,
-            headerMedia: <Dialog
-                className="dialog-container-private-list"
-                cancelButton={localize("cancel")}
-                confirmButton={localize("confirm")}
-                content={localize("deleteConfirmBodyText")}
-                header={localize("deleteConfirmTitleText")}
-                trigger={<TrashCanIcon />}
-                onConfirm={() => { props.onDeleteButtonClick(userPost.postId) }}
-            />,
+            header:<></>,
+            media: <UserAvatar avatarColor={getAuthorColor(userPost.createdByName)} showFullName={false} postType={userPost.type} content={userPost.createdByName} title={userPost.createdByName} />,
             contentMedia: <></>,
-            content: <Text className="content-text" content={userPost.description} title={userPost.description} />,
+            content:
+                <Flex>
+                    <Flex.Item>
+                        <Flex column gap="gap.small" vAlign="stretch">
+                            <Flex>
+                                <Text as="h4" className="user-heading" onClick={() => props.onTitleClick(userPost.contentUrl)} title={userPost.title} content={userPost.title} /><br />
+                            </Flex>
+                            <Flex>
+                                <Text className="content-text-private-list" content={userPost.description} title={userPost.description} />
+                            </Flex>
+                        </Flex>
+                    </Flex.Item>
+                    <Flex.Item push align="end">
+                        <Dialog
+                            className="dialog-container-private-list"
+                            cancelButton={localize("cancel")}
+                            confirmButton={localize("confirm")}
+                            content={localize("deleteConfirmBodyText")}
+                            header={localize("deleteConfirmTitleText")}
+                            trigger={<Button primary icon={<TrashCanIcon />} text iconOnly className="delete-button-list" />}
+                            onConfirm={() => { props.onDeleteButtonClick(userPost.postId) }}
+                        />
+                    </Flex.Item>
+                </Flex>,
             className: "list-item"
         }
     ));
 
     return (
         <>
-            <List className="mobile-private-list" items={privateListListViewItems} />
-            <Table rows={privateListTableRows}
-                header={privateListTableHeader} className="nonmobile-private-list table-cell-content" />
+            {props.screenWidth <= 750 && <List items={privateListListViewItems} />}
+            {props.screenWidth > 750 && <Table rows={privateListTableRows}
+                header={privateListTableHeader} className="nonmobile-private-list table-cell-content" />}
         </>
     );
 }

@@ -11,7 +11,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Class which represents team post entity model.
+    /// A class that represents team post entity model which helps to create, insert, update and delete the post.
     /// </summary>
     public class TeamPostEntity : TableEntity
     {
@@ -35,7 +35,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         }
 
         /// <summary>
-        /// Gets or sets user selected value (type of post) from the dropdown list for e.g. Blog post or Other etc. .
+        /// Gets or sets user selected value (type of post) from the dropdown list for e.g. Blog post or Other etc..
         /// </summary>
         [IsFilterable]
         public string Type { get; set; }
@@ -70,7 +70,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         public DateTime CreatedDate { get; set; }
 
         /// <summary>
-        /// Gets or sets name of user who created post.
+        /// Gets or sets author name who created post.
         /// </summary>
         [IsFilterable]
         public string CreatedByName { get; set; }
@@ -82,7 +82,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         public DateTime UpdatedDate { get; set; }
 
         /// <summary>
-        /// Gets or sets user id of user who added the post.
+        /// Gets or sets Azure Active Directory id of author who created the post.
         /// </summary>
         [IsFilterable]
         public string UserId { get; set; }

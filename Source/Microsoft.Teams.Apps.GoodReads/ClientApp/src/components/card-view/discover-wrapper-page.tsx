@@ -11,6 +11,7 @@ import TitleBar from "../filter-bar/title-bar";
 import { Container, Col, Row } from "react-bootstrap";
 import * as microsoftTeams from "@microsoft/teams-js";
 import { getDiscoverPosts, getUserVotes, getFilteredPosts, filterTitleAndTags } from "../../api/discover-api";
+import { generateColor } from "../../helpers/helper";
 import NotificationMessage from "../notification-message/notification-message";
 import { WithTranslation, withTranslation } from "react-i18next";
 import { TFunction } from "i18next";
@@ -36,6 +37,7 @@ export interface IDiscoverPost {
     isRemoved: boolean;
     isVotedByUser?: boolean;
     isCurrentUserPost?: boolean;
+    avatarBackgroundColor: string;
 }
 
 export interface IUserVote {
@@ -71,6 +73,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     allPosts: Array<IDiscoverPost>;
     loggedInUserObjectId: string;
     teamId: string;
+    authorAvatarBackground: Array<any>;
 
     constructor(props: any) {
         super(props);
@@ -83,6 +86,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         this.allPosts = [];
         this.loggedInUserObjectId = "";
         this.teamId = "";
+        this.authorAvatarBackground = [];
 
         this.state = {
             loader: false,
@@ -141,6 +145,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             }
 
             response.data.map((post: IDiscoverPost) => {
+                let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                if (searchedAuthor) {
+                    post.avatarBackgroundColor = searchedAuthor.color;
+                }
+                else {
+                    let color = generateColor();
+                    this.authorAvatarBackground.push({ id: post.userId, color: color });
+                    post.avatarBackgroundColor = color;
+                }
+
                 if (post.userId === this.loggedInUserObjectId) {
                     post.isCurrentUserPost = true;
                 }
@@ -191,6 +205,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 });
             }
             response.data.map((post: IDiscoverPost) => {
+                let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                if (searchedAuthor) {
+                    post.avatarBackgroundColor = searchedAuthor.color;
+                }
+                else {
+                    let color = generateColor();
+                    this.authorAvatarBackground.push({ id: post.userId, color: color });
+                    post.avatarBackgroundColor = color;
+                }
+
                 if (post.userId === this.loggedInUserObjectId) {
                     post.isCurrentUserPost = true;
                 }
@@ -351,6 +375,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     });
                 }
                 response.data.map((post: IDiscoverPost) => {
+                    let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                    if (searchedAuthor) {
+                        post.avatarBackgroundColor = searchedAuthor.color;
+                    }
+                    else {
+                        let color = generateColor();
+                        this.authorAvatarBackground.push({ id: post.userId, color: color });
+                        post.avatarBackgroundColor = color;
+                    }
+
                     if (post.userId === this.loggedInUserObjectId) {
                         post.isCurrentUserPost = true;
                     }
@@ -441,12 +475,18 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     }
 
     /**
-    * Invoked when user clicks on vote icon. Ppdates state and showing notification alert.
+    * Invoked when user clicks on vote icon. Updates state and showing notification alert.
     * @param isSuccess Boolean indicating whether edit operation is successful.
+    * @param isLiked Boolean indicating whether post is liked or not.
     */
-    onVoteClick = (isSuccess: boolean) => {
+    onVoteClick = (isSuccess: boolean, isLiked: boolean) => {
         if (isSuccess) {
-            this.showAlert(this.localize("voteSuccess"), 1)
+            if (isLiked) {
+                this.showAlert(this.localize("voteSuccess"), 1)
+            }
+            else {
+                this.showAlert(this.localize("voteUnliked"), 1)
+            }
         }
         else {
             this.showAlert(this.localize("voteError"), 2)
@@ -485,6 +525,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     */
     onNewPost = (isSuccess: boolean, getSubmittedPost: IDiscoverPost) => {
         if (isSuccess) {
+            let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === getSubmittedPost.userId);
+            if (searchedAuthor) {
+                getSubmittedPost.avatarBackgroundColor = searchedAuthor.color;
+            }
+            else {
+                let color = generateColor();
+                this.authorAvatarBackground.push({ id: getSubmittedPost.userId, color: color });
+                getSubmittedPost.avatarBackgroundColor = color;
+            }
+
             let submittedPost = this.state.discoverPosts;
             if (getSubmittedPost.userId === this.loggedInUserObjectId) {
                 getSubmittedPost.isCurrentUserPost = true;
@@ -509,9 +559,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     onFilterSearchTextChange = (searchText: string) => {
         this.filterSearchText = searchText;
         if (searchText.trim().length) {
-            let filteredPosts = this.allPosts.filter((post: IDiscoverPost) => {
-                return post.title.toLowerCase().includes(searchText.toLowerCase()) === true;
-            });
+            let filteredPosts = this.allPosts.filter((post: IDiscoverPost) => post.title.toLowerCase().includes(searchText.toLowerCase()) === true);
 
             this.setState({ discoverPosts: filteredPosts });
         }

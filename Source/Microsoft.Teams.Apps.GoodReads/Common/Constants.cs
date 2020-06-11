@@ -5,7 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Common
 {
     /// <summary>
-    /// Class that holds application constants that are used in multiple files.
+    /// A class that holds application constants that are used in multiple files.
     /// </summary>
     public static class Constants
     {
@@ -48,11 +48,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common
         /// Partition key for team tag entity table.
         /// </summary>
         public const string TeamTagEntityPartitionKey = "TeamTagEntity";
-
-        /// <summary>
-        /// Represents Partition key of the table.
-        /// </summary>
-        public const string PartitionKey = "PartitionKey";
 
         /// <summary>
         /// Bot Help command in personal scope.

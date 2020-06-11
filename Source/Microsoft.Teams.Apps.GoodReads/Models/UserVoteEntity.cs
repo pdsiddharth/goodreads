@@ -8,12 +8,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Class which represents user like/vote model.
+    /// A class that represents user like/vote model.
     /// </summary>
     public class UserVoteEntity : TableEntity
     {
         /// <summary>
-        /// Gets or sets unique value for each user.
+        /// Gets or sets unique Azure Active Directory id of user.
         /// </summary>
         public string UserId
         {

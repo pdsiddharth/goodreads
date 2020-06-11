@@ -12,12 +12,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
     public interface IUserPrivatePostStorageHelper
     {
         /// <summary>
-        /// Get user private post details model.
+        /// Create user private post model data.
         /// </summary>
         /// <param name="userPrivatePostEntity">User private post entity model.</param>
         /// <param name="userId">Azure Active Directory id of the user.</param>
-        /// <param name="userName">The user name.</param>
+        /// <param name="userName">Name of user who added the post in private list.</param>
         /// <returns>Represents private post entity model.</returns>
-        UserPrivatePostEntity GetNewUserPrivatePostModel(UserPrivatePostEntity userPrivatePostEntity, string userId, string userName);
+        UserPrivatePostEntity CreateUserPrivatePostModel(UserPrivatePostEntity userPrivatePostEntity, string userId, string userName);
     }
 }

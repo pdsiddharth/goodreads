@@ -3,9 +3,9 @@
   "manifestVersion": "1.5",
   "version": "1.0.0",
   "id": "c1b50ba4-a9fc-46ed-ae5c-c4060461f88b",
-  "packageName": "com.microsoft.teams.apptemplates.goodreads",
+  "packageName": "com.microsoft.teams.apptemplates.sharenow",
   "developer": {
-    "name": "Contoso",
+    "name": "<company name>",
     "websiteUrl": "<website url>",
     "privacyUrl": "<privacy url>",
     "termsOfUseUrl": "<terms of use url>"
@@ -15,17 +15,17 @@
     "outline": "outline.png"
   },
   "name": {
-    "short": "Template Base",
-    "full": "Teams App Template Base"
+    "short": "Share Now",
+    "full": "Share Now"
   },
   "description": {
     "short": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics.",
     "full": "Encourage and introduce your co-workers to a widespread knowledge-based sharing of posts, videos, or topics with a bite-sized information on how it influenced them and learn together in Teams."
   },
-  "accentColor": "#FFFFFF",
+  "accentColor": "#BDBDE6",
   "configurableTabs": [
     {
-      "configurationUrl": "<configurable tab url>",
+      "configurationUrl": "<<azureFdUrl>>/configtab",
       "canUpdateConfiguration": true,
       "scopes": [ "team" ]
     }
@@ -34,15 +34,15 @@
     {
       "entityId": "<A unique identifier for the entity that the tab displays>",
       "name": "Discover",
-      "contentUrl": "<content url>",
-      "websiteUrl": "<website url>",
+      "contentUrl": "<<azureFdUrl>>",
+      "websiteUrl": "<<azureFdUrl>>",
       "scopes": [ "personal" ]
     },
     {
       "entityId": "<A unique identifier for the entity that the tab displays>",
       "name": "Private list",
-      "contentUrl": "<content url>",
-      "websiteUrl": "<website url>",
+      "contentUrl": "<<azureFdUrl>>/user-private-list",
+      "websiteUrl": "<<azureFdUrl>>/user-private-list",
       "scopes": [ "personal" ]
     }
   ],
@@ -121,15 +121,11 @@
       ]
     }
   ],
-  "permissions": [
-    "identity",
-    "messageTeamMembers"
-  ],
   "validDomains": [
     "<<appDomain>>"
   ],
   "webApplicationInfo": {
-    "id": "<Azure aad client id>",
+    "id": "<<botId>>",
     "resource": "<ApplicationIdURI>"
   }
 }

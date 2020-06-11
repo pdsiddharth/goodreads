@@ -10,7 +10,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Implements storage helper which is responsible for get, add and delete user private posts data in Microsoft Azure Table storage.
+    /// Implements user private post storage helper which helps to construct the model for user private post.
     /// </summary>
     public class UserPrivatePostStorageHelper : IUserPrivatePostStorageHelper
     {
@@ -30,13 +30,13 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Get user private post details model.
+        /// Create user private post model data.
         /// </summary>
         /// <param name="userPrivatePostEntity">User private post entity model.</param>
         /// <param name="userId">Azure Active Directory id of the user.</param>
-        /// <param name="userName">The user name.</param>
+        /// <param name="userName">Name of user who added the post in private list.</param>
         /// <returns>Represents private post entity model.</returns>
-        public UserPrivatePostEntity GetNewUserPrivatePostModel(UserPrivatePostEntity userPrivatePostEntity, string userId, string userName)
+        public UserPrivatePostEntity CreateUserPrivatePostModel(UserPrivatePostEntity userPrivatePostEntity, string userId, string userName)
         {
             try
             {

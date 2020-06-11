@@ -18,7 +18,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
     using Microsoft.Teams.Apps.GoodReads.Models.Configuration;
 
     /// <summary>
-    /// Team post Search service which will help in creating index, indexer and data source if it doesn't exist
+    /// Team post Search service which helps in creating index, indexer and data source if it doesn't exist
     /// for indexing table which will be used for search by Messaging Extension.
     /// </summary>
     public class TeamPostSearchService : ITeamPostSearchService, IDisposable
@@ -125,7 +125,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <param name="sortBy">Represents sorting type like: Popularity or Newest.</param>
         /// <param name="filterQuery">Filter bar based query.</param>
         /// <returns>List of search results.</returns>
-        public async Task<IEnumerable<TeamPostEntity>> GetSearchTeamPostsAsync(
+        public async Task<IEnumerable<TeamPostEntity>> GetTeamPostsAsync(
             TeamPostSearchScope searchScope,
             string searchQuery,
             string userObjectId,
@@ -172,7 +172,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// Creates Index, Data Source and Indexer for search service.
         /// </summary>
         /// <returns>A task that represents the work queued to execute.</returns>
-        public async Task InitializeSearchServiceIndexAsync()
+        public async Task RecreateSearchServiceIndexAsync()
         {
             try
             {
@@ -234,7 +234,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
             {
                 // When there is no team post created by user and Messaging Extension is open, table initialization is required here before creating search index or data source or indexer.
                 await this.teamPostStorageProvider.GetTeamPostEntityAsync(string.Empty);
-                await this.InitializeSearchServiceIndexAsync();
+                await this.RecreateSearchServiceIndexAsync();
             }
             catch (Exception ex)
             {

@@ -9,7 +9,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
     using Microsoft.Teams.Apps.GoodReads.Common.Interfaces;
 
     /// <summary>
-    /// Validates if the user is a member of a certain team.
+    /// A class that is responsible for validating, if the user is a member of a certain team.
     /// </summary>
     public class UserValidator
     {

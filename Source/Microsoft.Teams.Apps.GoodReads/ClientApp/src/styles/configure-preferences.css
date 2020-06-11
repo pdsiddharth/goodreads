@@ -10,7 +10,7 @@
 }
 
 .tag-list-box {
-    width: 54.5rem;
+    width: 100%;
     max-height: 13rem;
     box-shadow: 0px 2px 2px 1px grey;
     overflow: scroll;
@@ -97,7 +97,7 @@
 }
 
 .search-div {
-    width: 90%;
+    width: 100% !important;
     margin-top: 0.3rem;
 }
 

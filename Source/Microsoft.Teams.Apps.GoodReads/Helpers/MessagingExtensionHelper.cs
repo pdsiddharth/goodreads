@@ -22,7 +22,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Class that handles the search activities for Messaging Extension.
+    /// A class that handles the search activities for Messaging Extension.
     /// </summary>
     public class MessagingExtensionHelper : IMessagingExtensionHelper
     {
@@ -103,18 +103,18 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             // commandId should be equal to Id mentioned in Manifest file under composeExtensions section.
             switch (commandId)
             {
-                case Constants.AllItemsPostCommandId:
-                    teamPostResults = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.AllItems, query, userObjectId, count, skip);
+                case Constants.AllItemsPostCommandId: // Get all posts
+                    teamPostResults = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.AllItems, query, userObjectId, count, skip);
                     composeExtensionResult = this.GetTeamPostResult(teamPostResults);
                     break;
 
-                case Constants.PostedByMePostCommandId:
-                    teamPostResults = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.PostedByMe, query, userObjectId, count, skip);
+                case Constants.PostedByMePostCommandId: // Get current author posts.
+                    teamPostResults = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.PostedByMe, query, userObjectId, count, skip);
                     composeExtensionResult = this.GetTeamPostResult(teamPostResults);
                     break;
 
-                case Constants.PopularPostCommandId:
-                    teamPostResults = await this.teamPostSearchService.GetSearchTeamPostsAsync(TeamPostSearchScope.Popular, query, userObjectId, count, skip);
+                case Constants.PopularPostCommandId: // Get popular posts based on the maximum votes provided for posts.
+                    teamPostResults = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.Popular, query, userObjectId, count, skip);
                     composeExtensionResult = this.GetTeamPostResult(teamPostResults);
                     break;
             }
@@ -127,7 +127,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         /// </summary>
         /// <param name="query">Contains Messaging Extension query keywords.</param>
         /// <returns>A value of the searchText parameter.</returns>
-        public string GetSearchQueryString(MessagingExtensionQuery query)
+        public string GetSearchResult(MessagingExtensionQuery query)
         {
             return query?.Parameters.FirstOrDefault(parameter => parameter.Name.Equals(SearchTextParameterName, StringComparison.OrdinalIgnoreCase))?.Value?.ToString();
         }
@@ -167,6 +167,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                         {
                             Text = teamPost.Description,
                             Wrap = true,
+                            Size = AdaptiveTextSize.Small,
                         },
                     },
                 };
@@ -181,9 +182,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                         Url = new Uri(teamPost.ContentUrl),
                     });
 
-                var voteIcon = $"<img src='{this.options.Value.AppBaseUri}/Artifacts/userVoteIcon.png' alt='vote logo' width='18' height='18'";
-                var nameString = teamPost.CreatedByName.Length < 25 ? HttpUtility.HtmlEncode(teamPost.CreatedByName) :
-                    $"{HttpUtility.HtmlEncode(teamPost.CreatedByName.Substring(0, 24))} {"..."}";
+                var voteIcon = $"<img src='{this.options.Value.AppBaseUri}/Artifacts/voteIcon.png' alt='vote logo' width='18' height='18'";
+                var nameString = teamPost.CreatedByName.Length < 25
+                    ? HttpUtility.HtmlEncode(teamPost.CreatedByName)
+                    : $"{HttpUtility.HtmlEncode(teamPost.CreatedByName.Substring(0, 24))} {"..."}";
+
                 ThumbnailCard previewCard = new ThumbnailCard
                 {
                     Title = $"<p style='font-weight: 600;'>{teamPost.Title}</p>",
@@ -213,103 +216,105 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             var postTypeContainer = new AdaptiveContainer
             {
                 Items = new List<AdaptiveElement>
+                {
+                    new AdaptiveColumnSet
+                    {
+                        Columns = new List<AdaptiveColumn>
+                        {
+                            new AdaptiveColumn
                             {
-                                new AdaptiveColumnSet
+                                Width = AdaptiveColumnWidth.Auto,
+                                Items = new List<AdaptiveElement>
                                 {
-                                    Columns = new List<AdaptiveColumn>
+                                    new AdaptiveImage
                                     {
-                                        new AdaptiveColumn
-                                        {
-                                            Width = AdaptiveColumnWidth.Auto,
-                                            Items = new List<AdaptiveElement>
-                                            {
-                                                 new AdaptiveImage
-                                                 {
-                                                    Url = new Uri($"{applicationBasePath}/Artifacts/PeopleAvatar.png"),
-                                                    Size = AdaptiveImageSize.Small,
-                                                    Style = AdaptiveImageStyle.Person,
-                                                    AltText = "User Image",
-                                                 },
-                                            },
-                                        },
-                                        new AdaptiveColumn
-                                        {
-                                            Width = AdaptiveColumnWidth.Stretch,
-                                            VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
-                                            Items = new List<AdaptiveElement>
-                                            {
-                                                new AdaptiveTextBlock
-                                                {
-                                                    Text = teamPost.CreatedByName.Length > 19 ? $"{teamPost.CreatedByName.Substring(0, 18)} {"..."}" : teamPost.CreatedByName,
-                                                    Wrap = true,
-                                                },
-                                            },
-                                            Spacing = AdaptiveSpacing.Medium,
-                                        },
-                                        new AdaptiveColumn
-                                        {
-                                            Width = AdaptiveColumnWidth.Auto,
-                                            VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
-                                            Items = new List<AdaptiveElement>
-                                            {
-                                                new AdaptiveImage
-                                                {
-                                                    Url = new Uri(typeIconUrl),
-                                                    Size = AdaptiveImageSize.Stretch,
-                                                    Style = AdaptiveImageStyle.Default,
-                                                    Height = AdaptiveHeight.Auto,
-                                                },
-                                            },
-                                            Spacing = AdaptiveSpacing.Small,
-                                        },
-                                        new AdaptiveColumn
-                                        {
-                                            Width = AdaptiveColumnWidth.Stretch,
-                                            VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
-                                            Items = new List<AdaptiveElement>
-                                            {
-                                                new AdaptiveTextBlock
-                                                {
-                                                    Text = $"{PostTypeHelper.GetPostType(Convert.ToInt32(teamPost.Type, CultureInfo.InvariantCulture))}",
-                                                    Spacing = AdaptiveSpacing.None,
-                                                    IsSubtle = true,
-                                                    Wrap = true,
-                                                    Weight = AdaptiveTextWeight.Bolder,
-                                                },
-                                            },
-                                        },
-                                        new AdaptiveColumn
-                                        {
-                                            Width = AdaptiveColumnWidth.Auto,
-                                            VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
-                                            Items = new List<AdaptiveElement>
-                                            {
-                                                new AdaptiveTextBlock
-                                                {
-                                                    Text = $"{teamPost.TotalVotes} ",
-                                                    Wrap = true,
-                                                },
-                                            },
-                                            Spacing = AdaptiveSpacing.Small,
-                                        },
-                                        new AdaptiveColumn
-                                        {
-                                            Width = AdaptiveColumnWidth.Auto,
-                                            VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
-                                            Items = new List<AdaptiveElement>
-                                            {
-                                                new AdaptiveImage
-                                                {
-                                                    Url = new Uri($"{applicationBasePath}/Artifacts/userVoteIcon.png"),
-                                                    Size = AdaptiveImageSize.Stretch,
-                                                    Style = AdaptiveImageStyle.Default,
-                                                },
-                                            },
-                                            Spacing = AdaptiveSpacing.Small,
-                                        },
+                                        Url = new Uri($"{applicationBasePath}/Artifacts/peopleAvatar.png"),
+                                        Size = AdaptiveImageSize.Auto,
+                                        Style = AdaptiveImageStyle.Person,
+                                        AltText = "User Image",
                                     },
                                 },
+                                Spacing = AdaptiveSpacing.Small,
                             },
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Stretch,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = teamPost.CreatedByName.Length > 19 ? $"{teamPost.CreatedByName.Substring(0, 18)} {"..."}" : teamPost.CreatedByName,
+                                        Wrap = true,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Auto,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveImage
+                                    {
+                                        Url = new Uri(typeIconUrl),
+                                        Size = AdaptiveImageSize.Stretch,
+                                        Style = AdaptiveImageStyle.Default,
+                                        Height = AdaptiveHeight.Auto,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Stretch,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = $"{PostTypeHelper.GetPostType(Convert.ToInt32(teamPost.Type, CultureInfo.InvariantCulture))}",
+                                        Spacing = AdaptiveSpacing.None,
+                                        IsSubtle = true,
+                                        Wrap = true,
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Auto,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Text = $"{teamPost.TotalVotes} ",
+                                        Wrap = true,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+                            new AdaptiveColumn
+                            {
+                                Width = AdaptiveColumnWidth.Auto,
+                                VerticalContentAlignment = AdaptiveVerticalContentAlignment.Center,
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveImage
+                                    {
+                                        Url = new Uri($"{applicationBasePath}/Artifacts/voteIcon.png"),
+                                        Size = AdaptiveImageSize.Stretch,
+                                        Style = AdaptiveImageStyle.Default,
+                                    },
+                                },
+                                Spacing = AdaptiveSpacing.Small,
+                            },
+                        },
+                    },
+                },
             };
 
             return postTypeContainer;
@@ -337,7 +342,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                                 {
                                     new AdaptiveTextBlock
                                     {
-                                        Text = $"{this.localizer.GetString("TagsText")} {teamPost.Tags?.Replace(";", ", ", false, CultureInfo.InvariantCulture)}",
+                                        Text = $"**{this.localizer.GetString("TagsLabelText")}{":"}** {teamPost.Tags?.Replace(";", ", ", false, CultureInfo.InvariantCulture)}",
                                         Wrap = true,
                                     },
                                 },

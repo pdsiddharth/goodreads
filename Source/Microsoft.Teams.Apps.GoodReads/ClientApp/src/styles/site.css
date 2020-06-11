@@ -13,8 +13,8 @@
 .container-fluid-overriden {
     height: 100% !important;
     position: relative;
-    padding-right: 0.5rem;
-    padding-left: 0.5rem;
+    padding-right: 0.5rem !important;
+    padding-left: 0.5rem !important;
 }
 
 .container-div {
@@ -99,6 +99,7 @@
 
 @media only screen and (max-width: 650px) {
     .mobile-button {
+        width:auto;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }

@@ -60,6 +60,47 @@ namespace Microsoft.Teams.Apps.GoodReads {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Share Now.
+        /// </summary>
+        public static string ApplicationName {
+            get {
+                return ResourceManager.GetString("ApplicationName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;b&gt;Discover&lt;/b&gt; content by Tags, Type, Suggested by and sort by Popularity/latest based on your interest. &lt;br /&gt;
+        ///&lt;b&gt;Add content&lt;/b&gt; to your private list and visit later to learn and grow.
+        /// &lt;br /&gt;
+        ///&lt;b&gt;Share&lt;/b&gt; content that influenced or inspired you with your co-workers..
+        /// </summary>
+        public static string CarouselCard1Text {
+            get {
+                return ResourceManager.GetString("CarouselCard1Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Get a &lt;b&gt;digest of content&lt;/b&gt; that are added based on your preference in a channel to stay updated on the topics..
+        /// </summary>
+        public static string CarouselCard2Text {
+            get {
+                return ResourceManager.GetString("CarouselCard2Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;b&gt;Add&lt;/b&gt; {0} to the Channel Tab based on tags to learn together with your team.
+        ///&lt;br /&gt;
+        ///&lt;b&gt;Share&lt;/b&gt; your favorite reads in a channel or chat to help your Peers grow..
+        /// </summary>
+        public static string CarouselCard3Text {
+            get {
+                return ResourceManager.GetString("CarouselCard3Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You can set digest preference by selecting the frequency and tab you wants to follow..
         /// </summary>
         public static string DigestPreferenceCardContent {
@@ -132,16 +173,16 @@ namespace Microsoft.Teams.Apps.GoodReads {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to **Tags:**.
+        ///   Looks up a localized string similar to Tags.
         /// </summary>
-        public static string TagsText {
+        public static string TagsLabelText {
             get {
-                return ResourceManager.GetString("TagsText", resourceCulture);
+                return ResourceManager.GetString("TagsLabelText", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Good reads.
+        ///   Looks up a localized string similar to Share Now.
         /// </summary>
         public static string TaskModuleTitleText {
             get {
@@ -164,24 +205,6 @@ namespace Microsoft.Teams.Apps.GoodReads {
         public static string TeamWelcomeCardConfigureButtonText {
             get {
                 return ResourceManager.GetString("TeamWelcomeCardConfigureButtonText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to **Total votes:**.
-        /// </summary>
-        public static string TotalVotesText {
-            get {
-                return ResourceManager.GetString("TotalVotesText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to **Type:**.
-        /// </summary>
-        public static string TypeOfPostText {
-            get {
-                return ResourceManager.GetString("TypeOfPostText", resourceCulture);
             }
         }
         

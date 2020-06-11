@@ -14,20 +14,20 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
     public interface ITeamPostStorageHelper
     {
         /// <summary>
-        /// Get team post details model.
+        /// Create team post details model.
         /// </summary>
         /// <param name="teamPostEntity">Team post object.</param>
         /// <param name="userId">Azure Active directory id of user.</param>
-        /// <param name="userName">The user name.</param>
+        /// <param name="userName">Author who created the post.</param>
         /// <returns>A task that represents team post entity data.</returns>
-        TeamPostEntity GetTeamPostModel(TeamPostEntity teamPostEntity, string userId, string userName);
+        TeamPostEntity CreateTeamPostModel(TeamPostEntity teamPostEntity, string userId, string userName);
 
         /// <summary>
-        /// Get updated team post details to Microsoft Azure Table storage.
+        /// Create updated team post model to save in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamPostEntity">Team post detail.</param>
         /// <returns>A task that represents team post entity updated data.</returns>
-        TeamPostEntity GetUpdatedTeamPostModel(TeamPostEntity teamPostEntity);
+        TeamPostEntity CreateUpdatedTeamPostModel(TeamPostEntity teamPostEntity);
 
         /// <summary>
         /// Get filtered team posts as per the configured tags.
@@ -42,7 +42,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
         /// </summary>
         /// <param name="tags">Tags of a configured team post.</param>
         /// <returns>Represents tags query to fetch team posts.</returns>
-        string GetTagsQuery(string tags);
+        string GetTags(string tags);
 
         /// <summary>
         /// Get filtered team posts as per the date range from Microsoft Azure Table storage.
@@ -58,10 +58,10 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
         /// </summary>
         /// <param name="teamPosts">Team post entities.</param>
         /// <returns>Represents team posts.</returns>
-        IEnumerable<string> GetFilteredUserNames(IEnumerable<TeamPostEntity> teamPosts);
+        IEnumerable<string> GetAuthorNamesAsync(IEnumerable<TeamPostEntity> teamPosts);
 
         /// <summary>
-        /// Get user names and post types query to fetch team posts as per the selected filters.
+        /// Get combined query to fetch team posts as per the selected filter.
         /// </summary>
         /// <param name="postTypes">Post type like: Blog post or Other.</param>
         /// <param name="sharedByNames">User names selected in filter.</param>

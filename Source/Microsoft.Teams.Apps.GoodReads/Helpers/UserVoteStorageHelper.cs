@@ -12,7 +12,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Implements user storage helper which is responsible for storing or updating user vote data in Microsoft Azure Table storage.
+    /// Implements user vote storage helper which is responsible for storing, updating or deleting user vote data in Microsoft Azure Table storage.
     /// </summary>
     public class UserVoteStorageHelper : IUserVoteStorageHelper
     {
@@ -59,7 +59,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             }
             catch (Exception ex)
             {
-                this.logger.LogError("Exception occurred while adding the user vote at AddUserVoteDetailsAsync()", ex);
+                this.logger.LogError("Exception occurred while adding the user vote.", ex);
                 throw;
             }
         }
@@ -83,7 +83,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             }
             catch (Exception ex)
             {
-                this.logger.LogError("Exception occurred while deleting the user vote at DeleteUserVoteDetailsAsync()", ex);
+                this.logger.LogError("Exception occurred while deleting the user vote.", ex);
                 throw;
             }
         }
@@ -106,7 +106,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
             }
             catch (Exception ex)
             {
-                this.logger.LogError("Exception occurred while deleting the user vote at DeleteUserVoteDetailsAsync()", ex);
+                this.logger.LogError("Exception occurred while getting the user votes.", ex);
                 throw;
             }
         }

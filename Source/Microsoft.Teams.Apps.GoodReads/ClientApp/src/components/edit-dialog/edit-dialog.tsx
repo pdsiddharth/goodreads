@@ -13,66 +13,66 @@ import { TFunction } from "i18next";
 import "../../styles/edit-dialog.css";
 
 interface IEditItemProps extends WithTranslation {
-	index: number;
-	cardDetails: IDiscoverPost;
-	onSubmit: (editedCardDetails: IDiscoverPost, isSuccess: boolean) => void;
-	onCancel: () => void;
+    index: number;
+    cardDetails: IDiscoverPost;
+    onSubmit: (editedCardDetails: IDiscoverPost, isSuccess: boolean) => void;
+    onCancel: () => void;
 }
 
 interface IEditDialogStateState {
-	editDialogOpen: boolean;
+    editDialogOpen: boolean;
 }
 
 class EditItemDialog extends React.Component<IEditItemProps, IEditDialogStateState> {
-	localize: TFunction;
-	constructor(props: any) {
-		super(props);
+    localize: TFunction;
+    constructor(props: any) {
+        super(props);
 
-		this.localize = this.props.t;
-		this.state = {
-			editDialogOpen: false
-		}
-	}
+        this.localize = this.props.t;
+        this.state = {
+            editDialogOpen: false
+        }
+    }
 
 	/**
 	*Changes dialog open state to show and hide dialog.
 	*@param isOpen Boolean indication whether to show dialog
 	*/
-	changeDialogOpenState = (isOpen: boolean) => {
-		this.setState({ editDialogOpen: isOpen })
-	}
+    changeDialogOpenState = (isOpen: boolean) => {
+        this.setState({ editDialogOpen: isOpen })
+    }
 
 	/**
 	*Invoked while closing dialog. Set state to original values.
 	*/
-	onCancel = () => {
-		this.props.onCancel();
-		this.changeDialogOpenState(false);
-	}
+    onCancel = () => {
+        this.props.onCancel();
+        this.changeDialogOpenState(false);
+    }
 
 	/**
     * Renders the component
     */
-	public render(): JSX.Element {
-		return (
-			<Dialog
-				className="dialog-container"
-				content={
-					<EditItemDialogContent
-						onSubmit={this.props.onSubmit}
-						onCancel={this.onCancel}
-						cardDetails={this.props.cardDetails}
-						changeDialogOpenState={this.changeDialogOpenState}
-					/>
-				}
-				open={this.state.editDialogOpen}
-				onOpen={() => this.setState({ editDialogOpen: true })}
-				trigger={
-					<Flex vAlign="center" className="menu-items-wrapper" onClick={() => this.changeDialogOpenState(true)}>
-						<EditIcon outline /> <Text className="trigger-text" content={this.localize("edit")} />
-					</Flex>}
-			/>
-		);
-	}
+    public render(): JSX.Element {
+        return (
+            <Dialog
+                className="dialog-container"
+                content={
+                    <EditItemDialogContent
+                        onSubmit={this.props.onSubmit}
+                        onCancel={this.onCancel}
+                        cardDetails={this.props.cardDetails}
+                        changeDialogOpenState={this.changeDialogOpenState}
+                    />
+                }
+                open={this.state.editDialogOpen}
+                onOpen={() => this.setState({ editDialogOpen: true })}
+                trigger={
+                    <Flex vAlign="center" className="menu-items-wrapper" onClick={() => this.changeDialogOpenState(true)}>
+                        <EditIcon outline /> <Text className="trigger-text" content={this.localize("edit")} />
+                    </Flex>}
+            />
+        );
+    }
 }
 export default withTranslation()(EditItemDialog)

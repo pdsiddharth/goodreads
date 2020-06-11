@@ -1,0 +1,22 @@
+﻿.ui-popup__content__content {
+    padding: 0 !important;
+}
+
+.popup-menu-content-wrapper {
+    padding: 0rem !important;
+    width: 18rem;
+}
+
+.popup-menu-item-text {
+    margin-left: 1rem;
+}
+
+.menu-items-wrapper {
+    padding: 1rem;
+}
+
+    .menu-items-wrapper:hover {
+        background-color: #DEDDE6;
+        color: black;
+        cursor: pointer;
+    }

@@ -87,6 +87,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("call to retrieve list of votes for user.");
+
                 var userVotes = await this.userVoteStorageHelper.GetVotesAsync(this.UserAadId);
                 this.RecordEvent(RecordUserVoteHTTPGetCall);
 
@@ -109,6 +111,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("call to add user vote.");
+
                 userVote = userVote ?? throw new ArgumentNullException(nameof(userVote));
 
                 userVote.UserId = this.UserAadId;
@@ -139,7 +143,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         }
 
         /// <summary>
-        /// Delete call to delete team post details data in Microsoft Azure Table storage.
+        /// Delete call to delete user vote details from Microsoft Azure Table storage.
         /// </summary>
         /// <param name="postId">Id of the post to delete vote.</param>
         /// <returns>Returns true for successful operation.</returns>
@@ -148,7 +152,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
-                postId = postId ?? throw new NullReferenceException(nameof(postId));
+                this.logger.LogInformation("call to delete user vote.");
+
+                postId = postId ?? throw new ArgumentNullException(nameof(postId));
                 var deleteResult = await this.userVoteStorageHelper.DeleteUserVoteDetailsAsync(postId, this.UserAadId);
 
                 if (deleteResult)

@@ -24,7 +24,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
         /// <param name="sortBy">Represents sorting type like: Popularity or Newest.</param>
         /// <param name="filterQuery">Filter bar based query.</param>
         /// <returns>List of search results.</returns>
-        Task<IEnumerable<TeamPostEntity>> GetSearchTeamPostsAsync(
+        Task<IEnumerable<TeamPostEntity>> GetTeamPostsAsync(
             TeamPostSearchScope searchScope,
             string searchQuery,
             string userObjectId,
@@ -37,7 +37,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
         /// Creates Index, Data Source and Indexer for search service.
         /// </summary>
         /// <returns>A task that represents the work queued to execute.</returns>
-        Task InitializeSearchServiceIndexAsync();
+        Task RecreateSearchServiceIndexAsync();
 
         /// <summary>
         /// Run the indexer on demand.

@@ -12,7 +12,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
     using Microsoft.Extensions.Logging;
 
     /// <summary>
-    /// Class that implements error handler.
+    /// A class that implements error handler.
     /// </summary>
     public class GoodReadsAdapterWithErrorHandler : BotFrameworkHttpAdapter
     {
@@ -32,10 +32,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
             ConversationState conversationState = null)
             : base(configuration)
         {
-            if (goodReadsActivityMiddleware == null)
-            {
-                throw new NullReferenceException(nameof(goodReadsActivityMiddleware));
-            }
+            goodReadsActivityMiddleware = goodReadsActivityMiddleware ?? throw new ArgumentNullException(nameof(goodReadsActivityMiddleware));
 
             // Add activity middleware to the adapter's middleware pipeline
             this.Use(goodReadsActivityMiddleware);

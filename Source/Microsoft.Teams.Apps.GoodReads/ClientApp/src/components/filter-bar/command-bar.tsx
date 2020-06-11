@@ -38,7 +38,7 @@ const CommandBar: React.FunctionComponent<ICommandBarProps> = props => {
     return (
         <Flex gap="gap.small" vAlign="center" hAlign="end" className="command-bar-wrapper">
             <Flex.Item push>
-                <Button icon={props.showSolidFilterIcon ? < Icon iconName="FilterSolid" className="filter-icon" /> : < Icon iconName="Filter" className="filter-icon" />} content={localize("filter")} text onClick={props.onFilterButtonClick} />
+                <Button className="filter-button" icon={props.showSolidFilterIcon ? <Icon iconName="FilterSolid" className="filter-icon" /> : <Icon iconName="Filter" className="filter-icon" />} content={localize("filter")} text onClick={props.onFilterButtonClick} />
             </Flex.Item>
             <div className="search-bar-wrapper">
                 <Input inverted fluid onKeyDown={onTagKeyDown} onChange={(event: any) => props.onSearchInputChange(event.target.value)} value={props.commandBarSearchText} placeholder={localize("searchPlaceholder")} />

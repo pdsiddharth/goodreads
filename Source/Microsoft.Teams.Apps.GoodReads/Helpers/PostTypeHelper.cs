@@ -7,7 +7,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using System.Collections.Generic;
 
     /// <summary>
-    ///  Class that handles the post type.
+    ///  A class that handles the post types based on the post type id.
     /// </summary>
     public static class PostTypeHelper
     {

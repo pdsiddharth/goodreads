@@ -90,6 +90,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to retrieve team tags data.");
+
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError("Error while getting the team tags from Microsoft Azure Table storage.");
@@ -124,6 +126,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to add team tag details.");
+
                 if (string.IsNullOrEmpty(teamTagEntity?.TeamId))
                 {
                     this.logger.LogError("Error while creating or updating team tag details in Microsoft Azure Table storage.");
@@ -137,7 +141,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
                 }
 
                 this.RecordEvent(RecordTeamTagHTTPPostCall);
-                var teamTagDetail = this.teamTagStorageHelper.GetTeamTagModel(teamTagEntity, this.UserName, this.UserAadId);
+                var teamTagDetail = this.teamTagStorageHelper.CreateTeamTagModel(teamTagEntity, this.UserName, this.UserAadId);
 
                 return this.Ok(await this.teamTagStorageProvider.UpsertTeamTagsAsync(teamTagDetail));
             }
@@ -158,6 +162,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("Call to get list of configured tags for a team.");
+
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError("Error while getting the list of team tags from Microsoft Azure Table storage.");

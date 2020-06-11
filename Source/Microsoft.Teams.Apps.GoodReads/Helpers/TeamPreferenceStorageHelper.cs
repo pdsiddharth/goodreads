@@ -12,7 +12,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Implements user storage helper which is responsible for storing, updating and deleting team preference data in Microsoft Azure Table storage.
+    /// Implements team preference storage helper which helps to construct the model, get unique tags for team preference.
     /// </summary>
     public class TeamPreferenceStorageHelper : ITeamPreferenceStorageHelper
     {
@@ -32,11 +32,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Get team preference details.
+        /// Create team preference model data.
         /// </summary>
         /// <param name="entity">Represents team preference entity object.</param>
         /// <returns>Represents team preference entity model.</returns>
-        public TeamPreferenceEntity GetTeamPreferenceModel(TeamPreferenceEntity entity)
+        public TeamPreferenceEntity CreateTeamPreferenceModel(TeamPreferenceEntity entity)
         {
             try
             {

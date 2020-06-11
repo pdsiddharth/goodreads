@@ -28,7 +28,7 @@
 }
 
 .add-icon {
-    margin-left: -4rem;
+    margin-left: -5rem;
     padding: 0.5rem;
 }
 
@@ -53,12 +53,11 @@
 
 .dialog-container {
     width: 60rem !important;
-    height: 50rem !important;
+    height: 58rem !important;
 }
 
 .dialog-body {
-    padding: 0.5rem !important;
-    height: 35rem !important;
+    height: 43rem !important;
     overflow: auto !important;
     width: 100%;
 }

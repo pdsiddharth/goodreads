@@ -13,7 +13,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models.Card
     public class AdaptiveSubmitActionData
     {
         /// <summary>
-        /// Gets or sets the Teams-specific action.
+        /// Gets or sets the teams specific action.
         /// </summary>
         [JsonProperty("msteams")]
         public CardAction Msteams { get; set; }

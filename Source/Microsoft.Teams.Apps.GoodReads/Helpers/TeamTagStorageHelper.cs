@@ -10,7 +10,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Implements user storage helper which is responsible for preparing the model data for team tags to store in Microsoft Azure Table storage.
+    ///  Implements team tag storage helper which helps to construct the model for team tag.
     /// </summary>
     public class TeamTagStorageHelper : ITeamTagStorageHelper
     {
@@ -30,13 +30,13 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Get team tags details.
+        /// Create team tags mode data.
         /// </summary>
         /// <param name="teamTagEntity">Represents team tag entity object.</param>
         /// <param name="userName">User name who has configured the tags in team.</param>
         /// <param name="userAadId">Azure Active Directory id of the user.</param>
         /// <returns>Represents team tags entity model.</returns>
-        public TeamTagEntity GetTeamTagModel(TeamTagEntity teamTagEntity, string userName, string userAadId)
+        public TeamTagEntity CreateTeamTagModel(TeamTagEntity teamTagEntity, string userName, string userAadId)
         {
             try
             {

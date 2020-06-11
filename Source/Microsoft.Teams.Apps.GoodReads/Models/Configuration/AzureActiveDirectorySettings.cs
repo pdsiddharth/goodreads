@@ -5,17 +5,17 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models.Configuration
 {
     /// <summary>
-    /// Class which will help to provide Azure Active Directlry settings for Good Reads application.
+    /// A class which helps to provide Azure Active Directlry settings for Share Now application.
     /// </summary>
     public class AzureActiveDirectorySettings
     {
         /// <summary>
-        /// Gets or sets application tenant id.
+        /// Gets or sets tenant id of application.
         /// </summary>
         public string TenantId { get; set; }
 
         /// <summary>
-        /// Gets or sets client id.
+        /// Gets or sets client id of application.
         /// </summary>
         public string ClientId { get; set; }
     }

@@ -13,11 +13,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
     public interface ITeamPreferenceStorageHelper
     {
         /// <summary>
-        /// Get team preference details.
+        /// Create team preference model data.
         /// </summary>
         /// <param name="entity">Team preference detail.</param>
         /// <returns>Represents team preference entity model.</returns>
-        TeamPreferenceEntity GetTeamPreferenceModel(TeamPreferenceEntity entity);
+        TeamPreferenceEntity CreateTeamPreferenceModel(TeamPreferenceEntity entity);
 
         /// <summary>
         /// Get posts unique tags.

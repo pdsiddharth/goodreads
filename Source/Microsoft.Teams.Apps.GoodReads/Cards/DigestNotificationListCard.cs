@@ -47,7 +47,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Cards
                 Buttons = new List<ButtonAction>(),
             };
 
-            var voteIcon = $"<img src='{applicationBasePath}/Artifacts/userVoteIcon.png' alt='vote logo' width='18' height='18'";
+            var voteIcon = $"<img src='{applicationBasePath}/Artifacts/voteIcon.png' alt='vote logo' width='18' height='18'";
 
             foreach (var teamPostEntity in teamPosts)
             {

@@ -19,14 +19,14 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
     public class AuthenticationMetadataController : ControllerBase
     {
         /// <summary>
-        /// Represents a set of key/value application configuration properties for Good reads bot.
+        /// Represents a set of key/value application configuration properties for Share Now bot.
         /// </summary>
         private readonly IOptions<AzureActiveDirectorySettings> options;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationMetadataController"/> class.
         /// </summary>
-        /// <param name="options">A set of key/value application configuration properties for Good reads bot.</param>
+        /// <param name="options">A set of key/value application configuration properties for Share Now bot.</param>
         public AuthenticationMetadataController(IOptions<AzureActiveDirectorySettings> options)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));

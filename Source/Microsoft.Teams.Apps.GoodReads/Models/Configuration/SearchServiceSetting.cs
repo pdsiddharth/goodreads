@@ -5,7 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models.Configuration
 {
     /// <summary>
-    /// Provides settings related to search service.
+    /// A class that represents settings related to search ervice.
     /// </summary>
     public class SearchServiceSetting : StorageSetting
     {

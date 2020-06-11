@@ -5,17 +5,17 @@
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     /// <summary>
-    /// Class which will help to provide Bot settings for Good Reads application.
+    /// A class which helps to provide Bot settings for Share Now application.
     /// </summary>
     public class BotSetting
     {
         /// <summary>
-        /// Gets or sets application base Uri which helps in generating Customer Token.
+        /// Gets or sets application base Uri which helps in generating customer token.
         /// </summary>
         public string AppBaseUri { get; set; }
 
         /// <summary>
-        /// Gets or sets security key which helps in generating Customer Token.
+        /// Gets or sets security key which helps in generating customer token.
         /// </summary>
         public string SecurityKey { get; set; }
 

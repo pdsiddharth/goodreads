@@ -3,7 +3,7 @@
 // </copyright>
 
 import * as React from "react";
-import { Button, Flex, Text, Input, RadioGroup, Loader, InfoIcon } from "@fluentui/react-northstar";
+import { Button, Flex, Text, Tooltip, Input, RadioGroup, Loader, InfoIcon } from "@fluentui/react-northstar";
 import { SearchIcon } from "@fluentui/react-icons-northstar";
 import { filterTags } from "../../api/preferences-api";
 import { getTags } from "../../helpers/helper";
@@ -181,7 +181,7 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
         if (this.state.showLoader) {
             return (
                 <div className="dialog-container-div-preferences">
-                        <Loader className="preference-loader" />
+                    <Loader className="preference-loader" />
                 </div>
             )
         }
@@ -289,12 +289,12 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
     showTagsAlreadyAddedError() {
         if (this.state.showTagError) {
             if (this.state.tagsList.length === Resources.tagsMaxCountPreferences)
-                
-            return (
-                <Flex gap="gap.smaller" className="tag-error-maxfive">
-                    <Text content={this.localize("preferenceTagCountError")} />
-                </Flex>
-            )
+
+                return (
+                    <Flex gap="gap.smaller" className="tag-error-maxfive">
+                        <Text content={this.localize("preferenceTagCountError")} />
+                    </Flex>
+                )
             else {
                 return (
                     <Flex gap="gap.smaller" className="tag-error-label">
@@ -417,7 +417,7 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
             return (
                 <div ref={elementRef => this.elementRef = elementRef} className="configure-preferences-div">
                     <Flex gap="gap.smaller" className="frequency-label">
-                        <Text content={this.localize("digestFrequencyLabel")} /><InfoIcon className="info-icon-preferences" size="small" title={this.localize("digestFrequencyLabel")} />
+                        <Text content={this.localize("digestFrequencyLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("digestFrequencyLabel")} />
                     </Flex>
                     <Flex gap="gap.smaller" className="frequency-radio">
                         <RadioGroup
@@ -429,16 +429,17 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
                     </Flex>
                     <Flex gap="gap.smaller" className="tag-searchbox-label">
                         <Text content={this.localize("tagsLabel")} />
-                        {this.showTagsAlreadyAddedError()}
+                        <Flex.Item push>
+                            {this.showTagsAlreadyAddedError()}
+                        </Flex.Item>
                     </Flex>
-                    <div className="search-div">
-                        <Flex gap="gap.smaller" className="input-search">
-                            <Flex.Item push>
-                                <Input onKeyDown={(event: any) => this.onEnterKeyPress(event)} fluid icon={<SearchIcon onClick={(event: any) => this.filterSavedTags(this.state.searchText)} key="search" className="search-icon-preferences" />} onChange={(event: any) => this.getInputValue(event.target.value)} placeholder="Search..." />
-                            </Flex.Item>
-                        </Flex>
+                    <Flex className="search-div">
+                        <Input onKeyDown={(event: any) => this.onEnterKeyPress(event)} fluid icon={<SearchIcon onClick={(event: any) => this.filterSavedTags(this.state.searchText)} key="search" className="search-icon-preferences" />} onChange={(event: any) => this.getInputValue(event.target.value)} placeholder="Search..." />
+                    </Flex>
+                    <Flex>
                         {this.showSuggestedTags()}
-                    </div>
+                    </Flex>
+
 
                     <Flex gap="gap.smaller" className="tags-flex-preferences" vAlign="center">
                         <div>

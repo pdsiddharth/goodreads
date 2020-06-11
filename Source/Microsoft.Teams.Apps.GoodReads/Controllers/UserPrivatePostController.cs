@@ -89,6 +89,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("call to retrieve list of private posts.");
+
                 var postIds = await this.userPrivatePostStorageProvider.GetUserPrivatePostsIdsAsync(this.UserAadId);
 
                 if (postIds == null || !postIds.Any())
@@ -125,13 +127,15 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("call to add private post.");
+
                 if (string.IsNullOrEmpty(userPrivatePostEntity?.PostId))
                 {
                     this.logger.LogError("Error while adding post in user's private list.");
                     return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while adding post in user's private list.");
                 }
 
-                var updatedPrivatePostEntity = this.userPrivatePostStorageHelper.GetNewUserPrivatePostModel(userPrivatePostEntity, this.UserAadId, this.UserName);
+                var updatedPrivatePostEntity = this.userPrivatePostStorageHelper.CreateUserPrivatePostModel(userPrivatePostEntity, this.UserAadId, this.UserName);
                 var result = await this.userPrivatePostStorageProvider.UpsertPostAsPrivateAsync(updatedPrivatePostEntity);
 
                 if (result)
@@ -159,6 +163,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         {
             try
             {
+                this.logger.LogInformation("call to delete private post.");
+
                 if (string.IsNullOrEmpty(postId))
                 {
                     this.logger.LogError("Error while deleting private post details data in Microsoft Azure Table storage.");

@@ -10,7 +10,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Class which represents team preference entity model.
+    /// A class that represents team preference entity model.
     /// </summary>
     public class TeamPreferenceEntity : TableEntity
     {

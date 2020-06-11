@@ -10,6 +10,7 @@ import FilterNoPostContentPage from "./filter-no-post-content-page";
 import TitleBar from "../filter-bar-teams/title-bar-teams";
 import { Container, Col, Row } from "react-bootstrap";
 import * as microsoftTeams from "@microsoft/teams-js";
+import { generateColor } from "../../helpers/helper";
 import { getTeamDiscoverPosts, getUserVotes, getFilteredPosts, filterTitleAndTagsTeam } from "../../api/discover-api";
 import NotificationMessage from "../notification-message/notification-message";
 import { WithTranslation, withTranslation } from "react-i18next";
@@ -57,6 +58,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     allPosts: Array<IDiscoverPost>;
     loggedInUserObjectId: string;
     teamId: string;
+    authorAvatarBackground: Array<any>;
 
     constructor(props: any) {
         super(props);
@@ -69,6 +71,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         this.allPosts = [];
         this.loggedInUserObjectId = "";
         this.teamId = "";
+        this.authorAvatarBackground = [];
 
         this.state = {
             loader: false,
@@ -141,6 +144,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             }
 
             response.data.map((post: IDiscoverPost) => {
+                let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                if (searchedAuthor) {
+                    post.avatarBackgroundColor = searchedAuthor.color;
+                }
+                else {
+                    let color = generateColor();
+                    this.authorAvatarBackground.push({ id: post.userId, color: color });
+                    post.avatarBackgroundColor = color;
+                }
+
                 if (post.userId === this.loggedInUserObjectId) {
                     post.isCurrentUserPost = true;
                 }
@@ -179,6 +192,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 });
             }
             response.data.map((post: IDiscoverPost) => {
+                let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                if (searchedAuthor) {
+                    post.avatarBackgroundColor = searchedAuthor.color;
+                }
+                else {
+                    let color = generateColor();
+                    this.authorAvatarBackground.push({ id: post.userId, color: color });
+                    post.avatarBackgroundColor = color;
+                }
+
                 if (post.userId === this.loggedInUserObjectId) {
                     post.isCurrentUserPost = true;
                 }
@@ -342,6 +365,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     });
                 }
                 response.data.map((post: IDiscoverPost) => {
+                    let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                    if (searchedAuthor) {
+                        post.avatarBackgroundColor = searchedAuthor.color;
+                    }
+                    else {
+                        let color = generateColor();
+                        this.authorAvatarBackground.push({ id: post.userId, color: color });
+                        post.avatarBackgroundColor = color;
+                    }
+
                     if (post.userId === this.loggedInUserObjectId) {
                         post.isCurrentUserPost = true;
                     }
@@ -431,12 +464,18 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     }
 
     /**
-    * Invoked when user clicks on vote icon. Ppdates state and showing notification alert.
+    * Invoked when user clicks on vote icon. Updates state and showing notification alert.
     * @param isSuccess Boolean indicating whether edit operation is successful.
+    * @param isLiked Boolean indicating whether post is liked or not.
     */
-    onVoteClick = (isSuccess: boolean) => {
+    onVoteClick = (isSuccess: boolean, isLiked: boolean) => {
         if (isSuccess) {
-            this.showAlert(this.localize("voteSuccess"), 1)
+            if (isLiked) {
+                this.showAlert(this.localize("voteSuccess"), 1)
+            }
+            else {
+                this.showAlert(this.localize("voteUnliked"), 1)
+            }
         }
         else {
             this.showAlert(this.localize("voteError"), 2)
@@ -470,6 +509,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 }
             });
 
+            this.setState({ discoverPosts: this.allPosts });
             this.onFilterSearchTextChange(this.filterSearchText);
             this.showAlert(this.localize("postUpdateSuccess"), 1)
         }
@@ -485,6 +525,16 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     */
     onNewPost = (isSuccess: boolean, getSubmittedPost: IDiscoverPost) => {
         if (isSuccess) {
+            let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === getSubmittedPost.userId);
+            if (searchedAuthor) {
+                getSubmittedPost.avatarBackgroundColor = searchedAuthor.color;
+            }
+            else {
+                let color = generateColor();
+                this.authorAvatarBackground.push({ id: getSubmittedPost.userId, color: color });
+                getSubmittedPost.avatarBackgroundColor = color;
+            }
+
             let submittedPost = this.state.discoverPosts;
             if (getSubmittedPost.userId === this.loggedInUserObjectId) {
                 getSubmittedPost.isCurrentUserPost = true;

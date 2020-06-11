@@ -7,7 +7,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models.Card
     using Newtonsoft.Json;
 
     /// <summary>
-    /// Button action class for list card.
+    /// A class that represents a model for list card action.
     /// </summary>
     public class ButtonAction
     {

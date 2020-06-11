@@ -16,7 +16,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which stores team tags data in Microsoft Azure Table storage.
+    /// Implements storage provider which helps to create, get, update or delete team tags data in Microsoft Azure Table storage.
     /// </summary>
     public class TeamTagStorageProvider : BaseStorageProvider, ITeamTagStorageProvider
     {
@@ -24,11 +24,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Represents team tag entity name.
         /// </summary>
         private const string TeamTagEntityName = "TeamTagEntity";
-
-        /// <summary>
-        /// Represents row key string.
-        /// </summary>
-        private const string RowKey = "RowKey";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TeamTagStorageProvider"/> class.
@@ -41,10 +36,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, TeamTagEntityName, logger)
         {
-            if (options == null)
-            {
-                throw new ArgumentNullException(nameof(options));
-            }
+            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
@@ -57,8 +49,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
             teamId = teamId ?? throw new ArgumentNullException(nameof(teamId));
             await this.EnsureInitializedAsync();
 
-            string partitionKeyCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, TeamTagEntityName);
-            string teamIdCondition = TableQuery.GenerateFilterCondition(RowKey, QueryComparisons.Equal, teamId);
+            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamTagEntityName);
+            string teamIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, teamId);
             var combinedTeamFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, teamIdCondition);
 
             TableQuery<TeamTagEntity> query = new TableQuery<TeamTagEntity>().Where(combinedTeamFilter);
@@ -71,29 +63,29 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         /// Delete configured tags for a team if Bot is uninstalled from Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamId">Holds team id.</param>
-        /// <returns>A task that represents team tags data is deleted.</returns>
+        /// <returns>A boolean that represents team tags is successfully deleted or not.</returns>
         public async Task<bool> DeleteTeamTagsEntryDataAsync(string teamId)
         {
             teamId = teamId ?? throw new ArgumentNullException(nameof(teamId));
             await this.EnsureInitializedAsync();
 
-            string partitionKeyCondition = TableQuery.GenerateFilterCondition(Constants.PartitionKey, QueryComparisons.Equal, TeamTagEntityName);
-            string teamIdCondition = TableQuery.GenerateFilterCondition(RowKey, QueryComparisons.Equal, teamId);
+            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamTagEntityName);
+            string teamIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, teamId);
             var combinedTeamFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, teamIdCondition);
 
             TableQuery<TeamTagEntity> query = new TableQuery<TeamTagEntity>().Where(combinedTeamFilter);
             var queryResult = await this.GoodReadsCloudTable.ExecuteQuerySegmentedAsync(query, null);
             TableOperation deleteOperation = TableOperation.Delete(queryResult?.FirstOrDefault());
-            await this.GoodReadsCloudTable.ExecuteAsync(deleteOperation);
+            var result = await this.GoodReadsCloudTable.ExecuteAsync(deleteOperation);
 
-            return true;
+            return result.HttpStatusCode == (int)HttpStatusCode.OK;
         }
 
         /// <summary>
         /// Stores or update team tags data in Microsoft Azure Table storage.
         /// </summary>
         /// <param name="teamTagEntity">Represents team tag entity object.</param>
-        /// <returns>A task that represents team tags entity data is saved or updated.</returns>
+        /// <returns>A boolean that represents team tags entity is successfully saved/updated or not.</returns>
         public async Task<bool> UpsertTeamTagsAsync(TeamTagEntity teamTagEntity)
         {
             var result = await this.StoreOrUpdateEntityAsync(teamTagEntity);
