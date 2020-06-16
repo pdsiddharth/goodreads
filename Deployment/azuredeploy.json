@@ -27,7 +27,7 @@
     "appDisplayName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "ShareNow",
+      "defaultValue": "Share Now",
       "metadata": {
         "description": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics."
       }
