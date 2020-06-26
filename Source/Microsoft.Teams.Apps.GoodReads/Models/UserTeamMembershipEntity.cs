@@ -4,8 +4,6 @@
 
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
-    using System;
-    using Microsoft.Teams.Apps.GoodReads.Common;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
@@ -14,24 +12,22 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     public class UserTeamMembershipEntity : TableEntity
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="UserTeamMembershipEntity"/> class.
-        /// Holds team posts data.
-        /// </summary>
-        public UserTeamMembershipEntity()
-        {
-            this.PartitionKey = Constants.UserTeamMembershipPartitionKey;
-            this.RowKey = Guid.NewGuid().ToString();
-        }
-
-        /// <summary>
         /// Gets or sets Azure Active Directory id of user.
         /// </summary>
-        public string UserAadObjectId { get; set; }
+        public string UserAadObjectId
+        {
+            get { return this.RowKey; }
+            set { this.RowKey = value; }
+        }
 
         /// <summary>
         /// Gets or sets id of the team.
         /// </summary>
-        public string TeamId { get; set; }
+        public string TeamId
+        {
+            get { return this.PartitionKey; }
+            set { this.PartitionKey = value; }
+        }
 
         /// <summary>
         /// Gets or sets service URL where responses to this activity should be sent.

@@ -11,7 +11,7 @@ import TitleBar from "../filter-bar-teams/title-bar-teams";
 import { Container, Col, Row } from "react-bootstrap";
 import * as microsoftTeams from "@microsoft/teams-js";
 import { generateColor } from "../../helpers/helper";
-import { getTeamDiscoverPosts, getUserVotes, getFilteredPosts, filterTitleAndTagsTeam } from "../../api/discover-api";
+import { getTeamDiscoverPosts, getUserVotes, getFilteredPostsForTeam, filterTitleAndTagsTeam } from "../../api/discover-api";
 import NotificationMessage from "../notification-message/notification-message";
 import { WithTranslation, withTranslation } from "react-i18next";
 import { TFunction } from "i18next";
@@ -31,6 +31,7 @@ export interface IUserVote {
 
 interface ICardViewState {
     loader: boolean;
+    loadingPost: boolean;
     resourceStrings: any;
     discoverPosts: Array<IDiscoverPost>;
     discoverSearchPosts: Array<IDiscoverPost>;
@@ -45,6 +46,7 @@ interface ICardViewState {
     isPageInitialLoad: boolean;
     pageLoadStart: number;
     hasMorePosts: boolean;
+    initialPosts: Array<IDiscoverPost>;
 }
 
 class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewState> {
@@ -53,12 +55,13 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     selectedSharedBy: Array<ICheckBoxItem>;
     selectedPostType: Array<ICheckBoxItem>;
     selectedTags: Array<ICheckBoxItem>;
-    selectedSortBy: string;
+    selectedSortBy: number;
     filterSearchText: string;
     allPosts: Array<IDiscoverPost>;
     loggedInUserObjectId: string;
     teamId: string;
     authorAvatarBackground: Array<any>;
+    hasmorePost: boolean;
 
     constructor(props: any) {
         super(props);
@@ -66,15 +69,17 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         this.selectedSharedBy = [];
         this.selectedPostType = [];
         this.selectedTags = [];
-        this.selectedSortBy = "";
+        this.selectedSortBy = 0;
         this.filterSearchText = "";
         this.allPosts = [];
         this.loggedInUserObjectId = "";
         this.teamId = "";
-        this.authorAvatarBackground = [];
+        this.authorAvatarBackground = localStorage.getItem("avatar-colors") === null ? [] : JSON.parse(localStorage.getItem("avatar-colors")!);
+        this.hasmorePost = true;
 
         this.state = {
-            loader: false,
+            loader: true,
+            loadingPost: false,
             discoverPosts: [],
             discoverSearchPosts: [],
             resourceStrings: {},
@@ -88,7 +93,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             isFilterApplied: false,
             isPageInitialLoad: true,
             pageLoadStart: -1,
-            hasMorePosts: true
+            hasMorePosts: true,
+            initialPosts: []
         }
     }
 
@@ -96,12 +102,12 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     * Used to initialize Microsoft Teams sdk
     */
     async componentDidMount() {
-        this.setState({ loader: true });
         microsoftTeams.initialize();
-        microsoftTeams.getContext(async (context: microsoftTeams.Context) => {
+        microsoftTeams.getContext((context: microsoftTeams.Context) => {
             this.teamId = context.teamId!;
             this.loggedInUserObjectId = context.userObjectId!;
             this.getConfigTags();
+            this.initDiscoverPosts();
         });
     }
 
@@ -111,7 +117,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     getConfigTags = async () => {
         let response = await getConfigTags(this.teamId);
         if (response.status === 200 && response.data) {
-            this.setState({ tagList: response.data.tags, loader: false });
+            this.setState({ tagList: response.data.tags });
         }
     }
 
@@ -135,12 +141,10 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         let tags = this.selectedTags.map((tag: ICheckBoxItem) => { return tag.title });
         let tagsString = this.getFilterString(tags);
 
-        let response = await getFilteredPosts(postTypesString, authorsString, tagsString, this.selectedSortBy, this.teamId, pageCount);
+        let response = await getFilteredPostsForTeam(postTypesString, authorsString, tagsString, this.selectedSortBy, this.teamId, pageCount);
         if (response.status === 200 && response.data) {
-            if (!response.data.length) {
-                this.setState({
-                    hasMorePosts: false,
-                });
+            if (response.data.length < 50) {
+                this.hasmorePost = false;
             }
 
             response.data.map((post: IDiscoverPost) => {
@@ -152,6 +156,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.userId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.userId === this.loggedInUserObjectId) {
@@ -165,9 +171,11 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             });
 
             if (response.data.count !== 0) {
-                this.setState({
-                    isPageInitialLoad: false,
-                });
+                if (!this.state.isPageInitialLoad) {
+                    this.setState({
+                        isPageInitialLoad: false,
+                    });
+                }
             }
             else {
                 this.setState({
@@ -175,7 +183,22 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     isPageInitialLoad: false
                 })
             }
+
+            this.setState({ searchText: "" });
             this.getUserVotes();
+        }
+    }
+
+    /**
+    * Fetch posts for initializing grid
+    */
+    initDiscoverPosts = async () => {
+        let response = await getTeamDiscoverPosts(this.teamId, 0);
+        if (response.status === 200 && response.data) {
+            this.setState({
+                initialPosts: response.data,
+                loader: false
+            })
         }
     }
 
@@ -186,10 +209,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     getDiscoverPosts = async (pageCount: number) => {
         let response = await getTeamDiscoverPosts(this.teamId, pageCount);
         if (response.status === 200 && response.data) {
-            if (!response.data.length) {
-                this.setState({
-                    hasMorePosts: false,
-                });
+            if (response.data.length < 50) {
+                this.hasmorePost = false;
             }
             response.data.map((post: IDiscoverPost) => {
                 let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
@@ -200,6 +221,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.userId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.userId === this.loggedInUserObjectId) {
@@ -217,14 +240,10 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     showNoPostPage: true
                 })
             }
+
+            this.setState({ searchText: "" });
             this.getUserVotes();
         }
-
-        this.setState({
-            loader: false,
-            searchText: "",
-            isPageInitialLoad: false
-        });
     }
 
     /**
@@ -264,13 +283,9 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     }
                 })
             }
-
-            this.onFilterSearchTextChange(this.filterSearchText);
         }
 
-        this.setState({
-            loader: false
-        });
+        this.onFilterSearchTextChange(this.filterSearchText);
     }
 
     /**
@@ -285,8 +300,11 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     post.isRemoved = true;
                 }
             });
-
+            this.showAlert(this.localize("postDeletedSuccess"), 1);
             this.onFilterSearchTextChange(this.filterSearchText);
+        }
+        else {
+            this.showAlert(this.localize("postDeletedError"), 2);
         }
     }
 
@@ -359,10 +377,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             let response = await filterTitleAndTagsTeam(this.state.searchText, this.teamId, page);
 
             if (response.status === 200 && response.data) {
-                if (!response.data.length) {
-                    this.setState({
-                        hasMorePosts: false,
-                    });
+                if (response.data.length < 50) {
+                    this.hasmorePost = false;
                 }
                 response.data.map((post: IDiscoverPost) => {
                     let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
@@ -373,6 +389,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                         let color = generateColor();
                         this.authorAvatarBackground.push({ id: post.userId, color: color });
                         post.avatarBackgroundColor = color;
+
+                        localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                     }
 
                     if (post.userId === this.loggedInUserObjectId) {
@@ -385,7 +403,6 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     this.allPosts.push(post)
                 });
 
-                this.setState({ isPageInitialLoad: false });
                 this.getUserVotes();
             }
         }
@@ -449,7 +466,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     *Filter cards based sort by value.
     *@param selectedValue Selected value for 'sort by'
     */
-    onSortByChange = (selectedValue: string) => {
+    onSortByChange = (selectedValue: number) => {
         this.selectedSortBy = selectedValue;
         this.setState({
             isPageInitialLoad: true,
@@ -533,6 +550,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 let color = generateColor();
                 this.authorAvatarBackground.push({ id: getSubmittedPost.userId, color: color });
                 getSubmittedPost.avatarBackgroundColor = color;
+
+                localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
             }
 
             let submittedPost = this.state.discoverPosts;
@@ -543,7 +562,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 getSubmittedPost.isCurrentUserPost = false;
             }
             submittedPost.unshift(getSubmittedPost);
-            this.setState({ discoverPosts: submittedPost });
+            this.setState({ discoverPosts: submittedPost, initialPosts: submittedPost });
             this.allPosts = this.state.discoverPosts;
             this.showAlert(this.localize("addNewPostSuccess"), 1)
         }
@@ -557,17 +576,21 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     * @param isOpen Boolean indicating whether filter bar is displayed or closed.
     */
     handleFilterClear = (isOpen: boolean) => {
-        this.resetAllFilters();
+        if (!isOpen && (this.selectedPostType.length > 0 || this.selectedSharedBy.length > 0 || this.selectedTags.length > 0 || this.selectedSortBy !== Resources.sortBy[0].id)) {
+            this.setState({
+                isPageInitialLoad: true,
+                pageLoadStart: -1,
+                infiniteScrollParentKey: this.state.infiniteScrollParentKey + 1,
+                discoverPosts: [],
+                searchText: "",
+                hasMorePosts: true
+            });
+            this.allPosts = [];
+        }
         this.setState({
-            isPageInitialLoad: true,
-            pageLoadStart: -1,
-            infiniteScrollParentKey: this.state.infiniteScrollParentKey + 1,
-            discoverPosts: [],
-            searchText: "",
-            isFilterApplied: isOpen,
-            hasMorePosts: true
+            isFilterApplied: isOpen
         });
-        this.allPosts = [];
+        this.resetAllFilters();
     }
 
     /**
@@ -595,10 +618,12 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 return post.title.toLowerCase().includes(searchText.toLowerCase()) === true;
             });
 
-            this.setState({ discoverPosts: filteredPosts });
+            this.setState({
+                discoverPosts: filteredPosts, hasMorePosts: this.hasmorePost, loader: false, isPageInitialLoad: false
+            });
         }
         else {
-            this.setState({ discoverPosts: [...this.allPosts] });
+            this.setState({ discoverPosts: [...this.allPosts], hasMorePosts: this.hasmorePost, loader: false, isPageInitialLoad: false });
         }
     }
 
@@ -628,18 +653,27 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 </div>
             );
         } else {
-            // Cards component array to be rendered in grid.
-            const cards = new Array<any>();
-
-            this.state.discoverPosts!.map((value: IDiscoverPost, index) => {
-                if (!value.isRemoved) {
-                    cards.push(<Col lg={3} sm={6} md={4} className="grid-column d-flex justify-content-center">
-                        <Card onAddPrivatePostClick={this.handleUserPrivatePostButtonClick} index={index} cardDetails={value} onVoteClick={this.onVoteClick} onCardUpdate={this.onCardUpdate} onDeleteButtonClick={this.handleDeleteButtonClick} />
-                    </Col>);
+            if (this.state.tagList.length > 0) {
+                if (this.state.initialPosts.length === 0) {
+                    return (
+                        <div className="container-div">
+                            <div className="container-subdiv">
+                                <NotificationMessage onClose={this.hideAlert} showAlert={this.state.showAlert} content={this.state.alertMessage} notificationType={this.state.alertType} />
+                                <NoPostAddedPage showAddButton={false} onNewPostSubmit={this.onNewPost} />
+                            </div>
+                        </div>
+                    )
                 }
-            });
+                // Cards component array to be rendered in grid.
+                const cards = new Array<any>();
 
-            if (this.state.tagList.length > 0 && this.state.discoverPosts.length >= 0) {
+                this.state.discoverPosts!.map((value: IDiscoverPost, index) => {
+                    if (!value.isRemoved) {
+                        cards.push(<Col lg={3} sm={6} md={4} className="grid-column d-flex justify-content-center">
+                            <Card onAddPrivatePostClick={this.handleUserPrivatePostButtonClick} index={index} cardDetails={value} onVoteClick={this.onVoteClick} onCardUpdate={this.onCardUpdate} onDeleteButtonClick={this.handleDeleteButtonClick} />
+                        </Col>);
+                    }
+                });
                 let scrollViewStyle = { height: this.state.isFilterApplied === true ? "84vh" : "92vh" };
                 return (
                     <div className="container-div">
@@ -673,7 +707,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
 
                                         <Row>
                                             {
-                                                cards.length > 0 ? cards : this.state.hasMorePosts === true ? <></> : <FilterNoPostContentPage />
+                                                cards.length > 0 ? cards : this.state.hasMorePosts ? <></> : <FilterNoPostContentPage />
                                             }
                                         </Row>
 
@@ -683,16 +717,6 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                         </div>
                     </div>
                 );
-            }
-            else {
-                return (
-                    <div className="container-div">
-                        <div className="container-subdiv">
-                            <NotificationMessage onClose={this.hideAlert} showAlert={this.state.showAlert} content={this.state.alertMessage} notificationType={this.state.alertType} />
-                            <NoPostAddedPage onNewPostSubmit={this.onNewPost} />
-                        </div>
-                    </div>
-                )
             }
         }
     }

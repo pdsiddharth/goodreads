@@ -44,10 +44,25 @@
 }
 
 .configure-preferences-div {
-    margin-left: 3rem;
-    margin-top: -2rem;
-    padding-top:2rem;
-    height: 48rem;
+    margin-left: 3.2rem;
+    margin-right: 3.2rem;
+    height: 100vh;
+}
+
+.dialog-container-div-config {
+    height: 44.2rem;
+    overflow: hidden;
+}
+
+.config-container {
+    margin-left: 0.1%;
+    height: 15rem;
+}
+
+.footer {
+    position: absolute;
+    bottom: 3.2rem;
+    width: 90vw;
 }
 
 .config-container {
@@ -56,7 +71,7 @@
 
 
 .frequency-label {
-    margin-top: 2rem;
+    padding-top: 2rem;
 }
 
 

@@ -9,8 +9,8 @@ import "../../styles/popup-menu.css";
 
 interface IPopupMenuRadiogroupContentProps {
     content: any,
-    selectedValue: string,
-    onRadiogroupStateChange: (selectedValue: string) => void
+    selectedValue: number,
+    onRadiogroupStateChange: (selectedValue: number) => void
 }
 
 const PopupMenuRadiogroupContent: React.FunctionComponent<IPopupMenuRadiogroupContentProps> = props => {

@@ -10,7 +10,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
-    using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.Bot.Builder;
     using Microsoft.Bot.Builder.Teams;
     using Microsoft.Bot.Schema;
@@ -18,11 +17,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
     using Microsoft.Extensions.Localization;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
-    using Microsoft.Teams.Apps.GoodReads;
     using Microsoft.Teams.Apps.GoodReads.Cards;
     using Microsoft.Teams.Apps.GoodReads.Common;
     using Microsoft.Teams.Apps.GoodReads.Common.Interfaces;
     using Microsoft.Teams.Apps.GoodReads.Models;
+    using Microsoft.Teams.Apps.GoodReads.Models.Configuration;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
 
@@ -42,19 +41,14 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         private const int TaskModuleWidth = 600;
 
         /// <summary>
-        /// Represents the conversation type as personal.
-        /// </summary>
-        private const string Personal = "PERSONAL";
-
-        /// <summary>
-        /// Represents the conversation type as channel.
-        /// </summary>
-        private const string Channel = "CHANNEL";
-
-        /// <summary>
         /// Represents the close command for task module.
         /// </summary>
         private const string CloseCommand = "close";
+
+        /// <summary>
+        /// Submit preference command.
+        /// </summary>
+        private const string SubmitCommand = "submit";
 
         /// <summary>
         /// State management object for maintaining user conversation state.
@@ -64,7 +58,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// <summary>
         /// A set of key/value application configuration properties for Activity settings.
         /// </summary>
-        private readonly IOptions<BotSetting> botOptions;
+        private readonly IOptions<BotSettings> botOptions;
 
         /// <summary>
         /// Instance to send logs to the Application Insights service.
@@ -82,14 +76,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         private readonly TelemetryClient telemetryClient;
 
         /// <summary>
-        /// Messaging Extension search helper for working with team posts data in Microsoft Azure Table storage.
+        /// Messaging Extension search helper for working with team posts data.
         /// </summary>
         private readonly IMessagingExtensionHelper messagingExtensionHelper;
-
-        /// <summary>
-        /// Instance to work with user team membership data.
-        /// </summary>
-        private readonly IUserTeamMembershipProvider userTeamMembershipProvider;
 
         /// <summary>
         /// Instance of team preference storage helper.
@@ -107,11 +96,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         private readonly ITeamTagStorageProvider teamTagStorageProvider;
 
         /// <summary>
-        /// Entity id of the static discover tab.
-        /// </summary>
-        private readonly string discoverTabEntityId;
-
-        /// <summary>
         /// A set of key/value application configuration properties for Activity settings.
         /// </summary>
         private readonly IOptions<GoodReadsActivityHandlerOptions> options;
@@ -125,7 +109,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// <param name="options">>A set of key/value application configuration properties for activity handler.</param>
         /// <param name="messagingExtensionHelper">Messaging Extension helper dependency injection.</param>
         /// <param name="userState">State management object for maintaining user conversation state.</param>
-        /// <param name="userTeamMembershipProvider">Provider instance to work with user team membership data.</param>
         /// <param name="teamPreferenceStorageHelper">Team preference storage helper dependency injection.</param>
         /// <param name="teamPreferenceStorageProvider">Team preference storage provider dependency injection.</param>
         /// <param name="teamTagStorageProvider">Team tags storage provider dependency injection.</param>
@@ -137,25 +120,21 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
             IOptions<GoodReadsActivityHandlerOptions> options,
             IMessagingExtensionHelper messagingExtensionHelper,
             UserState userState,
-            IUserTeamMembershipProvider userTeamMembershipProvider,
             ITeamPreferenceStorageHelper teamPreferenceStorageHelper,
             ITeamPreferenceStorageProvider teamPreferenceStorageProvider,
             ITeamTagStorageProvider teamTagStorageProvider,
-            IOptions<BotSetting> botOptions)
+            IOptions<BotSettings> botOptions)
         {
             this.logger = logger;
             this.localizer = localizer;
             this.telemetryClient = telemetryClient;
-            options = options ?? throw new ArgumentNullException(nameof(options));
+            this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.messagingExtensionHelper = messagingExtensionHelper;
             this.userState = userState;
-            this.userTeamMembershipProvider = userTeamMembershipProvider;
             this.teamPreferenceStorageHelper = teamPreferenceStorageHelper;
             this.teamPreferenceStorageProvider = teamPreferenceStorageProvider;
             this.teamTagStorageProvider = teamTagStorageProvider;
             this.botOptions = botOptions ?? throw new ArgumentNullException(nameof(botOptions));
-            this.options = options;
-            this.discoverTabEntityId = options.Value.DiscoverTabEntityId;
         }
 
         /// <summary>
@@ -169,15 +148,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// </remarks>
         public override Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
-                this.RecordEvent(nameof(this.OnTurnAsync), turnContext);
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, $"Error at OnTurnAsync(): {ex.Message}", SeverityLevel.Error);
-            }
+            turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
+            this.RecordEvent(nameof(this.OnTurnAsync), turnContext);
 
             return base.OnTurnAsync(turnContext, cancellationToken);
         }
@@ -190,35 +162,54 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// <returns>A task that represents the work queued to execute.</returns>
         protected override async Task OnConversationUpdateActivityAsync(ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
         {
-            turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
-
             try
             {
+                turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
                 this.RecordEvent(nameof(this.OnConversationUpdateActivityAsync), turnContext);
 
                 var activity = turnContext.Activity;
                 this.logger.LogInformation($"conversationType: {activity.Conversation.ConversationType}, membersAdded: {activity.MembersAdded?.Count}, membersRemoved: {activity.MembersRemoved?.Count}");
 
-                if (activity.Conversation.ConversationType.Equals(Personal, StringComparison.OrdinalIgnoreCase))
-                {
-                    if (activity.MembersAdded != null && activity.MembersAdded.Any(member => member.Id != activity.Recipient.Id))
-                    {
-                        await this.HandleMemberAddedinPersonalScopeAsync(turnContext);
-                    }
-                    else if (activity.MembersRemoved != null && activity.MembersRemoved.Any(member => member.Id != activity.Recipient.Id))
-                    {
-                        await this.HandleMemberRemovedInPersonalScopeAsync(turnContext);
-                    }
-                }
-                else if (activity.Conversation.ConversationType.Equals(Channel, StringComparison.OrdinalIgnoreCase))
+                if (activity.Conversation.ConversationType == ConversationTypes.Personal)
                 {
                     if (activity.MembersAdded != null && activity.MembersAdded.Any(member => member.Id == activity.Recipient.Id))
                     {
-                        await this.HandleMemberAddedInTeamAsync(turnContext);
+                        await this.SendWelcomeCardInPersonalScopeAsync(turnContext);
+                    }
+                }
+                else if (activity.Conversation.ConversationType == ConversationTypes.Channel)
+                {
+                    if (activity.MembersAdded != null && activity.MembersAdded.Any(member => member.Id == activity.Recipient.Id))
+                    {
+                        // If bot added to team, add team tab configuration with service URL.
+                        await this.SendWelcomeCardInChannelAsync(turnContext);
+
+                        var teamsDetails = activity.TeamsGetTeamInfo();
+
+                        if (teamsDetails != null)
+                        {
+                            var teamTagConfiguration = new TeamTagEntity
+                            {
+                                CreatedDate = DateTime.UtcNow,
+                                ServiceUrl = activity.ServiceUrl,
+                                Tags = string.Empty,
+                                TeamId = teamsDetails.Id,
+                                CreatedByName = activity.From.Name,
+                                UserAadId = activity.From.AadObjectId,
+                            };
+
+                            await this.teamTagStorageProvider.UpsertTeamTagAsync(teamTagConfiguration);
+                        }
                     }
                     else if (activity.MembersRemoved != null && activity.MembersRemoved.Any(member => member.Id == activity.Recipient.Id))
                     {
-                        await this.HandleMemberRemovedInTeamScopeAsync(turnContext);
+                        // If bot removed from team, delete configured tags and digest preference settings.
+                        var teamsDetails = activity.TeamsGetTeamInfo();
+                        if (teamsDetails != null)
+                        {
+                            await this.teamTagStorageProvider.DeleteTeamTagAsync(teamsDetails.Id);
+                            await this.teamPreferenceStorageProvider.DeleteTeamPreferenceAsync(teamsDetails.Id);
+                        }
                     }
                 }
             }
@@ -244,13 +235,13 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
             MessagingExtensionQuery query,
             CancellationToken cancellationToken)
         {
-            turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
-            this.RecordEvent(nameof(this.OnTeamsMessagingExtensionQueryAsync), turnContext);
-
-            var activity = turnContext.Activity;
-
             try
             {
+                turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
+                this.RecordEvent(nameof(this.OnTeamsMessagingExtensionQueryAsync), turnContext);
+
+                var activity = turnContext.Activity;
+
                 var messagingExtensionQuery = JsonConvert.DeserializeObject<MessagingExtensionQuery>(activity.Value.ToString());
                 var searchQuery = this.messagingExtensionHelper.GetSearchResult(messagingExtensionQuery);
 
@@ -261,7 +252,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Failed to handle the Messaging Extension command {activity.Name}: {ex.Message}", SeverityLevel.Error);
+                this.logger.LogError(ex, $"Failed to handle the Messaging Extension command {turnContext.Activity.Name}: {ex.Message}");
                 throw;
             }
         }
@@ -273,7 +264,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// <param name="taskModuleRequest">Task module invoke request value payload.</param>
         /// <param name="cancellationToken">Propagates notification that operations should be canceled.</param>
         /// <returns>A task that represents the work queued to execute.</returns>
+#pragma warning disable CS1998 // Overriding method for task module fetch.
         protected override async Task<TaskModuleResponse> OnTeamsTaskModuleFetchAsync(ITurnContext<IInvokeActivity> turnContext, TaskModuleRequest taskModuleRequest, CancellationToken cancellationToken)
+#pragma warning restore CS1998 // Overriding method for task module fetch.
         {
             try
             {
@@ -283,20 +276,27 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
                 this.RecordEvent(nameof(this.OnTeamsTaskModuleFetchAsync), turnContext);
 
                 var activity = turnContext.Activity;
-                if (taskModuleRequest.Data == null)
-                {
-                    this.telemetryClient.TrackTrace("Request data obtained on task module fetch action is null.");
-                    await turnContext.SendActivityAsync(this.localizer.GetString("WelcomeCardContent")).ConfigureAwait(false);
-                    return default;
-                }
-
                 var postedValues = JsonConvert.DeserializeObject<BotCommand>(JObject.Parse(taskModuleRequest.Data.ToString()).SelectToken("data").ToString());
                 var command = postedValues.Text;
 
                 switch (command.ToUpperInvariant())
                 {
-                    case Constants.Preferences: // Preference command to set the tags in a team.
-                        return this.GetTaskModuleResponse();
+                    case Constants.PreferenceSettings: // Preference settings command to set the tags in a team.
+                        return new TaskModuleResponse
+                        {
+                            Task = new TaskModuleContinueResponse
+                            {
+                                Type = "continue",
+                                Value = new TaskModuleTaskInfo()
+                                {
+                                    Url = $"{this.options.Value.AppBaseUri}/configurepreferences",
+                                    Height = TaskModuleHeight,
+                                    Width = TaskModuleWidth,
+                                    Title = this.localizer.GetString("ApplicationName"),
+                                },
+                            },
+                        };
+
                     default:
                         this.logger.LogInformation($"Received a command {command.ToUpperInvariant()} which is not supported.");
                         return default;
@@ -320,24 +320,28 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
             try
             {
                 turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
-                var message = turnContext.Activity;
+                var activity = turnContext.Activity;
 
-                message = message ?? throw new NullReferenceException(nameof(message));
-                var command = message.RemoveRecipientMention().Trim();
-
-                switch (command.ToUpperInvariant())
+                if (!string.IsNullOrEmpty(activity.Text))
                 {
-                    case Constants.HelpCommand: // Help command to get the information about the bot.
-                        this.logger.LogInformation("Sending user help card.");
-                        var userHelpCards = CarouselCard.GetUserHelpCards(this.options.Value.AppBaseUri);
-                        await turnContext.SendActivityAsync(MessageFactory.Carousel(userHelpCards)).ConfigureAwait(false);
-                        break;
-                    case Constants.Preferences: // Preference command to get the card to setup the tags preference of a team.
-                        await turnContext.SendActivityAsync(MessageFactory.Attachment(WelcomeCard.GetPreferenceCard(localizer: this.localizer)), cancellationToken).ConfigureAwait(false);
-                        break;
-                    default:
-                        this.logger.LogInformation($"Received a command {command.ToUpperInvariant()} which is not supported.");
-                        break;
+                    var command = activity.RemoveRecipientMention().Trim();
+
+                    switch (command.ToUpperInvariant())
+                    {
+                        case Constants.HelpCommand: // Help command to get the information about the bot.
+                            this.logger.LogInformation("Sending user help card.");
+                            var userHelpCards = CarouselCard.GetUserHelpCards(this.options.Value.AppBaseUri);
+                            await turnContext.SendActivityAsync(MessageFactory.Carousel(userHelpCards)).ConfigureAwait(false);
+                            break;
+
+                        case Constants.PreferenceSettings: // Preference command to get the card to setup the tags preference of a team.
+                            await turnContext.SendActivityAsync(MessageFactory.Attachment(WelcomeCard.GetPreferenceCard(localizer: this.localizer)), cancellationToken).ConfigureAwait(false);
+                            break;
+
+                        default:
+                            this.logger.LogInformation($"Received a command {command.ToUpperInvariant()} which is not supported.");
+                            break;
+                    }
                 }
             }
             catch (Exception ex)
@@ -358,8 +362,23 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         {
             try
             {
-                turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
-                taskModuleRequest = taskModuleRequest ?? throw new ArgumentNullException(nameof(taskModuleRequest));
+                if (turnContext == null || taskModuleRequest == null)
+                {
+                    return new TaskModuleResponse
+                    {
+                        Task = new TaskModuleContinueResponse
+                        {
+                            Type = "continue",
+                            Value = new TaskModuleTaskInfo()
+                            {
+                                Url = $"{this.options.Value.AppBaseUri}/error",
+                                Height = TaskModuleHeight,
+                                Width = TaskModuleWidth,
+                                Title = this.localizer.GetString("ApplicationName"),
+                            },
+                        },
+                    };
+                }
 
                 var preferenceData = JsonConvert.DeserializeObject<Preference>(taskModuleRequest.Data?.ToString());
 
@@ -370,48 +389,85 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
                     return null;
                 }
 
+                // If user clicks Cancel button in task module.
                 if (preferenceData.Command == CloseCommand)
                 {
                     return null;
                 }
-                else
+
+                if (preferenceData.Command == SubmitCommand)
                 {
-                    var teamPreferenceDetail = this.teamPreferenceStorageHelper.CreateTeamPreferenceModel(preferenceData.ConfigureDetails);
-                    await this.teamPreferenceStorageProvider.UpsertTeamPreferenceAsync(teamPreferenceDetail);
+                    // Save or update digest preference for team.
+                    if (preferenceData.ConfigureDetails != null)
+                    {
+                        var currentTeamPreferenceDetail = await this.teamPreferenceStorageProvider.GetTeamPreferenceAsync(preferenceData.ConfigureDetails.TeamId);
+                        TeamPreferenceEntity teamPreferenceDetail;
+
+                        if (currentTeamPreferenceDetail == null)
+                        {
+                            teamPreferenceDetail = new TeamPreferenceEntity
+                            {
+                                CreatedDate = DateTime.UtcNow,
+                                DigestFrequency = preferenceData.ConfigureDetails.DigestFrequency,
+                                Tags = preferenceData.ConfigureDetails.Tags,
+                                TeamId = preferenceData.ConfigureDetails.TeamId,
+                                UpdatedByName = turnContext.Activity.From.Name,
+                                UpdatedByObjectId = turnContext.Activity.From.AadObjectId,
+                                UpdatedDate = DateTime.UtcNow,
+                                RowKey = preferenceData.ConfigureDetails.TeamId,
+                            };
+                        }
+                        else
+                        {
+                            currentTeamPreferenceDetail.DigestFrequency = preferenceData.ConfigureDetails.DigestFrequency;
+                            currentTeamPreferenceDetail.Tags = preferenceData.ConfigureDetails.Tags;
+                            teamPreferenceDetail = currentTeamPreferenceDetail;
+                        }
+
+                        var upsertResult = await this.teamPreferenceStorageProvider.UpsertTeamPreferenceAsync(teamPreferenceDetail);
+                    }
+                    else
+                    {
+                        this.logger.LogInformation("Preference details received from task module is null.");
+                        return new TaskModuleResponse
+                        {
+                            Task = new TaskModuleContinueResponse
+                            {
+                                Type = "continue",
+                                Value = new TaskModuleTaskInfo()
+                                {
+                                    Url = $"{this.options.Value.AppBaseUri}/error",
+                                    Height = TaskModuleHeight,
+                                    Width = TaskModuleWidth,
+                                    Title = this.localizer.GetString("ApplicationName"),
+                                },
+                            },
+                        };
+                    }
                 }
 
                 return null;
             }
+#pragma warning disable CA1031 // Catching general exception for any errors occurred during saving data to table storage.
             catch (Exception ex)
+#pragma warning restore CA1031 // Catching general exception for any errors occurred during saving data to table storage.
             {
                 this.logger.LogError(ex, "Error in submit action of task module.");
-                await turnContext.SendActivityAsync(Strings.ErrorMessage).ConfigureAwait(false);
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Get task module response object.
-        /// </summary>
-        /// <returns>TaskModuleResponse object.</returns>
-        private TaskModuleResponse GetTaskModuleResponse()
-        {
-            string url = $"{this.options.Value.AppBaseUri}/configurepreferences";
-
-            return new TaskModuleResponse
-            {
-                Task = new TaskModuleContinueResponse
+                return new TaskModuleResponse
                 {
-                    Type = "continue",
-                    Value = new TaskModuleTaskInfo()
+                    Task = new TaskModuleContinueResponse
                     {
-                        Url = url,
-                        Height = TaskModuleHeight,
-                        Width = TaskModuleWidth,
-                        Title = this.localizer.GetString("TaskModuleTitleText"),
+                        Type = "continue",
+                        Value = new TaskModuleTaskInfo()
+                        {
+                            Url = $"{this.options.Value.AppBaseUri}/error",
+                            Height = TaskModuleHeight,
+                            Width = TaskModuleWidth,
+                            Title = this.localizer.GetString("ApplicationName"),
+                        },
                     },
-                },
-            };
+                };
+            }
         }
 
         /// <summary>
@@ -432,69 +488,30 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
             });
         }
 
-        private async Task<IEnumerable<TeamsChannelAccount>> GetTeamMembersAsync(ITurnContext<IConversationUpdateActivity> turnContext)
-        {
-            var teamInfo = turnContext.Activity.TeamsGetTeamInfo();
-            return await TeamsInfo.GetTeamMembersAsync(turnContext, teamInfo.Id);
-        }
-
-        /// <summary>
-        /// Get Azure Active Directory id of user.
-        /// </summary>
-        /// <param name="channelAccount">Channel account object.</param>
-        /// <returns>Azure Active Directory id of user.</returns>
-        private string GetUserAadObjectId(ChannelAccount channelAccount)
-        {
-            if (!string.IsNullOrWhiteSpace(channelAccount.AadObjectId))
-            {
-                return channelAccount.AadObjectId;
-            }
-
-            return channelAccount.Properties["objectId"].ToString();
-        }
-
         /// <summary>
         /// Sent welcome card to personal chat.
         /// </summary>
         /// <param name="turnContext">Provides context for a turn in a bot.</param>
         /// <returns>A task that represents a response.</returns>
-        private async Task HandleMemberAddedinPersonalScopeAsync(ITurnContext<IConversationUpdateActivity> turnContext)
+        private async Task SendWelcomeCardInPersonalScopeAsync(ITurnContext<IConversationUpdateActivity> turnContext)
         {
             this.logger.LogInformation($"Bot added in personal {turnContext.Activity.Conversation.Id}");
             var userStateAccessors = this.userState.CreateProperty<UserConversationState>(nameof(UserConversationState));
             var userConversationState = await userStateAccessors.GetAsync(turnContext, () => new UserConversationState());
 
-            userConversationState = userConversationState ?? throw new NullReferenceException(nameof(userConversationState));
-
-            if (userConversationState.IsWelcomeCardSent)
+            if (userConversationState?.IsWelcomeCardSent == null || userConversationState?.IsWelcomeCardSent == false)
             {
-                return;
+                userConversationState.IsWelcomeCardSent = true;
+                await userStateAccessors.SetAsync(turnContext, userConversationState);
+
+                var userWelcomeCardAttachment = WelcomeCard.GetWelcomeCardAttachmentForPersonal(
+                    this.options.Value.AppBaseUri,
+                    localizer: this.localizer,
+                    this.botOptions.Value.ManifestId,
+                    this.options.Value.DiscoverTabEntityId);
+
+                await turnContext.SendActivityAsync(MessageFactory.Attachment(userWelcomeCardAttachment));
             }
-
-            userConversationState.IsWelcomeCardSent = true;
-            await userStateAccessors.SetAsync(turnContext, userConversationState);
-
-            var userWelcomeCardAttachment = WelcomeCard.GetWelcomeCardAttachmentForPersonal(
-                this.options.Value.AppBaseUri,
-                localizer: this.localizer,
-                this.botOptions.Value.ManifestId,
-                this.discoverTabEntityId);
-
-            await turnContext.SendActivityAsync(MessageFactory.Attachment(userWelcomeCardAttachment));
-        }
-
-        /// <summary>
-        /// Set user conversation state to new if bot is removed from personal scope.
-        /// </summary>
-        /// <param name="turnContext">Provides context for a turn in a bot.</param>
-        /// <returns>>A task that represents a response.</returns>
-        private async Task HandleMemberRemovedInPersonalScopeAsync(ITurnContext<IConversationUpdateActivity> turnContext)
-        {
-            this.logger.LogInformation($"Bot removed from personal {turnContext.Activity.Conversation.Id}");
-            var userStateAccessors = this.userState.CreateProperty<UserConversationState>(nameof(UserConversationState));
-            var userdata = await userStateAccessors.GetAsync(turnContext, () => new UserConversationState());
-            userdata.IsWelcomeCardSent = false;
-            await userStateAccessors.SetAsync(turnContext, userdata).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -502,38 +519,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// </summary>
         /// <param name="turnContext">Provides context for a turn in a bot.</param>
         /// <returns>A task that represents a response.</returns>
-        private async Task HandleMemberAddedInTeamAsync(ITurnContext<IConversationUpdateActivity> turnContext)
+        private async Task SendWelcomeCardInChannelAsync(ITurnContext<IConversationUpdateActivity> turnContext)
         {
             this.logger.LogInformation($"Bot added in team {turnContext.Activity.Conversation.Id}");
-            var teamMembers = await this.GetTeamMembersAsync(turnContext);
-            var channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
             var userWelcomeCardAttachment = WelcomeCard.GetWelcomeCardAttachmentForTeam(this.options.Value.AppBaseUri, this.localizer);
             await turnContext.SendActivityAsync(MessageFactory.Attachment(userWelcomeCardAttachment));
-
-            foreach (var teamMember in teamMembers)
-            {
-                var userAadObjectId = this.GetUserAadObjectId(teamMember);
-                await this.userTeamMembershipProvider.AddUserTeamMembershipAsync(channelData.Team.Id, userAadObjectId, new Uri(turnContext.Activity.ServiceUrl));
-            }
-        }
-
-        /// <summary>
-        /// Remove user membership from storage if bot is uninstalled from Team scope.
-        /// </summary>
-        /// <param name="turnContext">Provides context for a turn in a bot.</param>
-        /// <returns>A task that represents a response.</returns>
-        private async Task HandleMemberRemovedInTeamScopeAsync(ITurnContext<IConversationUpdateActivity> turnContext)
-        {
-            this.logger.LogInformation($"Bot removed from team {turnContext.Activity.Conversation.Id}");
-            var teamsChannelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
-            var teamId = teamsChannelData.Team.Id;
-            await this.userTeamMembershipProvider.DeleteUserTeamMembershipByTeamIdAsync(teamId);
-            var result = await this.teamTagStorageProvider.DeleteTeamTagsEntryDataAsync(teamId);
-
-            if (!result)
-            {
-                this.logger.LogInformation($"Filed to delete the tags for team: {teamId}");
-            }
         }
     }
 }

@@ -3,10 +3,9 @@
 // </copyright>
 
 import * as React from "react";
-import { Button, Flex, Text, Input, Tooltip, TextArea, Dropdown, ItemLayout, Image, Provider } from "@fluentui/react-northstar";
+import { Button, Flex, Text, Input, Tooltip, TextArea, Dropdown, ItemLayout, Image, Provider, Label } from "@fluentui/react-northstar";
 import { CloseIcon, AddIcon, InfoIcon } from "@fluentui/react-icons-northstar";
 import * as microsoftTeams from "@microsoft/teams-js";
-import Tag from "../card-view/tag";
 import { IDiscoverPost } from "../card-view/discover-wrapper-page";
 import { addNewPostContent } from "../../api/discover-api";
 import { WithTranslation, withTranslation } from "react-i18next";
@@ -16,6 +15,7 @@ import { IPostType } from "../../constants/resources";
 import Resources from "../../constants/resources";
 
 import "../../styles/edit-dialog.css";
+import "../../styles/card.css";
 
 interface IAddNewDialogContentProps extends WithTranslation {
     onSubmit: (isSuccess: boolean, getSubmittedPost: IDiscoverPost) => void;
@@ -27,6 +27,7 @@ export interface ITagValidationParameters {
     isExisting: boolean;
     isLengthValid: boolean;
     isTagsCountValid: boolean;
+    containsSemicolon: boolean;
 }
 
 interface IAddNewDialogContentState {
@@ -41,11 +42,13 @@ interface IAddNewDialogContentState {
     isLinkValid: boolean;
     isLoading: boolean;
     tagValidation: ITagValidationParameters;
+    theme: string;
 }
 
 class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps, IAddNewDialogContentState> {
     localize: TFunction;
     teamId = "";
+
     constructor(props: any) {
         super(props);
 
@@ -63,7 +66,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                 tags: "",
                 title: "",
                 totalVotes: 0,
-                type: "",
+                type: undefined,
                 updatedDate: new Date(),
                 userId: "",
                 isVotedByUser: undefined,
@@ -76,8 +79,9 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
             isTypeValid: true,
             isDescriptionValid: true,
             isLinkValid: true,
-            tagValidation: { isEmpty: false, isExisting: false, isLengthValid: true, isTagsCountValid: true },
-            isLoading: false
+            tagValidation: { isEmpty: false, isExisting: false, isLengthValid: true, isTagsCountValid: true, containsSemicolon: false },
+            isLoading: false,
+            theme: ""
         }
     }
 
@@ -85,7 +89,18 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
         microsoftTeams.initialize();
         microsoftTeams.getContext((context: microsoftTeams.Context) => {
             this.teamId = context.teamId!;
+            this.setState({ theme: context.theme! });
         });
+
+        window.addEventListener("resize", function () {
+            if (this.document) {
+                if (document!.activeElement!.tagName == "INPUT") {
+                    window.setTimeout(function () {
+                        document!.activeElement!.scrollIntoView();
+                    }, 0);
+                }
+            }
+        })
     }
 
 	/**
@@ -119,7 +134,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 
 	/**
 	*Sets description state.
-	*@param description Description string
+	*@param description Description of post.
 	*/
     onDescriptionChange = (description: string) => {
         let cardDetails = this.state.postDetails;
@@ -129,7 +144,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 
 	/**
 	*Sets heading state.
-	*@param headingText Heading string
+	*@param headingText Title for post.
 	*/
     onHeadingChange = (headingText: string) => {
         let cardDetails = this.state.postDetails;
@@ -139,7 +154,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 
 	/**
 	*Sets link state.
-	*@param link Link string
+	*@param link Link to the original post.
 	*/
     onLinkChange = (link: string) => {
         let cardDetails = this.state.postDetails;
@@ -168,7 +183,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 	*Check if tag is valid
 	*/
     checkIfTagIsValid = () => {
-        let validationParams: ITagValidationParameters = { isEmpty: false, isLengthValid: true, isExisting: false, isTagsCountValid: false };
+        let validationParams: ITagValidationParameters = { isEmpty: false, isLengthValid: true, isExisting: false, isTagsCountValid: false, containsSemicolon: false };
         if (this.state.tag.trim() === "") {
             validationParams.isEmpty = true;
         }
@@ -184,6 +199,10 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
             }
         });
 
+        if (this.state.tag.split(";").length > 1) {
+            validationParams.containsSemicolon = true;
+        }
+
         if (isTagExist) {
             validationParams.isExisting = true;
         }
@@ -194,7 +213,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 
         this.setState({ tagValidation: validationParams });
 
-        if (!validationParams.isEmpty && !validationParams.isExisting && validationParams.isLengthValid && validationParams.isTagsCountValid) {
+        if (!validationParams.isEmpty && !validationParams.isExisting && validationParams.isLengthValid && validationParams.isTagsCountValid && !validationParams.containsSemicolon) {
             return true;
         }
         return false;
@@ -215,7 +234,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 	*/
     checkIfSubmitAllowed = () => {
         let postValidationStatus = { isTypeValid: true, isTitleValid: true, isDescriptionValid: true, isLinkValid: false };
-        if (this.state.postDetails.type === "") {
+        if (this.state.postDetails.type === undefined) {
             postValidationStatus.isTypeValid = false;
         }
 
@@ -328,6 +347,9 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
         else if (!this.state.tagValidation.isTagsCountValid) {
             return (<Text content={this.localize("tagsCountError")} className="field-error-message" error size="medium" />);
         }
+        else if (this.state.tagValidation.containsSemicolon) {
+            return (<Text content={this.localize("semicolonTagError")} className="field-error-message" error size="medium" />);
+        }
         return (<></>);
     }
 
@@ -348,7 +370,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
 
         const onTypeSelection = {
             onAdd: item => {
-                this.setState((prevState: IAddNewDialogContentState) => ({ postDetails: { ...prevState.postDetails, type: item!.key.toString() } }));
+                this.setState((prevState: IAddNewDialogContentState) => ({ postDetails: { ...prevState.postDetails, type: item!.key } }));
                 return "";
             },
         };
@@ -364,12 +386,12 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                             content={<Text content={this.localize("addNewPostDialogHeader")} weight="semibold" size="small" />}
                         />
                     </Flex.Item>
-                    <CloseIcon className="icon-hover" onClick={() => this.props.changeDialogOpenState(false)} />
+                    <CloseIcon className="icon-hover close-icon-dialog" onClick={() => this.props.changeDialogOpenState(false)} />
                 </Flex>
                 <Flex>
                     <div className="dialog-body">
                         <Flex gap="gap.smaller">
-                            <Text content={"*" + this.localize("type")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("type")} />
+                            <Text className="form-label" content={"*" + this.localize("type")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("typeInfo")} />
                             <Flex.Item push>
                                 {this.getTypeError()}
                             </Flex.Item>
@@ -386,7 +408,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                         </Flex>
 
                         <Flex gap="gap.smaller" className="input-fields-margin-between-add-post">
-                            <Text content={"*" + this.localize("headingFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("headingFormLabel")} />
+                            <Text className="form-label" content={"*" + this.localize("headingFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("titleInfo")} />
                             <Flex.Item push>
                                 {this.getTitleError()}
                             </Flex.Item>
@@ -398,7 +420,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                         </Flex>
 
                         <Flex gap="gap.smaller" className="input-fields-margin-between-add-post">
-                            <Text content={"*" + this.localize("descriptionFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("descriptionFormLabelTooltip")} />
+                            <Text className="form-label" content={"*" + this.localize("descriptionFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("descriptionInfo")} />
                             <Flex.Item push>
                                 {this.getDescriptionError()}
                             </Flex.Item>
@@ -410,7 +432,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                         </Flex>
 
                         <Flex gap="gap.smaller" className="input-fields-margin-between-add-post">
-                            <Text content={"*" + this.localize("linkFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("linkFormLabel")} />
+                            <Text className="form-label" content={"*" + this.localize("linkFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("linkInfo")} />
                             <Flex.Item push>
                                 {this.getLinkError()}
                             </Flex.Item>
@@ -422,7 +444,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                         </Flex>
 
                         <Flex gap="gap.smaller" className="input-fields-margin-between-add-post">
-                            <Text content={this.localize("tagsFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("tagsFormLabel")} />
+                            <Text className="form-label" content={this.localize("tagsFormLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("tagInfo")} />
                             <Flex.Item push>
                                 <div>
                                     {this.getTagError()}
@@ -441,7 +463,14 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                                 {
                                     this.state.tagsList.map((value: string, index) => {
                                         if (value.trim().length > 0) {
-                                            return <Tag index={index} tagContent={value.trim()} showRemoveIcon={true} onRemoveClick={this.onTagRemoveClick} />
+                                            return (
+                                                <Label
+                                                    circular
+                                                    content={<Text className="tag-text-form" content={value.trim()} title={value.trim()} size="small" />}
+                                                    className={this.state.theme === Resources.dark ? "tags-label-wrapper-dark" : "tags-label-wrapper"}
+                                                    icon={<CloseIcon key={index} className="icon-hover" onClick={() => this.onTagRemoveClick(index)} />}
+                                                />
+                                            )
                                         }
                                     })
                                 }
@@ -451,6 +480,7 @@ class AddNewItemDialogContent extends React.Component<IAddNewDialogContentProps,
                 </Flex>
                 <Flex className="dialog-footer-wrapper">
                     <Flex gap="gap.smaller" className="dialog-footer input-fields-margin-between-add-post">
+                        <div></div>
                         <Flex.Item push>
                             <Button content={this.localize("submit")} primary loading={this.state.isLoading} disabled={this.state.isLoading} onClick={this.onSubmitClick} />
                         </Flex.Item>

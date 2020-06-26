@@ -1,4 +1,4 @@
-﻿// <copyright file="TeamPostSearchService.cs" company="Microsoft">
+﻿// <copyright file="PostSearchService.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -8,35 +8,38 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.Azure.Search;
     using Microsoft.Azure.Search.Models;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
+    using Microsoft.Rest.Azure;
     using Microsoft.Teams.Apps.GoodReads.Common.Interfaces;
     using Microsoft.Teams.Apps.GoodReads.Models;
     using Microsoft.Teams.Apps.GoodReads.Models.Configuration;
+    using Polly;
+    using Polly.Contrib.WaitAndRetry;
+    using Polly.Retry;
 
     /// <summary>
-    /// Team post Search service which helps in creating index, indexer and data source if it doesn't exist
+    /// Post Search service which helps in creating index, indexer and data source if it doesn't exist
     /// for indexing table which will be used for search by Messaging Extension.
     /// </summary>
-    public class TeamPostSearchService : ITeamPostSearchService, IDisposable
+    public class PostSearchService : IPostSearchService, IDisposable
     {
         /// <summary>
-        /// Azure Search service index name for team post.
+        /// Azure Search service index name.
         /// </summary>
-        private const string TeamPostIndexName = "team-post-index";
+        private const string IndexName = "team-post-index";
 
         /// <summary>
-        /// Azure Search service indexer name for team post.
+        /// Azure Search service indexer name.
         /// </summary>
-        private const string TeamPostIndexerName = "team-post-indexer";
+        private const string IndexerName = "team-post-indexer";
 
         /// <summary>
-        /// Azure Search service data source name for team post.
+        /// Azure Search service data source name.
         /// </summary>
-        private const string TeamPostDataSourceName = "team-post-storage";
+        private const string DataSourceName = "team-post-storage";
 
         /// <summary>
         /// Table name where team post data will get saved.
@@ -46,12 +49,20 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <summary>
         /// Represents the sorting type as popularity means to sort the data based on number of votes.
         /// </summary>
-        private const string SortByPopular = "Popularity";
+        private const int SortByPopular = 1;
 
         /// <summary>
         /// Azure Search service maximum search result count for team post entity.
         /// </summary>
         private const int ApiSearchResultCount = 1500;
+
+        /// <summary>
+        /// Retry policy with jitter.
+        /// </summary>
+        /// <remarks>
+        /// Reference: https://github.com/Polly-Contrib/Polly.Contrib.WaitAndRetry#new-jitter-recommendation.
+        /// </remarks>
+        private readonly AsyncRetryPolicy retryPolicy;
 
         /// <summary>
         /// Used to initialize task.
@@ -61,22 +72,22 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <summary>
         /// Instance of Azure Search service client.
         /// </summary>
-        private readonly SearchServiceClient searchServiceClient;
+        private readonly ISearchServiceClient searchServiceClient;
 
         /// <summary>
         /// Instance of Azure Search index client.
         /// </summary>
-        private readonly SearchIndexClient searchIndexClient;
+        private readonly ISearchIndexClient searchIndexClient;
 
         /// <summary>
-        /// Instance of team post storage helper to update post and get information of posts.
+        /// Instance of post storage helper to update post and get information of posts.
         /// </summary>
-        private readonly ITeamPostStorageProvider teamPostStorageProvider;
+        private readonly IPostStorageProvider postStorageProvider;
 
         /// <summary>
         /// Instance to send logs to the Application Insights service.
         /// </summary>
-        private readonly ILogger<TeamPostSearchService> logger;
+        private readonly ILogger<PostSearchService> logger;
 
         /// <summary>
         /// Represents a set of key/value application configuration properties.
@@ -89,29 +100,30 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         private bool disposed = false;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TeamPostSearchService"/> class.
+        /// Initializes a new instance of the <see cref="PostSearchService"/> class.
         /// </summary>
         /// <param name="optionsAccessor">A set of key/value application configuration properties.</param>
-        /// <param name="teamPostStorageProvider">Team post storage provider dependency injection.</param>
+        /// <param name="postStorageProvider">Post storage provider dependency injection.</param>
         /// <param name="logger">Instance to send logs to the Application Insights service.</param>
         /// <param name="searchServiceClient">Search service client dependency injection.</param>
         /// <param name="searchIndexClient">Search index client dependency injection.</param>
-        public TeamPostSearchService(
+        public PostSearchService(
             IOptions<SearchServiceSetting> optionsAccessor,
-            ITeamPostStorageProvider teamPostStorageProvider,
-            ILogger<TeamPostSearchService> logger,
-            SearchServiceClient searchServiceClient,
-            SearchIndexClient searchIndexClient)
+            IPostStorageProvider postStorageProvider,
+            ILogger<PostSearchService> logger,
+            ISearchServiceClient searchServiceClient,
+            ISearchIndexClient searchIndexClient)
         {
             optionsAccessor = optionsAccessor ?? throw new ArgumentNullException(nameof(optionsAccessor));
 
             this.options = optionsAccessor.Value;
             var searchServiceValue = this.options.SearchServiceName;
             this.initializeTask = new Lazy<Task>(() => this.InitializeAsync());
-            this.teamPostStorageProvider = teamPostStorageProvider;
+            this.postStorageProvider = postStorageProvider;
             this.logger = logger;
             this.searchServiceClient = searchServiceClient;
             this.searchIndexClient = searchIndexClient;
+            this.retryPolicy = Policy.Handle<CloudException>().WaitAndRetryAsync(Backoff.LinearBackoff(TimeSpan.FromMilliseconds(2000), 2));
         }
 
         /// <summary>
@@ -125,47 +137,46 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <param name="sortBy">Represents sorting type like: Popularity or Newest.</param>
         /// <param name="filterQuery">Filter bar based query.</param>
         /// <returns>List of search results.</returns>
-        public async Task<IEnumerable<TeamPostEntity>> GetTeamPostsAsync(
-            TeamPostSearchScope searchScope,
+        public async Task<IEnumerable<PostEntity>> GetPostsAsync(
+            PostSearchScope searchScope,
             string searchQuery,
             string userObjectId,
             int? count = null,
             int? skip = null,
-            string sortBy = null,
+            int? sortBy = null,
             string filterQuery = null)
         {
             await this.EnsureInitializedAsync();
-            IEnumerable<TeamPostEntity> teamPosts = new List<TeamPostEntity>();
             var searchParameters = this.InitializeSearchParameters(searchScope, userObjectId, count, skip, sortBy, filterQuery);
 
             SearchContinuationToken continuationToken = null;
-            var userPrivatePostCollection = new List<TeamPostEntity>();
-            var teamPostResult = await this.searchIndexClient.Documents.SearchAsync<TeamPostEntity>(searchQuery, searchParameters);
+            var posts = new List<PostEntity>();
+            var postSearchResult = await this.searchIndexClient.Documents.SearchAsync<PostEntity>(searchQuery, searchParameters);
 
-            if (teamPostResult?.Results != null)
+            if (postSearchResult?.Results != null)
             {
-                userPrivatePostCollection.AddRange(teamPostResult.Results.Select(p => p.Document));
-                continuationToken = teamPostResult.ContinuationToken;
+                posts.AddRange(postSearchResult.Results.Select(p => p.Document));
+                continuationToken = postSearchResult.ContinuationToken;
             }
 
             if (continuationToken == null)
             {
-                return userPrivatePostCollection;
+                return posts;
             }
 
             do
             {
-                var teamPostResult1 = await this.searchIndexClient.Documents.ContinueSearchAsync<TeamPostEntity>(continuationToken);
+                var searchResult = await this.searchIndexClient.Documents.ContinueSearchAsync<PostEntity>(continuationToken);
 
-                if (teamPostResult1?.Results != null)
+                if (searchResult?.Results != null)
                 {
-                    userPrivatePostCollection.AddRange(teamPostResult1.Results.Select(p => p.Document));
-                    continuationToken = teamPostResult1.ContinuationToken;
+                    posts.AddRange(searchResult.Results.Select(p => p.Document));
+                    continuationToken = searchResult.ContinuationToken;
                 }
             }
             while (continuationToken != null);
 
-            return userPrivatePostCollection;
+            return posts;
         }
 
         /// <summary>
@@ -192,7 +203,32 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <returns>A task that represents the work queued to execute</returns>
         public async Task RunIndexerOnDemandAsync()
         {
-            await this.searchServiceClient.Indexers.RunAsync(TeamPostIndexerName);
+            // Retry once after 1 second if conflict occurs during indexer run.
+            // If conflict occurs again means another index run is in progress and it will index data for which first failure occurred.
+            // Hence ignore second conflict and continue.
+            var requestId = Guid.NewGuid().ToString();
+
+            try
+            {
+                await this.retryPolicy.ExecuteAsync(async () =>
+                {
+                    try
+                    {
+                        this.logger.LogInformation($"On-demand indexer run request #{requestId} - start");
+                        await this.searchServiceClient.Indexers.RunAsync(IndexerName);
+                        this.logger.LogInformation($"On-demand indexer run request #{requestId} - complete");
+                    }
+                    catch (CloudException ex)
+                    {
+                        this.logger.LogError(ex, $"Failed to run on-demand indexer run for request #{requestId}: {ex.Message}");
+                        throw;
+                    }
+                });
+            }
+            catch (CloudException ex)
+            {
+                this.logger.LogError(ex, $"Failed to run on-demand indexer for retry. Request #{requestId}: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -232,13 +268,13 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         {
             try
             {
-                // When there is no team post created by user and Messaging Extension is open, table initialization is required here before creating search index or data source or indexer.
-                await this.teamPostStorageProvider.GetTeamPostEntityAsync(string.Empty);
+                // When there is no post created by user and Messaging Extension is open, table initialization is required here before creating search index or data source or indexer.
+                await this.postStorageProvider.GetPostAsync(string.Empty, string.Empty);
                 await this.RecreateSearchServiceIndexAsync();
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Failed to initialize Azure Search Service: {ex.Message}", SeverityLevel.Error);
+                this.logger.LogError(ex, $"Failed to initialize Azure Search Service: {ex.Message}");
                 throw;
             }
         }
@@ -249,15 +285,15 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <returns><see cref="Task"/> That represents index is created if it is not created.</returns>
         private async Task CreateSearchIndexAsync()
         {
-            if (await this.searchServiceClient.Indexes.ExistsAsync(TeamPostIndexName))
+            if (await this.searchServiceClient.Indexes.ExistsAsync(IndexName))
             {
-                await this.searchServiceClient.Indexes.DeleteAsync(TeamPostIndexName);
+                await this.searchServiceClient.Indexes.DeleteAsync(IndexName);
             }
 
             var tableIndex = new Index()
             {
-                Name = TeamPostIndexName,
-                Fields = FieldBuilder.BuildForType<TeamPostEntity>(),
+                Name = IndexName,
+                Fields = FieldBuilder.BuildForType<PostEntity>(),
             };
             await this.searchServiceClient.Indexes.CreateAsync(tableIndex);
         }
@@ -268,15 +304,17 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <returns><see cref="Task"/> That represents data source is added to Azure Search service.</returns>
         private async Task CreateDataSourceAsync()
         {
-            if (await this.searchServiceClient.DataSources.ExistsAsync(TeamPostDataSourceName))
+            if (await this.searchServiceClient.DataSources.ExistsAsync(DataSourceName))
             {
                 return;
             }
 
             var dataSource = DataSource.AzureTableStorage(
-                TeamPostDataSourceName,
+                DataSourceName,
                 this.options.ConnectionString,
-                TeamPostTableName);
+                TeamPostTableName,
+                query: null,
+                new SoftDeleteColumnDeletionDetectionPolicy("IsRemoved", true));
 
             await this.searchServiceClient.DataSources.CreateAsync(dataSource);
         }
@@ -287,20 +325,20 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <returns><see cref="Task"/> That represents indexer is created if not available in Azure Search service.</returns>
         private async Task CreateIndexerAsync()
         {
-            if (await this.searchServiceClient.Indexers.ExistsAsync(TeamPostIndexerName))
+            if (await this.searchServiceClient.Indexers.ExistsAsync(IndexerName))
             {
-                await this.searchServiceClient.Indexers.DeleteAsync(TeamPostIndexerName);
+                await this.searchServiceClient.Indexers.DeleteAsync(IndexerName);
             }
 
             var indexer = new Indexer()
             {
-                Name = TeamPostIndexerName,
-                DataSourceName = TeamPostDataSourceName,
-                TargetIndexName = TeamPostIndexName,
+                Name = IndexerName,
+                DataSourceName = DataSourceName,
+                TargetIndexName = IndexName,
             };
 
             await this.searchServiceClient.Indexers.CreateAsync(indexer);
-            await this.searchServiceClient.Indexers.RunAsync(TeamPostIndexerName);
+            await this.searchServiceClient.Indexers.RunAsync(IndexerName);
         }
 
         /// <summary>
@@ -323,11 +361,11 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
         /// <param name="filterQuery">Filter bar based query.</param>
         /// <returns>Represents an search parameter object.</returns>
         private SearchParameters InitializeSearchParameters(
-            TeamPostSearchScope searchScope,
+            PostSearchScope searchScope,
             string userObjectId,
             int? count = null,
             int? skip = null,
-            string sortBy = null,
+            int? sortBy = null,
             string filterQuery = null)
         {
             SearchParameters searchParameters = new SearchParameters()
@@ -337,73 +375,72 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.SearchServices
                 IncludeTotalResultCount = false,
                 Select = new[]
                 {
-                    nameof(TeamPostEntity.PostId),
-                    nameof(TeamPostEntity.Type),
-                    nameof(TeamPostEntity.Title),
-                    nameof(TeamPostEntity.Description),
-                    nameof(TeamPostEntity.ContentUrl),
-                    nameof(TeamPostEntity.Tags),
-                    nameof(TeamPostEntity.CreatedDate),
-                    nameof(TeamPostEntity.CreatedByName),
-                    nameof(TeamPostEntity.UpdatedDate),
-                    nameof(TeamPostEntity.UserId),
-                    nameof(TeamPostEntity.TotalVotes),
-                    nameof(TeamPostEntity.IsRemoved),
+                    nameof(PostEntity.PostId),
+                    nameof(PostEntity.Type),
+                    nameof(PostEntity.Title),
+                    nameof(PostEntity.Description),
+                    nameof(PostEntity.ContentUrl),
+                    nameof(PostEntity.Tags),
+                    nameof(PostEntity.CreatedDate),
+                    nameof(PostEntity.CreatedByName),
+                    nameof(PostEntity.UpdatedDate),
+                    nameof(PostEntity.UserId),
+                    nameof(PostEntity.TotalVotes),
+                    nameof(PostEntity.IsRemoved),
                 },
-                SearchFields = new[] { nameof(TeamPostEntity.Title) },
-                Filter = string.IsNullOrEmpty(filterQuery) ? $"({nameof(TeamPostEntity.IsRemoved)} eq false)" : $"({nameof(TeamPostEntity.IsRemoved)} eq false) and ({filterQuery})",
+                SearchFields = new[] { nameof(PostEntity.Title) },
+                Filter = !string.IsNullOrEmpty(filterQuery) ? filterQuery : string.Empty,
             };
 
             switch (searchScope)
             {
-                case TeamPostSearchScope.AllItems:
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
+                case PostSearchScope.AllItems:
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
                     break;
 
-                case TeamPostSearchScope.PostedByMe:
-                    searchParameters.Filter = $"{nameof(TeamPostEntity.UserId)} eq '{userObjectId}' " + $"and ({nameof(TeamPostEntity.IsRemoved)} eq false)";
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
+                case PostSearchScope.PostedByMe:
+                    searchParameters.Filter = $"{nameof(PostEntity.UserId)} eq '{userObjectId}' ";
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
                     break;
 
-                case TeamPostSearchScope.Popular:
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.TotalVotes)} desc" };
+                case PostSearchScope.Popular:
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.TotalVotes)} desc" };
                     break;
 
-                case TeamPostSearchScope.TeamPreferenceTags:
-                    searchParameters.SearchFields = new[] { nameof(TeamPostEntity.Tags) };
+                case PostSearchScope.TeamPreferenceTags:
+                    searchParameters.SearchFields = new[] { nameof(PostEntity.Tags) };
                     searchParameters.Top = 5000;
-                    searchParameters.Select = new[] { nameof(TeamPostEntity.Tags) };
+                    searchParameters.Select = new[] { nameof(PostEntity.Tags) };
                     break;
 
-                case TeamPostSearchScope.FilterAsPerTeamTags:
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
-                    searchParameters.SearchFields = new[] { nameof(TeamPostEntity.Tags) };
+                case PostSearchScope.FilterAsPerTeamTags:
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
+                    searchParameters.SearchFields = new[] { nameof(PostEntity.Tags) };
                     break;
 
-                case TeamPostSearchScope.FilterPostsAsPerDateRange:
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
+                case PostSearchScope.FilterPostsAsPerDateRange:
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
                     searchParameters.Top = 200;
                     break;
 
-                case TeamPostSearchScope.UniqueUserNames:
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
-                    searchParameters.Select = new[] { nameof(TeamPostEntity.CreatedByName) };
+                case PostSearchScope.UniqueUserNames:
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
+                    searchParameters.Select = new[] { nameof(PostEntity.CreatedByName), nameof(PostEntity.UserId) };
                     break;
 
-                case TeamPostSearchScope.SearchTeamPostsForTitleText:
-                    searchParameters.OrderBy = new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
+                case PostSearchScope.SearchTeamPostsForTitleText:
+                    searchParameters.OrderBy = new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
                     searchParameters.QueryType = QueryType.Full;
-                    searchParameters.SearchFields = new[] { nameof(TeamPostEntity.Title) };
+                    searchParameters.SearchFields = new[] { nameof(PostEntity.Title) };
                     break;
 
-                case TeamPostSearchScope.FilterTeamPosts:
-
-                    if (!string.IsNullOrEmpty(sortBy))
+                case PostSearchScope.FilterTeamPosts:
+                    if (sortBy != null)
                     {
-                        searchParameters.OrderBy = sortBy == SortByPopular ? new[] { $"{nameof(TeamPostEntity.TotalVotes)} desc" } : new[] { $"{nameof(TeamPostEntity.UpdatedDate)} desc" };
+                        searchParameters.OrderBy = sortBy == SortByPopular ? new[] { $"{nameof(PostEntity.TotalVotes)} desc" } : new[] { $"{nameof(PostEntity.UpdatedDate)} desc" };
                     }
 
-                    searchParameters.SearchFields = new[] { nameof(TeamPostEntity.Tags) };
+                    searchParameters.SearchFields = new[] { nameof(PostEntity.Tags) };
                     break;
             }
 

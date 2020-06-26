@@ -11,6 +11,7 @@
 namespace Microsoft.Teams.Apps.GoodReads {
     using System;
     
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -65,6 +66,24 @@ namespace Microsoft.Teams.Apps.GoodReads {
         public static string ApplicationName {
             get {
                 return ResourceManager.GetString("ApplicationName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Blog post.
+        /// </summary>
+        public static string BlogPostType {
+            get {
+                return ResourceManager.GetString("BlogPostType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Book.
+        /// </summary>
+        public static string BookPostType {
+            get {
+                return ResourceManager.GetString("BookPostType", resourceCulture);
             }
         }
         
@@ -164,6 +183,15 @@ namespace Microsoft.Teams.Apps.GoodReads {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Other.
+        /// </summary>
+        public static string OtherPostType {
+            get {
+                return ResourceManager.GetString("OtherPostType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Discover.
         /// </summary>
         public static string PersonalWelcomeCardDiscoverButtonText {
@@ -173,20 +201,20 @@ namespace Microsoft.Teams.Apps.GoodReads {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Podcast.
+        /// </summary>
+        public static string PodcastPostType {
+            get {
+                return ResourceManager.GetString("PodcastPostType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tags.
         /// </summary>
         public static string TagsLabelText {
             get {
                 return ResourceManager.GetString("TagsLabelText", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Share Now.
-        /// </summary>
-        public static string TaskModuleTitleText {
-            get {
-                return ResourceManager.GetString("TaskModuleTitleText", resourceCulture);
             }
         }
         
@@ -205,6 +233,24 @@ namespace Microsoft.Teams.Apps.GoodReads {
         public static string TeamWelcomeCardConfigureButtonText {
             get {
                 return ResourceManager.GetString("TeamWelcomeCardConfigureButtonText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Video.
+        /// </summary>
+        public static string VideoPostType {
+            get {
+                return ResourceManager.GetString("VideoPostType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Vote.
+        /// </summary>
+        public static string VoteImageAltText {
+            get {
+                return ResourceManager.GetString("VoteImageAltText", resourceCulture);
             }
         }
         
@@ -250,6 +296,24 @@ namespace Microsoft.Teams.Apps.GoodReads {
         public static string WelcomeCardSuggestText {
             get {
                 return ResourceManager.GetString("WelcomeCardSuggestText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Get a **digest of content** that are added based on your preference in a channel to stay updated on the topics..
+        /// </summary>
+        public static string WelcomeCardTeamDigestContent {
+            get {
+                return ResourceManager.GetString("WelcomeCardTeamDigestContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to **Search &amp; Share** your favorite reads in a channel or chat to help your Peers grow..
+        /// </summary>
+        public static string WelcomeCardTeamShareContent {
+            get {
+                return ResourceManager.GetString("WelcomeCardTeamShareContent", resourceCulture);
             }
         }
         

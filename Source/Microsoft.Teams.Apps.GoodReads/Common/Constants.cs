@@ -40,9 +40,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Common
         public const string PopularPostCommandId = "popularReads";
 
         /// <summary>
-        /// Bot prefrences command to set preference for sending Weekly/Monthly notifications.
+        /// Bot preference settings command to set preference for sending Weekly/Monthly notifications.
         /// </summary>
-        public const string Preferences = "PREFERENCES";
+        public const string PreferenceSettings = "PREFERENCES";
 
         /// <summary>
         /// Partition key for team tag entity table.
@@ -58,5 +58,20 @@ namespace Microsoft.Teams.Apps.GoodReads.Common
         /// Per page post count for lazy loading (max 50).
         /// </summary>
         public const int LazyLoadPerPagePostCount = 50;
+
+        /// <summary>
+        /// Weekly digest for checking the digest notification type.
+        /// </summary>
+        public const string WeeklyDigest = "Weekly";
+
+        /// <summary>
+        /// Monthly digest for checking the digest notification type.
+        /// </summary>
+        public const string MonthlyDigest = "Monthly";
+
+        /// <summary>
+        /// default value for channel activity to send notifications.
+        /// </summary>
+        public const string TeamsBotFrameworkChannelId = "msteams";
     }
 }

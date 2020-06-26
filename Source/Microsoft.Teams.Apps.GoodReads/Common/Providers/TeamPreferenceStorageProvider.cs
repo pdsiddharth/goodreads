@@ -4,9 +4,7 @@
 
 namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Net;
     using System.Threading.Tasks;
     using Microsoft.Extensions.Logging;
@@ -17,7 +15,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which helps to create, get or update team preferences data in Microsoft Azure Table storage.
+    /// Implements storage provider which helps to create, get or update team preferences data.
     /// </summary>
     public class TeamPreferenceStorageProvider : BaseStorageProvider, ITeamPreferenceStorageProvider
     {
@@ -28,52 +26,47 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TeamPreferenceStorageProvider"/> class.
-        /// Handles Microsoft Azure Table storage read write operations.
+        /// Handles storage read write operations.
         /// </summary>
-        /// <param name="options">A set of key/value application configuration properties for Microsoft Azure Table storage.</param>
+        /// <param name="options">A set of key/value application configuration properties for storage.</param>
         /// <param name="logger">Sends logs to the Application Insights service.</param>
         public TeamPreferenceStorageProvider(
             IOptions<StorageSetting> options,
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, TeamPreferenceEntityName, logger)
         {
-            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
-        /// Get team preference data from Microsoft Azure Table storage.
+        /// Get team preference data.
         /// </summary>
         /// <param name="teamId">Team Id for which need to fetch data.</param>
         /// <returns>A task that represents an object to hold team preference data.</returns>
-        public async Task<TeamPreferenceEntity> GetTeamPreferenceDataAsync(string teamId)
+        public async Task<TeamPreferenceEntity> GetTeamPreferenceAsync(string teamId)
         {
-            teamId = teamId ?? throw new ArgumentNullException(nameof(teamId));
             await this.EnsureInitializedAsync();
+            var retrieveOperation = TableOperation.Retrieve<TeamPreferenceEntity>(teamId, teamId);
+            var queryResult = await this.GoodReadsCloudTable.ExecuteAsync(retrieveOperation);
+            if (queryResult?.Result != null)
+            {
+                return (TeamPreferenceEntity)queryResult?.Result;
+            }
 
-            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPreferenceEntityName);
-            string teamIdCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, teamId);
-            var combinedTeamFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, teamIdCondition);
-
-            TableQuery<TeamPreferenceEntity> query = new TableQuery<TeamPreferenceEntity>().Where(combinedTeamFilter);
-            var queryResult = await this.GoodReadsCloudTable.ExecuteQuerySegmentedAsync(query, null);
-
-            return queryResult?.Results.FirstOrDefault();
+            return null;
         }
 
         /// <summary>
-        /// Get team preferences data from Microsoft Azure Table storage.
+        /// Get team preferences data.
         /// </summary>
         /// <param name="digestFrequency">Digest frequency text for notification like Monthly/Weekly.</param>
         /// <returns>A task that represent collection to hold team preferences data.</returns>
-        public async Task<IEnumerable<TeamPreferenceEntity>> GetTeamPreferencesAsync(string digestFrequency)
+        public async Task<IEnumerable<TeamPreferenceEntity>> GetTeamPreferencesByDigestFrequencyAsync(string digestFrequency)
         {
             await this.EnsureInitializedAsync();
 
-            var partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, TeamPreferenceEntityName);
             var digestFrequencyCondition = TableQuery.GenerateFilterCondition(nameof(TeamPreferenceEntity.DigestFrequency), QueryComparisons.Equal, digestFrequency);
-            var combinedFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, digestFrequencyCondition);
 
-            TableQuery<TeamPreferenceEntity> query = new TableQuery<TeamPreferenceEntity>().Where(combinedFilter);
+            TableQuery<TeamPreferenceEntity> query = new TableQuery<TeamPreferenceEntity>().Where(digestFrequencyCondition);
             TableContinuationToken continuationToken = null;
             var teamPreferenceCollection = new List<TeamPreferenceEntity>();
 
@@ -93,22 +86,43 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         }
 
         /// <summary>
-        /// Stores or update team preference data in Microsoft Azure Table storage.
+        /// Delete team preference if Bot is uninstalled.
+        /// </summary>
+        /// <param name="teamId">Holds team id.</param>
+        /// <returns>A boolean that represents team tags is successfully deleted or not.</returns>
+        public async Task<bool> DeleteTeamPreferenceAsync(string teamId)
+        {
+            await this.EnsureInitializedAsync();
+
+            var retrieveOperation = TableOperation.Retrieve<TeamPreferenceEntity>(teamId, teamId);
+            var queryResult = await this.GoodReadsCloudTable.ExecuteAsync(retrieveOperation);
+            if (queryResult?.Result != null)
+            {
+                TableOperation deleteOperation = TableOperation.Delete((TeamPreferenceEntity)queryResult.Result);
+                var result = await this.GoodReadsCloudTable.ExecuteAsync(deleteOperation);
+                return result.HttpStatusCode == (int)HttpStatusCode.OK;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Stores or update team preference data.
         /// </summary>
         /// <param name="teamPreferenceEntity">Represents team preference entity object.</param>
         /// <returns>A boolean that represents team preference entity is successfully saved/updated or not.</returns>
         public async Task<bool> UpsertTeamPreferenceAsync(TeamPreferenceEntity teamPreferenceEntity)
         {
-            var result = await this.StoreOrUpdateEntityAsync(teamPreferenceEntity);
+            var result = await this.StoreOrUpdateTeamPreferenceAsync(teamPreferenceEntity);
             return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
         }
 
         /// <summary>
-        /// Stores or update team preference data in Microsoft Azure Table storage.
+        /// Stores or update team preference data in storage.
         /// </summary>
         /// <param name="teamPreferenceEntity">Holds team preference detail entity data.</param>
         /// <returns>A task that represents team preference entity data is saved or updated.</returns>
-        private async Task<TableResult> StoreOrUpdateEntityAsync(TeamPreferenceEntity teamPreferenceEntity)
+        private async Task<TableResult> StoreOrUpdateTeamPreferenceAsync(TeamPreferenceEntity teamPreferenceEntity)
         {
             await this.EnsureInitializedAsync();
             TableOperation addOrUpdateOperation = TableOperation.InsertOrReplace(teamPreferenceEntity);

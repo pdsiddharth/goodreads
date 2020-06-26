@@ -6,7 +6,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     using System;
     using System.ComponentModel.DataAnnotations;
-    using Microsoft.Teams.Apps.GoodReads.Common;
+    using Microsoft.Teams.Apps.GoodReads.Helpers.CustomValidations;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
@@ -15,32 +15,27 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     public class TeamPreferenceEntity : TableEntity
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TeamPreferenceEntity"/> class.
-        /// Holds team posts data.
-        /// </summary>
-        public TeamPreferenceEntity()
-        {
-            this.PartitionKey = Constants.TeamPreferenceEntityPartitionKey;
-        }
-
-        /// <summary>
         /// Gets or sets unique value for each Team where preference has configured.
         /// </summary>
-        [Key]
+        [Required]
         public string TeamId
         {
-            get { return this.RowKey; }
-            set { this.RowKey = value; }
+            get { return this.PartitionKey; }
+            set { this.PartitionKey = value; }
         }
 
         /// <summary>
         /// Gets or sets user selected value for digest frequency like Monthly/Weekly.
         /// </summary>
+        [Required]
+        [DigestFrequencyValidation]
         public string DigestFrequency { get; set; }
 
         /// <summary>
         /// Gets or sets semicolon separated tags selected by user.
         /// </summary>
+        [Required]
+        [PostTagsValidation(5)]
         public string Tags { get; set; }
 
         /// <summary>
@@ -52,11 +47,6 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         /// Gets or sets date time when entry is updated by user in UTC format.
         /// </summary>
         public DateTime UpdatedDate { get; set; }
-
-        /// <summary>
-        /// Gets or sets unique value for each Team preference.
-        /// </summary>
-        public string PreferenceId { get; set; }
 
         /// <summary>
         /// Gets or sets user name of last user who updated the configured preference.

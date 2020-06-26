@@ -185,10 +185,6 @@
     <value>Tags</value>
     <comment>Label text to show on card.</comment>
   </data>
-  <data name="TaskModuleTitleText" xml:space="preserve">
-    <value>Share Now</value>
-    <comment>Task module title text to show while setting the preferences for team.</comment>
-  </data>
   <data name="CarouselCard1Text" xml:space="preserve">
     <value>&lt;b&gt;Discover&lt;/b&gt; content by Tags, Type, Suggested by and sort by Popularity/latest based on your interest. &lt;br /&gt;
 &lt;b&gt;Add content&lt;/b&gt; to your private list and visit later to learn and grow.
@@ -209,5 +205,37 @@
   <data name="ApplicationName" xml:space="preserve">
     <value>Share Now</value>
     <comment>Application name to show on carousel card content.</comment>
+  </data>
+  <data name="WelcomeCardTeamDigestContent" xml:space="preserve">
+    <value>Get a **digest of content** that are added based on your preference in a channel to stay updated on the topics.</value>
+    <comment>Welcome card line one content for channel</comment>
+  </data>
+  <data name="WelcomeCardTeamShareContent" xml:space="preserve">
+    <value>**Search &amp; Share** your favorite reads in a channel or chat to help your Peers grow.</value>
+    <comment>Welcome card line two content for channel</comment>
+  </data>
+  <data name="BlogPostType" xml:space="preserve">
+    <value>Blog post</value>
+    <comment>Blog post type</comment>
+  </data>
+  <data name="BookPostType" xml:space="preserve">
+    <value>Book</value>
+    <comment>Book post type</comment>
+  </data>
+  <data name="OtherPostType" xml:space="preserve">
+    <value>Other</value>
+    <comment>Other post type</comment>
+  </data>
+  <data name="PodcastPostType" xml:space="preserve">
+    <value>Podcast</value>
+    <comment>Podcast post type</comment>
+  </data>
+  <data name="VideoPostType" xml:space="preserve">
+    <value>Video</value>
+    <comment>Video post type</comment>
+  </data>
+  <data name="VoteImageAltText" xml:space="preserve">
+    <value>Vote</value>
+    <comment>Text to show if vote icon fails to load</comment>
   </data>
 </root>

@@ -9,8 +9,10 @@ import EditItemDialogContent from "./edit-dialog-content";
 import { IDiscoverPost } from "../card-view/discover-wrapper-page";
 import { WithTranslation, withTranslation } from "react-i18next";
 import { TFunction } from "i18next";
+import * as microsoftTeams from "@microsoft/teams-js";
 
 import "../../styles/edit-dialog.css";
+import Resources from "../../constants/resources";
 
 interface IEditItemProps extends WithTranslation {
     index: number;
@@ -21,17 +23,27 @@ interface IEditItemProps extends WithTranslation {
 
 interface IEditDialogStateState {
     editDialogOpen: boolean;
+    theme: string;
 }
 
 class EditItemDialog extends React.Component<IEditItemProps, IEditDialogStateState> {
     localize: TFunction;
+
     constructor(props: any) {
         super(props);
 
         this.localize = this.props.t;
         this.state = {
-            editDialogOpen: false
+            editDialogOpen: false,
+            theme: Resources.default
         }
+    }
+
+    componentDidMount() {
+        microsoftTeams.initialize();
+        microsoftTeams.getContext((context: microsoftTeams.Context) => {
+            this.setState({ theme: context.theme! });
+        });
     }
 
 	/**
@@ -54,6 +66,7 @@ class EditItemDialog extends React.Component<IEditItemProps, IEditDialogStateSta
     * Renders the component
     */
     public render(): JSX.Element {
+        let className = this.state.theme === Resources.dark ? "dark-menu-items-wrapper" : this.state.theme === Resources.contrast ? "contrast-menu-items-wrapper" : "default-menu-items-wrapper";
         return (
             <Dialog
                 className="dialog-container"
@@ -68,7 +81,7 @@ class EditItemDialog extends React.Component<IEditItemProps, IEditDialogStateSta
                 open={this.state.editDialogOpen}
                 onOpen={() => this.setState({ editDialogOpen: true })}
                 trigger={
-                    <Flex vAlign="center" className="menu-items-wrapper" onClick={() => this.changeDialogOpenState(true)}>
+                    <Flex vAlign="center" className={className} onClick={() => this.changeDialogOpenState(true)}>
                         <EditIcon outline /> <Text className="trigger-text" content={this.localize("edit")} />
                     </Flex>}
             />

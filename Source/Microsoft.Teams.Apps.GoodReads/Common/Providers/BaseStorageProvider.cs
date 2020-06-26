@@ -16,7 +16,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     public class BaseStorageProvider
     {
         /// <summary>
-        /// Microsoft Azure Table storage connection string.
+        /// Storage connection string.
         /// </summary>
         private readonly string connectionString;
 
@@ -49,17 +49,17 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         protected Lazy<Task> InitializeTask { get; set; }
 
         /// <summary>
-        /// Gets or sets Microsoft Azure Table storage table name.
+        /// Gets or sets Storage table name.
         /// </summary>
         protected string TableName { get; set; }
 
         /// <summary>
-        /// Gets or sets a table in the Microsoft Azure Table storage.
+        /// Gets or sets a table in the storage.
         /// </summary>
         protected CloudTable GoodReadsCloudTable { get; set; }
 
         /// <summary>
-        /// Ensures Microsoft Azure Table storage should be created before working on table.
+        /// Ensures storage should be created before working on table.
         /// </summary>
         /// <returns>Represents an asynchronous operation.</returns>
         protected async Task EnsureInitializedAsync()
@@ -99,10 +99,10 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         {
             try
             {
-                CloudStorageAccount storageAccount = CloudStorageAccount.Parse(this.connectionString);
-                CloudTableClient cloudTableClient = storageAccount.CreateCloudTableClient();
-                this.GoodReadsCloudTable = cloudTableClient.GetTableReference(this.TableName);
-                await this.GoodReadsCloudTable.CreateIfNotExistsAsync();
+               CloudStorageAccount storageAccount = CloudStorageAccount.Parse(this.connectionString);
+               CloudTableClient cloudTableClient = storageAccount.CreateCloudTableClient();
+               this.GoodReadsCloudTable = cloudTableClient.GetTableReference(this.TableName);
+               await this.GoodReadsCloudTable.CreateIfNotExistsAsync();
             }
             catch (Exception ex)
             {

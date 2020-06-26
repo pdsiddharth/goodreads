@@ -7,26 +7,17 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.BackgroundService
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Rest.Azure;
     using Microsoft.Teams.Apps.GoodReads.Common.Interfaces;
+    using Microsoft.WindowsAzure.Storage;
 
     /// <summary>
     /// This class inherits IHostedService and implements the methods related to background tasks for sending Weekly/Monthly notifications.
     /// </summary>
     public class DigestNotificationBackgroundService : BackgroundService
     {
-        /// <summary>
-        /// Represents the Weekly digest frequency.
-        /// </summary>
-        private const string Weekly = "Weekly";
-
-        /// <summary>
-        ///  Represents the Monthly digest frequency.
-        /// </summary>
-        private const string Monthly = "Monthly";
-
         /// <summary>
         /// Instance to send logs to the Application Insights service.
         /// </summary>
@@ -64,68 +55,40 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.BackgroundService
             {
                 try
                 {
-                    var currentDateTime = DateTimeOffset.UtcNow;
+                    var currentDateTime = DateTimeOffset.UtcNow.AddDays(1);
                     this.logger.LogInformation($"Notification Hosted Service is running at: {currentDateTime}.");
 
                     if (currentDateTime.DayOfWeek == DayOfWeek.Monday)
                     {
                         this.logger.LogInformation($"Monday of the month: {currentDateTime} and sending the notification.");
-                        await this.SendNotificationWeeklyAsync(currentDateTime);
+                        DateTime fromDate = currentDateTime.AddDays(-7).Date;
+                        DateTime toDate = currentDateTime.Date;
+
+                        this.logger.LogInformation("Notification task queued for sending weekly notification.");
+                        await this.digestNotificationHelper.SendNotificationInChannelAsync(fromDate, toDate, Constants.WeeklyDigest); // Send the notifications
                     }
 
                     // Send digest notification if it's the 1st day of the Month.
                     if (currentDateTime.Day == 1)
                     {
                         this.logger.LogInformation($"First day of the month: {currentDateTime} and sending the notification.");
-                        await this.SendNotificationMonthlyAsync(currentDateTime);
+                        DateTime fromDate = currentDateTime.AddMonths(-1).Date;
+                        DateTime toDate = currentDateTime.Date;
+
+                        this.logger.LogInformation("Notification task queued for sending monthly notification.");
+                        await this.digestNotificationHelper.SendNotificationInChannelAsync(fromDate, toDate, Constants.MonthlyDigest); // Send the notifications
                     }
                 }
-                catch (Exception ex)
+                catch (CloudException ex)
                 {
-                    this.logger.LogError(ex, $"Error while running the background service to send digest notification): {ex.Message} at: {DateTimeOffset.UtcNow}", SeverityLevel.Error);
+                    this.logger.LogError(ex, $"Error occurred while accessing search service: {ex.Message} at: {DateTimeOffset.UtcNow}");
+                }
+                catch (StorageException ex)
+                {
+                    this.logger.LogError(ex, $"Error occurred while accessing storage: {ex.Message} at: {DateTimeOffset.UtcNow}");
                 }
 
                 await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
-            }
-        }
-
-        /// <summary>
-        /// Method invokes send notification task which gets posts data as per configured preference and send the notification.
-        /// </summary>
-        /// <returns>A task that sends notification in different channels.</returns>
-        private async Task SendNotificationWeeklyAsync(DateTimeOffset dateTimeOffset)
-        {
-            try
-            {
-                DateTime fromDate = dateTimeOffset.AddDays(-7).Date;
-                DateTime toDate = dateTimeOffset.Date;
-
-                this.logger.LogInformation("Notification task queued for sending weekly notification.");
-                await this.digestNotificationHelper.SendNotificationInChannelAsync(fromDate, toDate, Weekly); // Send the notifications
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, $"Error while sending the Weekly notification at {dateTimeOffset}.");
-            }
-        }
-
-        /// <summary>
-        /// Method invokes send notification task which gets posts data as per configured preference and send the notification.
-        /// </summary>
-        /// <returns>A task that sends notification in different channels.</returns>
-        private async Task SendNotificationMonthlyAsync(DateTimeOffset dateTimeOffset)
-        {
-            try
-            {
-                DateTime fromDate = dateTimeOffset.AddMonths(-1).Date;
-                DateTime toDate = dateTimeOffset.Date;
-
-                this.logger.LogInformation("Notification task queued for sending monthly notification.");
-                await this.digestNotificationHelper.SendNotificationInChannelAsync(fromDate, toDate, Monthly); // Send the notifications
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, $"Error while sending the Monthly notification at {dateTimeOffset}.");
             }
         }
     }

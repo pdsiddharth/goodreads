@@ -14,6 +14,7 @@ import "../../styles/no-post-added-page.css";
 
 interface INoPostAddedProps extends WithTranslation {
     onNewPostSubmit: (isSuccess: boolean, getSubmittedPost: IDiscoverPost) => void;
+    showAddButton: boolean;
 }
 
 class TeamsConfigPage extends React.Component<INoPostAddedProps> {
@@ -29,15 +30,12 @@ class TeamsConfigPage extends React.Component<INoPostAddedProps> {
                 <div className="app-logo">
                     <EyeIcon size="largest" />
                 </div>
-                <div className="no-data-preview">
-                    <Text content={this.localize("noDataPreviewNote")} />
-                </div>
                 <div className="add-new-post">
                     <Text content={this.localize("addNewPostNote")} />
                 </div>
-                <div className="add-new-post-btn">
+                {this.props.showAddButton && <div className="add-new-post-btn">
                     <AddNewPostDialog onSubmit={this.props.onNewPostSubmit} />
-                </div>
+                </div>}
             </div>
         )
     }

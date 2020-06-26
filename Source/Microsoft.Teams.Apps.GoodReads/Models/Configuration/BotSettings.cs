@@ -1,13 +1,13 @@
-﻿// <copyright file="BotSetting.cs" company="Microsoft">
+﻿// <copyright file="BotSettings.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     /// <summary>
-    /// A class which helps to provide Bot settings for Share Now application.
+    /// A class which helps to provide Bot settings for application.
     /// </summary>
-    public class BotSetting
+    public class BotSettings
     {
         /// <summary>
         /// Gets or sets application base Uri which helps in generating customer token.
@@ -38,5 +38,15 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         /// Gets or sets application manifest id.
         /// </summary>
         public string ManifestId { get; set; }
+
+        /// <summary>
+        /// Gets or sets application id.
+        /// </summary>
+        public string MicrosoftAppId { get; set; }
+
+        /// <summary>
+        /// Gets or sets application password.
+        /// </summary>
+        public string MicrosoftAppPassword { get; set; }
     }
 }

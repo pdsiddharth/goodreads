@@ -32,6 +32,6 @@ export const addNewPostContent = async (post: any): Promise<any> => {
 */
 export const deletePrivatePostContent = async (post: any): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/userprivatepost?postId=${post.postId}&userId=${post.userId}`;
+    let url = `${baseAxiosUrl}/userprivatepost?postId=${post.postId}`;
     return await axios.delete(url);
 }

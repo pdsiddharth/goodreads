@@ -16,7 +16,6 @@ namespace Microsoft.Teams.Apps.GoodReads
     using Microsoft.Bot.Connector.Authentication;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Teams.Apps.GoodReads.Authentication;
     using Microsoft.Teams.Apps.GoodReads.Bot;
     using Microsoft.Teams.Apps.GoodReads.Common.BackgroundService;
     using Microsoft.Teams.Apps.GoodReads.Common.Interfaces;
@@ -52,7 +51,7 @@ namespace Microsoft.Teams.Apps.GoodReads
                 options.DiscoverTabEntityId = discoverTabEntityId;
             });
 
-            services.Configure<BotSetting>(options =>
+            services.Configure<BotSettings>(options =>
             {
                 options.SecurityKey = configuration.GetValue<string>("App:SecurityKey");
                 options.AppBaseUri = appBaseUrl;
@@ -60,12 +59,17 @@ namespace Microsoft.Teams.Apps.GoodReads
                 options.MedianFirstRetryDelay = configuration.GetValue<double>("RetryPolicy:medianFirstRetryDelay");
                 options.RetryCount = configuration.GetValue<int>("RetryPolicy:retryCount");
                 options.ManifestId = configuration.GetValue<string>("App:ManifestId");
+                options.MicrosoftAppId = configuration.GetValue<string>("MicrosoftAppId");
+                options.MicrosoftAppPassword = configuration.GetValue<string>("MicrosoftAppPassword");
             });
 
             services.Configure<AzureActiveDirectorySettings>(options =>
             {
                 options.TenantId = configuration.GetValue<string>("AzureAd:TenantId");
                 options.ClientId = configuration.GetValue<string>("AzureAd:ClientId");
+                options.ApplicationIdURI = configuration.GetValue<string>("AzureAd:ApplicationIdURI");
+                options.ValidIssuers = configuration.GetValue<string>("AzureAd:ValidIssuers");
+                options.Instance = configuration.GetValue<string>("AzureAd:Instance");
             });
 
             services.Configure<TelemetrySetting>(options =>
@@ -85,11 +89,6 @@ namespace Microsoft.Teams.Apps.GoodReads
                 searchServiceSettings.SearchServiceAdminApiKey = configuration.GetValue<string>("SearchService:SearchServiceAdminApiKey");
                 searchServiceSettings.ConnectionString = configuration.GetValue<string>("Storage:ConnectionString");
             });
-
-            services.AddHostedService<TeamPostDataRefreshService>();
-            services.AddHostedService<DigestNotificationBackgroundService>();
-            services.AddSingleton<IDigestNotificationHelper, DigestNotificationHelper>();
-            services.AddSingleton<UserValidator>();
         }
 
         /// <summary>
@@ -99,35 +98,25 @@ namespace Microsoft.Teams.Apps.GoodReads
         /// <param name="configuration">Application configuration properties.</param>
         public static void AddHelpers(this IServiceCollection services, IConfiguration configuration)
         {
-            string appId = configuration.GetValue<string>("MicrosoftAppId");
-            string appPassword = configuration.GetValue<string>("MicrosoftAppPassword");
-
-            ICredentialProvider credentialProvider = new SimpleCredentialProvider(
-                appId: appId,
-                password: appPassword);
-
-            services.AddSingleton(credentialProvider);
-
             services.AddApplicationInsightsTelemetry(configuration.GetValue<string>("ApplicationInsights:InstrumentationKey"));
 
-            services.AddSingleton<ITeamPostStorageProvider, TeamPostStorageProvider>();
+            services.AddSingleton<IPostStorageProvider, PostStorageProvider>();
             services.AddSingleton<ITeamPreferenceStorageProvider, TeamPreferenceStorageProvider>();
             services.AddSingleton<IUserPrivatePostStorageProvider, UserPrivatePostStorageProvider>();
             services.AddSingleton<IUserVoteStorageProvider, UserVoteStorageProvider>();
-            services.AddSingleton<IUserTeamMembershipProvider, UserTeamMembershipProvider>();
             services.AddSingleton<ITeamTagStorageProvider, TeamTagStorageProvider>();
-
-            services.AddSingleton<ITeamPostSearchService, TeamPostSearchService>();
-
+            services.AddSingleton<ITeamTagStorageProvider, TeamTagStorageProvider>();
+            services.AddSingleton<PostTypeHelper>();
+            services.AddSingleton<IPostSearchService, PostSearchService>();
             services.AddSingleton<IMessagingExtensionHelper, MessagingExtensionHelper>();
-            services.AddSingleton<ITeamPostStorageHelper, TeamPostStorageHelper>();
+            services.AddSingleton<IPostStorageHelper, PostStorageHelper>();
             services.AddSingleton<ITeamPreferenceStorageHelper, TeamPreferenceStorageHelper>();
-            services.AddSingleton<IUserPrivatePostStorageHelper, UserPrivatePostStorageHelper>();
-            services.AddSingleton<IUserVoteStorageHelper, UserVoteStorageHelper>();
-            services.AddSingleton<ITeamTagStorageHelper, TeamTagStorageHelper>();
-            services.AddSingleton<UserValidator>();
-            services.AddSingleton(new SearchServiceClient(configuration.GetValue<string>("SearchService:SearchServiceName"), new SearchCredentials(configuration.GetValue<string>("SearchService:SearchServiceAdminApiKey"))));
-            services.AddSingleton(new SearchIndexClient(configuration.GetValue<string>("SearchService:SearchServiceName"), TeamPostIndexName, new SearchCredentials(configuration.GetValue<string>("SearchService:SearchServiceQueryApiKey"))));
+#pragma warning disable CA2000 // This is singleton which has lifetime same as the app
+            services.AddSingleton<ISearchServiceClient>(new SearchServiceClient(configuration.GetValue<string>("SearchService:SearchServiceName"), new SearchCredentials(configuration.GetValue<string>("SearchService:SearchServiceAdminApiKey"))));
+            services.AddSingleton<ISearchIndexClient>(new SearchIndexClient(configuration.GetValue<string>("SearchService:SearchServiceName"), TeamPostIndexName, new SearchCredentials(configuration.GetValue<string>("SearchService:SearchServiceQueryApiKey"))));
+#pragma warning restore CA2000 // This is singleton which has lifetime same as the app
+            services.AddHostedService<DigestNotificationBackgroundService>();
+            services.AddSingleton<IDigestNotificationHelper, DigestNotificationHelper>();
         }
 
         /// <summary>

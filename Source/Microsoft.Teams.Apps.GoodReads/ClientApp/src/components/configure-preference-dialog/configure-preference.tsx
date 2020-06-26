@@ -15,6 +15,7 @@ import Tag from "../card-view/tag";
 import NoTagFound from "./no-tag-found";
 import Resources from '../../constants/resources';
 
+import "../../styles/site.css";
 import "../../styles/configure-preferences.css";
 
 interface IConfigurePreferencesProps extends WithTranslation {
@@ -394,13 +395,13 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
             {
                 name: Resources.digestFrequencyRadioName,
                 key: Resources.weeklyDigestFrequencyText,
-                label: Resources.weeklyDigestFrequencyText,
+                label: this.localize("weeklyDigestFrequencyText"),
                 value: Resources.weeklyDigestFrequencyText,
             },
             {
                 name: Resources.digestFrequencyRadioName,
                 key: Resources.monthlyDigestFrequencyText,
-                label: Resources.monthlyDigestFrequencyText,
+                label: this.localize("monthlyDigestFrequencyText"),
                 value: Resources.monthlyDigestFrequencyText,
             },
         ]
@@ -417,7 +418,7 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
             return (
                 <div ref={elementRef => this.elementRef = elementRef} className="configure-preferences-div">
                     <Flex gap="gap.smaller" className="frequency-label">
-                        <Text content={this.localize("digestFrequencyLabel")} /><Tooltip position="below" trigger={<InfoIcon outline className="info-icon" size="small" />} content={this.localize("digestFrequencyLabel")} />
+                        <Text content={this.localize("digestFrequencyLabel")} /><InfoIcon outline className="info-icon" size="small" title={this.localize("digestFrequencyLabelInfo")} />
                     </Flex>
                     <Flex gap="gap.smaller" className="frequency-radio">
                         <RadioGroup
@@ -450,7 +451,7 @@ class ConfigurePreferences extends React.Component<IConfigurePreferencesProps, I
                             }
                         </div>
                     </Flex>
-                    <Flex gap="gap.smaller" className="input-fields-margin-between">
+                    <Flex gap="gap.smaller" className="footer">
                         <Flex.Item push>
                             <Button onClick={this.closeTaskModule} content={this.localize("cancel")} />
                         </Flex.Item>

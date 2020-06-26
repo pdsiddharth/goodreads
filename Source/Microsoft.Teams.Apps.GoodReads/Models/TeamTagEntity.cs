@@ -6,7 +6,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     using System;
     using System.ComponentModel.DataAnnotations;
-    using Microsoft.Teams.Apps.GoodReads.Common;
+    using Microsoft.Teams.Apps.GoodReads.Helpers.CustomValidations;
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
@@ -15,27 +15,35 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     public class TeamTagEntity : TableEntity
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TeamTagEntity"/> class.
-        /// Holds team posts data.
+        /// Gets or sets unique value for each Team where tags has configured.
         /// </summary>
-        public TeamTagEntity()
+        [Required]
+        public string TeamId
         {
-            this.PartitionKey = Constants.TeamTagEntityPartitionKey;
+            get { return this.PartitionKey; }
+            set { this.PartitionKey = value; }
         }
 
         /// <summary>
-        /// Gets or sets unique value for each Team where tags has configured.
+        /// Gets or sets Azure Active Directory id of user who configured the tags in team.
         /// </summary>
-        [Key]
-        public string TeamId
+        public string UserAadId
         {
             get { return this.RowKey; }
             set { this.RowKey = value; }
         }
 
         /// <summary>
+        /// Gets or sets service URL for tenant.
+        /// </summary>
+        [Required]
+        [Url]
+        public string ServiceUrl { get; set; }
+
+        /// <summary>
         /// Gets or sets semicolon separated tags selected by user.
         /// </summary>
+        [PostTagsValidation(5)]
         public string Tags { get; set; }
 
         /// <summary>
@@ -47,10 +55,5 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         /// Gets or sets user name who configured tags in team.
         /// </summary>
         public string CreatedByName { get; set; }
-
-        /// <summary>
-        /// Gets or sets Azure Active Directory id of user who configured the tags in team.
-        /// </summary>
-        public string UserAadId { get; set; }
     }
 }

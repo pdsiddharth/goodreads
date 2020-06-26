@@ -3,7 +3,7 @@
 // </copyright>
 
 import * as React from "react";
-import { Loader, Flex } from "@fluentui/react-northstar";
+import { Loader } from "@fluentui/react-northstar";
 import Card from "./card";
 import NoPostAddedPage from "./no-post-added-page";
 import FilterNoPostContentPage from "./filter-no-post-content-page";
@@ -21,10 +21,11 @@ import InfiniteScroll from 'react-infinite-scroller';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "../../styles/site.css";
+import "../../styles/card.css";
 
 export interface IDiscoverPost {
     postId: string;
-    type: string;
+    type?: number;
     title: string;
     description: string;
     contentUrl: string;
@@ -60,6 +61,7 @@ interface ICardViewState {
     isPageInitialLoad: boolean;
     pageLoadStart: number;
     hasMorePosts: boolean;
+    initialPosts: Array<IDiscoverPost>;
 }
 
 class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewState> {
@@ -68,28 +70,31 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     selectedSharedBy: Array<ICheckBoxItem>;
     selectedPostType: Array<ICheckBoxItem>;
     selectedTags: Array<ICheckBoxItem>;
-    selectedSortBy: string;
+    selectedSortBy: number;
     filterSearchText: string;
     allPosts: Array<IDiscoverPost>;
     loggedInUserObjectId: string;
     teamId: string;
     authorAvatarBackground: Array<any>;
+    hasmorePost: boolean;
 
     constructor(props: any) {
         super(props);
+        let colors = localStorage.getItem("avatar-colors");
         this.localize = this.props.t;
         this.selectedSharedBy = [];
         this.selectedPostType = [];
         this.selectedTags = [];
-        this.selectedSortBy = "";
+        this.selectedSortBy = 0;
         this.filterSearchText = "";
         this.allPosts = [];
         this.loggedInUserObjectId = "";
         this.teamId = "";
-        this.authorAvatarBackground = [];
+        this.authorAvatarBackground = colors === null ? [] : JSON.parse(colors!);
+        this.hasmorePost = true;
 
         this.state = {
-            loader: false,
+            loader: true,
             discoverPosts: [],
             discoverSearchPosts: [],
             resourceStrings: {},
@@ -102,7 +107,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             infiniteScrollParentKey: 0,
             isPageInitialLoad: true,
             pageLoadStart: -1,
-            hasMorePosts: true
+            hasMorePosts: true,
+            initialPosts: []
         }
     }
 
@@ -110,10 +116,24 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     * Used to initialize Microsoft Teams sdk
     */
     async componentDidMount() {
+        this.initDiscoverPosts();
         microsoftTeams.initialize();
         microsoftTeams.getContext((context: microsoftTeams.Context) => {
             this.loggedInUserObjectId = context.userObjectId!;
         });
+    }
+
+    /**
+    * Fetch posts for initializing grid
+    */
+    initDiscoverPosts = async () => {
+        let response = await getDiscoverPosts(0);
+        if (response.status === 200 && response.data) {
+            this.setState({
+                initialPosts: response.data,
+                loader: false
+            })
+        }
     }
 
     /**
@@ -129,19 +149,17 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     * @param pageCount Page count for which next set of posts needs to be fetched
     */
     getFilteredDiscoverPosts = async (pageCount: number) => {
-        let postTypes = this.selectedPostType.map((postType: ICheckBoxItem) => { return postType.key.toString().trim() });
+        let postTypes = this.selectedPostType.map((postType: ICheckBoxItem) => { return postType.key.toString() });
         let postTypesString = encodeURI(this.getFilterString(postTypes));
         let authors = this.selectedSharedBy.map((authors: ICheckBoxItem) => { return authors.title.trim() });
         let authorsString = encodeURI(this.getFilterString(authors));
         let tags = this.selectedTags.map((tag: ICheckBoxItem) => { return tag.title.trim() });
         let tagsString = encodeURI(this.getFilterString(tags));
 
-        let response = await getFilteredPosts(postTypesString, authorsString, tagsString, this.selectedSortBy, "", pageCount);
+        let response = await getFilteredPosts(postTypesString, authorsString, tagsString, this.selectedSortBy, pageCount);
         if (response.status === 200 && response.data) {
-            if (!response.data.length) {
-                this.setState({
-                    hasMorePosts: false,
-                });
+            if (response.data.length < 50) {
+                this.hasmorePost = false;
             }
 
             response.data.map((post: IDiscoverPost) => {
@@ -153,6 +171,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.userId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.userId === this.loggedInUserObjectId) {
@@ -176,6 +196,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     isPageInitialLoad: false
                 })
             }
+
+            this.setState({ searchText: "" });
             this.getUserVotes();
         }
     }
@@ -199,10 +221,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         this.resetAllFilters();
         let response = await getDiscoverPosts(pageCount);
         if (response.status === 200 && response.data) {
-            if (!response.data.length) {
-                this.setState({
-                    hasMorePosts: false,
-                });
+            if (response.data.length < 50) {
+                this.hasmorePost = false;
             }
             response.data.map((post: IDiscoverPost) => {
                 let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
@@ -213,6 +233,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.userId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.userId === this.loggedInUserObjectId) {
@@ -230,13 +252,10 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     showNoPostPage: true
                 })
             }
+
+            this.setState({ searchText: "" });
             this.getUserVotes();
         }
-
-        this.setState({
-            searchText: "",
-            isPageInitialLoad: false
-        });
     }
 
     /**
@@ -276,13 +295,9 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     }
                 })
             }
-
-            this.onFilterSearchTextChange(this.filterSearchText);
         }
 
-        this.setState({
-            loader: false
-        });
+        this.onFilterSearchTextChange(this.filterSearchText);
     }
 
     /**
@@ -297,8 +312,11 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     post.isRemoved = true;
                 }
             });
-
+            this.showAlert(this.localize("postDeletedSuccess"), 1);
             this.onFilterSearchTextChange(this.filterSearchText);
+        }
+        else {
+            this.showAlert(this.localize("postDeletedError"), 2);
         }
     }
 
@@ -369,10 +387,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
             let response = await filterTitleAndTags(this.state.searchText, pageCount);
 
             if (response.status === 200 && response.data) {
-                if (!response.data.length) {
-                    this.setState({
-                        hasMorePosts: false,
-                    });
+                if (response.data.length < 50) {
+                    this.hasmorePost = false;
                 }
                 response.data.map((post: IDiscoverPost) => {
                     let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
@@ -383,6 +399,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                         let color = generateColor();
                         this.authorAvatarBackground.push({ id: post.userId, color: color });
                         post.avatarBackgroundColor = color;
+
+                        localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                     }
 
                     if (post.userId === this.loggedInUserObjectId) {
@@ -395,7 +413,6 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     this.allPosts.push(post)
                 });
 
-                this.setState({ isPageInitialLoad: false });
                 this.getUserVotes();
             }
         }
@@ -460,7 +477,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     *Filter cards based sort by value.
     *@param selectedValue Selected value for 'sort by'
     */
-    onSortByChange = (selectedValue: string) => {
+    onSortByChange = (selectedValue: number) => {
         this.selectedSortBy = selectedValue;
         this.setState({
             isPageInitialLoad: true,
@@ -533,6 +550,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 let color = generateColor();
                 this.authorAvatarBackground.push({ id: getSubmittedPost.userId, color: color });
                 getSubmittedPost.avatarBackgroundColor = color;
+
+                localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
             }
 
             let submittedPost = this.state.discoverPosts;
@@ -543,7 +562,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 getSubmittedPost.isCurrentUserPost = false;
             }
             submittedPost.unshift(getSubmittedPost);
-            this.setState({ discoverPosts: submittedPost });
+            this.setState({ discoverPosts: submittedPost, initialPosts: submittedPost });
             this.allPosts = this.state.discoverPosts;
             this.showAlert(this.localize("addNewPostSuccess"), 1)
         }
@@ -561,10 +580,14 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         if (searchText.trim().length) {
             let filteredPosts = this.allPosts.filter((post: IDiscoverPost) => post.title.toLowerCase().includes(searchText.toLowerCase()) === true);
 
-            this.setState({ discoverPosts: filteredPosts });
+            this.setState({
+                discoverPosts: filteredPosts, loader: false, hasMorePosts: this.hasmorePost, isPageInitialLoad: false
+            });
         }
         else {
-            this.setState({ discoverPosts: [...this.allPosts] });
+            this.setState({
+                discoverPosts: [...this.allPosts], loader: false, hasMorePosts: this.hasmorePost, isPageInitialLoad: false
+            });
         }
     }
 
@@ -573,17 +596,21 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     * @param isOpen Boolean indicating whether filter bar is displayed or closed.
     */
     handleFilterClear = (isOpen: boolean) => {
-        this.resetAllFilters();
+        if (!isOpen && (this.selectedPostType.length > 0 || this.selectedSharedBy.length > 0 || this.selectedTags.length > 0 || this.selectedSortBy !== Resources.sortBy[0].id)) {
+            this.setState({
+                isPageInitialLoad: true,
+                pageLoadStart: -1,
+                infiniteScrollParentKey: this.state.infiniteScrollParentKey + 1,
+                discoverPosts: [],
+                searchText: "",
+                hasMorePosts: true
+            });
+            this.allPosts = [];
+        }
         this.setState({
-            isPageInitialLoad: true,
-            pageLoadStart: -1,
-            infiniteScrollParentKey: this.state.infiniteScrollParentKey + 1,
-            discoverPosts: [],
-            searchText: "",
-            isFilterApplied: isOpen,
-            hasMorePosts: true
+            isFilterApplied: isOpen
         });
-        this.allPosts = [];
+        this.resetAllFilters();
     }
 
     /**
@@ -643,63 +670,62 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 }
             });
 
-            if (this.state.discoverPosts.length >= 0) {
-                let scrollViewStyle = { height: this.state.isFilterApplied === true ? "84vh" : "92vh" };
-                return (
-                    <div className="container-div">
-                        <div className="container-subdiv-cardview">
-                            <Container fluid className="container-fluid-overriden">
-                                <NotificationMessage
-                                    onClose={this.hideAlert}
-                                    showAlert={this.state.showAlert}
-                                    content={this.state.alertMessage}
-                                    notificationType={this.state.alertType}
-                                />
-                                <TitleBar
-                                    commandBarSearchText={this.state.searchText}
-                                    searchFilterPostsUsingAPI={this.invokeApiSearch}
-                                    onFilterClear={this.handleFilterClear}
-                                    hideFilterbar={!this.state.isFilterApplied}
-                                    onSortByChange={this.onSortByChange}
-                                    onFilterSearchChange={this.onFilterSearchTextChange}
-                                    onSearchInputChange={this.handleSearchInputChange}
-                                    onNewPostSubmit={this.onNewPost}
-                                    onSharedByCheckboxStateChange={this.onSharedByCheckboxStateChange}
-                                    onTypeCheckboxStateChange={this.onTypeCheckboxStateChange}
-                                    onTagsStateChange={this.onTagsStateChange}
-                                />
-                                <div key={this.state.infiniteScrollParentKey} className="scroll-view" style={scrollViewStyle}>
-                                    <InfiniteScroll
-                                        pageStart={this.state.pageLoadStart}
-                                        loadMore={this.loadMorePosts}
-                                        hasMore={this.state.hasMorePosts && !this.filterSearchText.trim().length}
-                                        initialLoad={this.state.isPageInitialLoad}
-                                        useWindow={false}
-                                        loader={<div className="loader"><Loader /></div>}>
-
-                                        <Row>
-                                            {
-                                                cards.length ? cards : this.state.hasMorePosts === true ? <></> : <FilterNoPostContentPage />
-                                            }
-                                        </Row>
-
-                                    </InfiniteScroll>
-                                </div>
-
-                            </Container>
-                        </div>
-                    </div>
-                );
-            }
-            else {
+            if (this.state.initialPosts.length === 0) {
                 return (
                     <div className="container-div">
                         <div className="container-subdiv">
-                            <NoPostAddedPage onNewPostSubmit={this.onNewPost} />
+                            <NotificationMessage onClose={this.hideAlert} showAlert={this.state.showAlert} content={this.state.alertMessage} notificationType={this.state.alertType} />
+                            <NoPostAddedPage showAddButton={true} onNewPostSubmit={this.onNewPost} />
                         </div>
                     </div>
                 )
             }
+            let scrollViewStyle = { height: this.state.isFilterApplied === true ? "84vh" : "92vh" };
+            return (
+                <div className="container-div">
+                    <div className="container-subdiv-cardview">
+                        <Container fluid className="container-fluid-overriden">
+                            <NotificationMessage
+                                onClose={this.hideAlert}
+                                showAlert={this.state.showAlert}
+                                content={this.state.alertMessage}
+                                notificationType={this.state.alertType}
+                            />
+                            <TitleBar
+                                commandBarSearchText={this.state.searchText}
+                                searchFilterPostsUsingAPI={this.invokeApiSearch}
+                                onFilterClear={this.handleFilterClear}
+                                hideFilterbar={!this.state.isFilterApplied}
+                                onSortByChange={this.onSortByChange}
+                                onFilterSearchChange={this.onFilterSearchTextChange}
+                                onSearchInputChange={this.handleSearchInputChange}
+                                onNewPostSubmit={this.onNewPost}
+                                onSharedByCheckboxStateChange={this.onSharedByCheckboxStateChange}
+                                onTypeCheckboxStateChange={this.onTypeCheckboxStateChange}
+                                onTagsStateChange={this.onTagsStateChange}
+                            />
+                            <div key={this.state.infiniteScrollParentKey} className="scroll-view scroll-view-mobile" style={scrollViewStyle}>
+                                <InfiniteScroll
+                                    pageStart={this.state.pageLoadStart}
+                                    loadMore={this.loadMorePosts}
+                                    hasMore={this.state.hasMorePosts && !this.filterSearchText.trim().length}
+                                    initialLoad={this.state.isPageInitialLoad}
+                                    useWindow={false}
+                                    loader={<div className="loader"><Loader /></div>}>
+
+                                    <Row>
+                                        {
+                                            cards.length ? cards : this.state.hasMorePosts === true ? <></> : <FilterNoPostContentPage />
+                                        }
+                                    </Row>
+
+                                </InfiniteScroll>
+                            </div>
+
+                        </Container>
+                    </div>
+                </div>
+            );
         }
     }
 }

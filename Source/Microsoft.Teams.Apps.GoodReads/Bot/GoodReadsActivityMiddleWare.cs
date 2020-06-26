@@ -20,9 +20,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
     public class GoodReadsActivityMiddleware : IMiddleware
     {
         /// <summary>
-        /// Represents a set of key/value application configuration properties for Share Now Bot.
+        /// Represents a set of key/value application configuration properties for bot.
         /// </summary>
-        private readonly IOptions<BotSetting> options;
+        private readonly IOptions<BotSettings> options;
 
         /// <summary>
         /// Sends logs to the Application Insights service.
@@ -34,7 +34,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// </summary>
         /// <param name="options"> A set of key/value application configuration properties.</param>
         /// <param name="logger">Sends logs to the Application Insights service.</param>
-        public GoodReadsActivityMiddleware(IOptions<BotSetting> options, ILogger<GoodReadsActivityMiddleware> logger)
+        public GoodReadsActivityMiddleware(IOptions<BotSettings> options, ILogger<GoodReadsActivityMiddleware> logger)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logger = logger;

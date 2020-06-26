@@ -13,6 +13,7 @@ interface IThumbnailProps {
 
 const Thumbnail: React.FunctionComponent<IThumbnailProps> = props => {
     const localize = useTranslation().t;
+
     if (props.isVisible) {
         return (
             <Image

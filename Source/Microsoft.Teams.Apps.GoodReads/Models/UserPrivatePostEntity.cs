@@ -14,7 +14,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
     public class UserPrivatePostEntity : TableEntity
     {
         /// <summary>
-        /// Gets or sets unique Azure Active Directory id of user.
+        /// Gets or sets unique Azure Active Directory Id of user.
         /// </summary>
         public string UserId
         {
@@ -25,7 +25,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Models
         /// <summary>
         /// Gets or sets unique identifier for each created post.
         /// </summary>
-        [Key]
+        [Required]
         public string PostId
         {
             get { return this.RowKey; }

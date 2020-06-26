@@ -19,7 +19,6 @@ class Redirect extends React.Component<{}, {}> {
         else {
             window.location.href = "/error";
         }
-
     }
 
     /**

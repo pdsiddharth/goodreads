@@ -3,7 +3,7 @@
 // </copyright>
 
 import * as React from "react";
-import { Popup, Button } from "@fluentui/react-northstar";
+import { Popup, Button, Text } from "@fluentui/react-northstar";
 import { ChevronDownIcon } from "@fluentui/react-icons-northstar";
 import PopupMenuCheckboxesContent from "./popup-menu-checkboxes-content";
 import PopupMenuRadiogroupContent from "./popup-menu-radiogroup-content";
@@ -15,10 +15,10 @@ interface IPopupMenuWrapperProps {
     checkboxes?: Array<any>,
     radioGroup?: Array<any>,
     title: string,
-    selectedSortBy?: string,
+    selectedSortBy?: number,
     showSearchBar?: boolean,
     onCheckboxStateChange: (typeState: Array<any>) => void,
-    onRadiogroupStateChange: (selectedValue: string) => void,
+    onRadiogroupStateChange: (selectedValue: number) => void,
 }
 
 const PopupMenuWrapper: React.FunctionComponent<IPopupMenuWrapperProps> = props => {
@@ -48,7 +48,7 @@ const PopupMenuWrapper: React.FunctionComponent<IPopupMenuWrapperProps> = props 
                 align="end"
                 position="below"
                 onOpenChange={(e, { open }: any) => onOpenChange({ isOpen: open })}
-                trigger={<Button className={popup.isOpen ? "gray-background" : "no-background"} onClick={() => onFilterClick()} content={props.title} iconPosition="after" icon={<ChevronDownIcon className={popup.isOpen ? "gray-background" : "no-background"} />} text />}
+                trigger={<Button className={`mobile-button ${popup.isOpen ? "gray-background" : "no-background"}`} onClick={() => onFilterClick()} content={<Text content={props.title} />} iconPosition="after" icon={<ChevronDownIcon className={popup.isOpen ? "gray-background" : "no-background"} />} text />}
                 content={<PopupMenuCheckboxesContent disableClear={disableClear} showSearchBar={props.showSearchBar!} content={{ checkboxes: props.checkboxes, title: props.title }} onCheckboxStateChange={props.onCheckboxStateChange} />}
                 trapFocus
             />
@@ -61,7 +61,7 @@ const PopupMenuWrapper: React.FunctionComponent<IPopupMenuWrapperProps> = props 
                 align="end"
                 position="below"
                 onOpenChange={(e, { open }: any) => onOpenChange({ isOpen: open })}
-                trigger={<Button icon={<ChevronDownIcon className={popup.isOpen ? "gray-background" : "no-background"} />} className={popup.isOpen ? "gray-background" : "no-background"} iconPosition="after" content={props.title} text />}
+                trigger={<Button icon={<ChevronDownIcon className={popup.isOpen ? "gray-background" : "no-background"} />} className={`mobile-button ${popup.isOpen ? "gray-background" : "no-background"}`} iconPosition="after" content={<Text content={props.title} />} text />}
                 content={<PopupMenuRadiogroupContent selectedValue={props.selectedSortBy!} content={{ radioGroupItems: props.radioGroup, title: props.title }} onRadiogroupStateChange={props.onRadiogroupStateChange} />}
                 trapFocus
             />

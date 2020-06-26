@@ -1,11 +1,10 @@
 ﻿// <copyright file="GoodReadsActivityHandlerOptions.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
-
-namespace Microsoft.Teams.Apps.GoodReads.Bot
+namespace Microsoft.Teams.Apps.GoodReads.Models.Configuration
 {
     /// <summary>
-    /// This class provide options for the <see cref="GoodReadsActivityHandler" /> bot.
+    /// This class provide options for the <see cref="GoodReadsActivityHandlerOptions" /> bot.
     /// </summary>
     public sealed class GoodReadsActivityHandlerOptions
     {

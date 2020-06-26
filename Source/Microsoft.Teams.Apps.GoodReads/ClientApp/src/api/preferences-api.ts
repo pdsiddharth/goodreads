@@ -8,15 +8,6 @@ import { getBaseUrl } from '../configVariables';
 let baseAxiosUrl = getBaseUrl() + '/api';
 
 /**
-* Submit user selected configuration preferences to API
-* @param postContent User selected configuration object
-*/
-export const submitConfigurePreferences = async (postContent: any): Promise<any> => {
-    let url = `${baseAxiosUrl}/teampreference`;
-    return await axios.post(url, postContent);
-}
-
-/**
 * Get preferences tags for configure preferences
 * @param teamId Team Id for which user configured tags needs to be fetched
 */

@@ -53,6 +53,13 @@ namespace Microsoft.Teams.Apps.GoodReads.Cards
                                 {
                                     new AdaptiveTextBlock
                                     {
+                                        Weight = AdaptiveTextWeight.Bolder,
+                                        Spacing = AdaptiveSpacing.None,
+                                        Text = localizer.GetString("WelcomeCardTitle"),
+                                        Wrap = true,
+                                    },
+                                    new AdaptiveTextBlock
+                                    {
                                         Spacing = AdaptiveSpacing.None,
                                         Text = localizer.GetString("WelcomeCardContent"),
                                         Wrap = true,
@@ -65,22 +72,12 @@ namespace Microsoft.Teams.Apps.GoodReads.Cards
                     },
                     new AdaptiveTextBlock
                     {
-                        Text = localizer.GetString("WelcomeCardThingsContentText"),
+                        Text = localizer.GetString("WelcomeCardTeamDigestContent"),
                         Wrap = true,
                     },
                     new AdaptiveTextBlock
                     {
-                        Text = localizer.GetString("WelcomeCardDiscoverText"),
-                        Wrap = true,
-                    },
-                    new AdaptiveTextBlock
-                    {
-                        Text = localizer.GetString("WelcomeCardAddNewText"),
-                        Wrap = true,
-                    },
-                    new AdaptiveTextBlock
-                    {
-                        Text = localizer.GetString("WelcomeCardCreatePrivateList"),
+                        Text = localizer.GetString("WelcomeCardTeamShareContent"),
                         Wrap = true,
                     },
                 },
@@ -91,7 +88,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Cards
                         Title = localizer.GetString("TeamWelcomeCardConfigureButtonText"),
                         Data = new AdaptiveSubmitActionData
                         {
-                            Msteams = new TaskModuleAction(Constants.Preferences, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.Preferences }) }),
+                            Msteams = new TaskModuleAction(Constants.PreferenceSettings, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.PreferenceSettings }) }),
                         },
                     },
                 },
@@ -248,7 +245,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Cards
                         Title = localizer.GetString("TeamPreferenceCardConfigureButtonText"),
                         Data = new AdaptiveSubmitActionData
                         {
-                            Msteams = new TaskModuleAction(Constants.Preferences, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.Preferences }) }),
+                            Msteams = new TaskModuleAction(Constants.PreferenceSettings, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.PreferenceSettings }) }),
                         },
                     },
                 },

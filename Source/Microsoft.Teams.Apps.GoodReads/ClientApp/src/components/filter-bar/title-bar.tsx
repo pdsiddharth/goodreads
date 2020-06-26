@@ -13,7 +13,7 @@ interface IFilterBarProps {
     onTypeCheckboxStateChange: (currentValues: Array<ICheckBoxItem>) => void
     onSharedByCheckboxStateChange: (currentValues: Array<ICheckBoxItem>) => void
     onSearchInputChange: (searchString: string) => void;
-    onSortByChange: (selectedValue: string) => void;
+    onSortByChange: (selectedValue: number) => void;
     onNewPostSubmit: (isSuccess: boolean, getSubmittedPost: IDiscoverPost) => void;
     onFilterSearchChange: (searchText: string) => void;
     onTagsStateChange: (currentValues: Array<ICheckBoxItem>) => void;
@@ -102,6 +102,7 @@ class TitleBar extends React.Component<IFilterBarProps, IFilterBarState> {
                     showSolidFilterIcon={this.state.showSolidFilter}
                     searchFilterPostsUsingAPI={this.props.searchFilterPostsUsingAPI}
                     commandBarSearchText={this.props.commandBarSearchText}
+                    displayForTeam={false}
                 />
                 <FilterBar
                     tagsList={this.state.tagsList}

@@ -5,6 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Controllers
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.AspNetCore.Authorization;
@@ -24,90 +25,54 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
     public class TeamTagController : BaseGoodReadsController
     {
         /// <summary>
-        /// Event name for team tag HTTP get call.
-        /// </summary>
-        private const string RecordTeamTagHTTPGetCall = "Team tags - HTTP Get call succeeded";
-
-        /// <summary>
-        /// Event name for team tag HTTP get call.
-        /// </summary>
-        private const string RecordTeamConfiguredTagsHTTPGetCall = "Team tags - HTTP Get call succeeded";
-
-        /// <summary>
-        /// Event name for team tag HTTP post call.
-        /// </summary>
-        private const string RecordTeamTagHTTPPostCall = "Team tags - HTTP Post call succeeded";
-
-        /// <summary>
-        /// Sends logs to the Application Insights service.
+        /// Used to perform logging of errors and information.
         /// </summary>
         private readonly ILogger logger;
 
         /// <summary>
-        /// Instance of team tag storage helper.
-        /// </summary>
-        private readonly ITeamTagStorageHelper teamTagStorageHelper;
-
-        /// <summary>
-        /// Instance of team tag storage provider for team tags.
+        /// Provider to fetch, delete and upsert tags configured for team.
         /// </summary>
         private readonly ITeamTagStorageProvider teamTagStorageProvider;
 
         /// <summary>
-        /// Instance of user validator to check whether is valid team user or not.
-        /// </summary>
-        private readonly UserValidator userValidator;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="TeamTagController"/> class.
         /// </summary>
-        /// <param name="logger">Sends logs to the Application Insights service.</param>
+        /// <param name="logger">Used to perform logging of errors and information.</param>
         /// <param name="telemetryClient">The Application Insights telemetry client.</param>
-        /// <param name="teamTagStorageHelper">Team tag storage helper dependency injection.</param>
-        /// <param name="teamTagStorageProvider">Team tag storage provider dependency injection.</param>
-        /// <param name="userValidator">User validator to check whether is valid team user or not.</param>
+        /// <param name="teamTagStorageProvider">Provider to fetch, delete and upsert tags configured for team.</param>
         public TeamTagController(
             ILogger<TeamTagController> logger,
             TelemetryClient telemetryClient,
-            ITeamTagStorageHelper teamTagStorageHelper,
-            ITeamTagStorageProvider teamTagStorageProvider,
-            UserValidator userValidator)
+            ITeamTagStorageProvider teamTagStorageProvider)
             : base(telemetryClient)
         {
             this.logger = logger;
-            this.teamTagStorageHelper = teamTagStorageHelper;
             this.teamTagStorageProvider = teamTagStorageProvider;
-            this.userValidator = userValidator;
         }
 
         /// <summary>
-        /// Get call to retrieve team tags data.
+        /// Fetch configured tags for team.
         /// </summary>
         /// <param name="teamId">Team Id - unique value for each Team where tags has configured.</param>
         /// <returns>Represents Team tag entity model.</returns>
         [HttpGet]
+        [Authorize(PolicyNames.MustBePartOfTeamPolicy)]
         public async Task<IActionResult> GetAsync(string teamId)
         {
+            this.logger.LogInformation("Call to retrieve team tags data.");
+
+            if (string.IsNullOrEmpty(teamId))
+            {
+                this.logger.LogError("Team id is either null or empty.");
+                return this.BadRequest("TeamId is either null or empty.");
+            }
+
             try
             {
-                this.logger.LogInformation("Call to retrieve team tags data.");
+                var teamTags = await this.teamTagStorageProvider.GetTeamTagAsync(teamId);
+                this.RecordEvent("Team tags - HTTP Get call succeeded");
 
-                if (string.IsNullOrEmpty(teamId))
-                {
-                    this.logger.LogError("Error while getting the team tags from Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while getting the team tags from Microsoft Azure Table storage.");
-                }
-
-                var isUserValid = await this.userValidator.ValidateAsync(teamId, this.UserAadId);
-                if (!isUserValid)
-                {
-                    return this.Forbid();
-                }
-
-                var teamPreference = await this.teamTagStorageProvider.GetTeamTagsDataAsync(teamId);
-                this.RecordEvent(RecordTeamTagHTTPGetCall);
-
-                return this.Ok(teamPreference);
+                return this.Ok(teamTags);
             }
             catch (Exception ex)
             {
@@ -117,67 +82,90 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         }
 
         /// <summary>
-        /// Post call to store team tag details in Microsoft Azure Table storage.
+        /// Post call to store team tag configuration.
         /// </summary>
         /// <param name="teamTagEntity">Holds team tag detail entity data.</param>
         /// <returns>Returns true for successful operation.</returns>
         [HttpPost]
+        [Authorize(PolicyNames.MustBePartOfTeamPolicy)]
         public async Task<IActionResult> PostAsync([FromBody] TeamTagEntity teamTagEntity)
         {
+            this.logger.LogInformation("Call to add team tag details.");
+
             try
             {
-                this.logger.LogInformation("Call to add team tag details.");
+#pragma warning disable CA1062 // tags configuration details are validated by model validations for null check and is responded with bad request status
+                var currentTeamTagConfiguration = await this.teamTagStorageProvider.GetTeamTagAsync(teamTagEntity.TeamId);
+#pragma warning restore CA1062 // tags configuration details are validated by model validations for null check and is responded with bad request status
 
-                if (string.IsNullOrEmpty(teamTagEntity?.TeamId))
+                TeamTagEntity teamTagConfiguration;
+
+                // If there is no record in database for team, add new entry else update existing.
+                if (currentTeamTagConfiguration == null)
                 {
-                    this.logger.LogError("Error while creating or updating team tag details in Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while creating or updating team tag details in Microsoft Azure Table storage.");
+                    this.logger.LogError($"Tags configuration details were not found for team {teamTagEntity.TeamId}");
+                    return this.BadRequest("Tags configuration details were not found for team");
+                }
+                else
+                {
+                    currentTeamTagConfiguration.Tags = teamTagEntity.Tags;
+                    teamTagConfiguration = currentTeamTagConfiguration;
                 }
 
-                var isUserValid = await this.userValidator.ValidateAsync(teamTagEntity.TeamId, this.UserAadId);
-                if (!isUserValid)
+                var upsertResult = await this.teamTagStorageProvider.UpsertTeamTagAsync(teamTagConfiguration);
+
+                if (upsertResult)
                 {
-                    return this.Forbid();
+                    this.RecordEvent("Team tags - HTTP Post call succeeded");
+                    return this.Ok(upsertResult);
                 }
-
-                this.RecordEvent(RecordTeamTagHTTPPostCall);
-                var teamTagDetail = this.teamTagStorageHelper.CreateTeamTagModel(teamTagEntity, this.UserName, this.UserAadId);
-
-                return this.Ok(await this.teamTagStorageProvider.UpsertTeamTagsAsync(teamTagDetail));
+                else
+                {
+                    this.RecordEvent("Team tags - HTTP Post call failed");
+                    return this.GetErrorResponse(StatusCodes.Status500InternalServerError, "Unable to save tags for team.");
+                }
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error while making call to team tag service.");
+                this.logger.LogError(ex, "Error while saving tags for team.");
                 throw;
             }
         }
 
         /// <summary>
-        /// Get list of configured tags for a team to show on filter bar dropdown list.
+        /// Get list of configured tags for a team.
         /// </summary>
         /// <param name="teamId">Team id to get the configured tags for a team.</param>
         /// <returns>List of configured tags.</returns>
         [HttpGet("configured-tags")]
+        [Authorize(PolicyNames.MustBePartOfTeamPolicy)]
         public async Task<IActionResult> GetConfiguredTagsAsync(string teamId)
         {
+            this.logger.LogInformation("Call to get list of configured tags for a team.");
+
+            if (string.IsNullOrEmpty(teamId))
+            {
+                this.logger.LogError("TeamId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "TeamId is either null or empty.");
+            }
+
+            var configuredTags = new List<string>();
             try
             {
-                this.logger.LogInformation("Call to get list of configured tags for a team.");
-
-                if (string.IsNullOrEmpty(teamId))
+                var teamTagEntity = await this.teamTagStorageProvider.GetTeamTagAsync(teamId);
+                if (teamTagEntity == null || string.IsNullOrEmpty(teamTagEntity.Tags))
                 {
-                    this.logger.LogError("Error while getting the list of team tags from Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while getting the list of team tags from Microsoft Azure Table storage.");
+                    this.logger.LogInformation($"Tags are not configured for team {teamId}.");
+                    return this.Ok(configuredTags);
                 }
 
-                var teamTagDetail = await this.teamTagStorageProvider.GetTeamTagsDataAsync(teamId);
-                this.RecordEvent(RecordTeamConfiguredTagsHTTPGetCall);
-
-                return this.Ok(teamTagDetail?.Tags?.Split(";"));
+                configuredTags.AddRange(teamTagEntity.Tags.Split(';'));
+                this.RecordEvent("Team tags - HTTP Get call succeeded");
+                return this.Ok(configuredTags);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error while making call to get configured tags.");
+                this.logger.LogError(ex, $"Error while fetching configured tags for team {teamId}.");
                 throw;
             }
         }

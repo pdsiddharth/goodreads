@@ -38,7 +38,7 @@
     }
 
 .dark-container .gray-background {
-    background-color: #201F1F !important;
+    background-color: #3b3a39 !important;
     color: white !important;
 }
 
@@ -54,4 +54,10 @@
 
 .no-background{
     background-color:none;
+}
+@media only screen and (max-width: 750px) {
+    .ui-button__content {
+        display: contents;
+        padding:1rem !important;
+    }
 }

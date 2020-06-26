@@ -60,7 +60,7 @@ class Card extends React.Component<ICardProps, ICardState> {
         let cardDetails = { ...this.state.cardDetails };
         this.setState({ isVoteLoading: true });
         if (!cardDetails.isVotedByUser) {
-            let response = await addUserVote({ postId: cardDetails.postId });
+            let response = await addUserVote(cardDetails);
             if (response.status === 200 && response.data) {
                 cardDetails.isVotedByUser = true;
                 cardDetails.totalVotes = cardDetails.totalVotes + 1;
@@ -72,7 +72,7 @@ class Card extends React.Component<ICardProps, ICardState> {
             }
         }
         else {
-            let response = await deleteUserVote({ postId: cardDetails.postId });
+            let response = await deleteUserVote(cardDetails);
             if (response.status === 200 || response.data) {
                 cardDetails.isVotedByUser = false;
                 cardDetails.totalVotes = cardDetails.totalVotes - 1;
@@ -185,7 +185,7 @@ class Card extends React.Component<ICardProps, ICardState> {
                             <Text onClick={() => window.open(this.state.cardDetails.contentUrl, "_blank")} className="title-text" size="large" content={this.state.cardDetails.title} title={this.state.cardDetails.title} weight="bold" />
                         </Flex>
                         <Flex gap="gap.smaller">
-                            <TypeLabel postType={this.state.cardDetails.type} size="small" />
+                            <TypeLabel postType={this.state.cardDetails.type!} size="small" />
                         </Flex>
                         <Flex className="content-flex" gap="gap.small">
                             <Text size="small" className="content-text" title={this.state.cardDetails.description} content={this.state.cardDetails.description} />

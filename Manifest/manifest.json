@@ -6,7 +6,7 @@
   "packageName": "com.microsoft.teams.apptemplates.sharenow",
   "developer": {
     "name": "<company name>",
-    "websiteUrl": "<website url>",
+    "websiteUrl": "<appDomain>",
     "privacyUrl": "<privacy url>",
     "termsOfUseUrl": "<terms of use url>"
   },
@@ -25,30 +25,30 @@
   "accentColor": "#BDBDE6",
   "configurableTabs": [
     {
-      "configurationUrl": "<<azureFdUrl>>/configtab",
+      "configurationUrl": "<appDomain>/configtab",
       "canUpdateConfiguration": true,
       "scopes": [ "team" ]
     }
   ],
   "staticTabs": [
     {
-      "entityId": "<A unique identifier for the entity that the tab displays>",
+      "entityId": "PersonalDiscoverTab",
       "name": "Discover",
-      "contentUrl": "<<azureFdUrl>>",
-      "websiteUrl": "<<azureFdUrl>>",
+      "contentUrl": "<appDomain>",
+      "websiteUrl": "<appDomain>",
       "scopes": [ "personal" ]
     },
     {
-      "entityId": "<A unique identifier for the entity that the tab displays>",
+      "entityId": "PrivateList",
       "name": "Private list",
-      "contentUrl": "<<azureFdUrl>>/user-private-list",
-      "websiteUrl": "<<azureFdUrl>>/user-private-list",
+      "contentUrl": "<appDomain>/user-private-list",
+      "websiteUrl": "<appDomain>/user-private-list",
       "scopes": [ "personal" ]
     }
   ],
   "bots": [
     {
-      "botId": "<<botId>>",
+      "botId": "<botId>",
       "scopes": [ "personal", "team" ],
       "commandLists": [
         {
@@ -56,7 +56,7 @@
           "commands": [
             {
               "title": "Help",
-              "description": "Displays the supported commands."
+              "description": "Display commands and what they do."
             }
           ]
         },
@@ -64,8 +64,8 @@
           "scopes": [ "team" ],
           "commands": [
             {
-              "title": "Preferences",
-              "description": "Used to set up or edit the digest preferences in the team."
+              "title": "Settings",
+              "description": "Configure topics and frequency of digest."
             }
           ]
         }
@@ -76,7 +76,7 @@
   ],
   "composeExtensions": [
     {
-      "botId": "<<botId>>",
+      "botId": "<botId>",
       "canUpdateConfiguration": false,
       "commands": [
         {
@@ -95,7 +95,7 @@
         {
           "id": "postedByMe",
           "title": "Posted by me",
-          "description": "Show all posts created by current user.",
+          "description": "Show all posts created by me.",
           "parameters": [
             {
               "name": "searchText",
@@ -122,10 +122,10 @@
     }
   ],
   "validDomains": [
-    "<<appDomain>>"
+    "<appDomain>"
   ],
   "webApplicationInfo": {
-    "id": "<<botId>>",
+    "id": "<botId>",
     "resource": "<ApplicationIdURI>"
   }
 }

@@ -27,9 +27,9 @@
     "appDisplayName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "Share Now",
+      "defaultValue": "ShareNow",
       "metadata": {
-        "description": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics."
+        "description": "Application name"
       }
     },
     "appDescription": {
@@ -37,7 +37,7 @@
       "minLength": 1,
       "defaultValue": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics.",
       "metadata": {
-        "description": "Encourage and introduce your co-workers to a widespread knowledge-based sharing of posts, videos, or topics with a bite-sized information on how it influenced them and learn together in Teams."
+        "description": "Application description"
       }
     },
     "customDomainOption": {
@@ -54,7 +54,7 @@
     "appIconUrl": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "https://github.com/OfficeDev/microsoft-teams-apps-sharenow/master/Manifest/color.png",
+      "defaultValue": "https://raw.githubusercontent.com/OfficeDev/microsoft-teams-apps-sharenow/master/Manifest/color.png",
       "metadata": {
         "description": "The link to the icon for the app. It must resolve to a PNG file."
       }
@@ -63,16 +63,9 @@
       "type": "string",
       "minLength": 36,
       "maxLength": 36,
+      "defaultValue": "c1b50ba4-a9fc-46ed-ae5c-c4060461f88b",
       "metadata": {
-        "description": "Manifest id."
-      }
-    },
-    "discoverTabEntityId": {
-      "type": "string",
-      "minLength": 36,
-      "maxLength": 36,
-      "metadata": {
-        "description": "Discover static tab entity id."
+        "description": "Manifest Id (Must be same as manifest Id used while creating package for sideload)"
       }
     },
     "tenantId": {
@@ -141,7 +134,7 @@
       "metadata": {
         "description": "The URL to the GitHub repository to deploy."
       },
-      "defaultValue": "https://github.com/OfficeDev/<<To Do>>.git"
+      "defaultValue": "https://github.com/OfficeDev/microsoft-teams-apps-sharenow.git"
     },
     "gitBranch": {
       "type": "string",
@@ -272,7 +265,7 @@
             },
             {
               "name": "DiscoverTabEntityId",
-              "value": "[parameters('discoverTabEntityId')]"
+              "value": "PersonalDiscoverTab"
             },
             {
               "name": "Logging:LogLevel:Default",
@@ -281,10 +274,6 @@
             {
               "name": "i18n:DefaultCulture",
               "value": "[parameters('defaultCulture')]"
-            },
-            {
-              "name": "i18n:SupportedCultures",
-              "value": "en-US,fr-Fr"
             },
             {
               "name": "ApplicationInsights:InstrumentationKey",
@@ -309,14 +298,6 @@
             {
               "name": "SearchService:SearchServiceQueryApiKey",
               "value": "[listQueryKeys(resourceId('Microsoft.Search/searchServices/', variables('azureSearchName')), '2015-08-19').value[0].key]"
-            },
-            {
-              "name": "RetryPolicy:medianFirstRetryDelay",
-              "value": "1000"
-            },
-            {
-              "name": "RetryPolicy:retryCount",
-              "value": "2"
             },
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",

@@ -9,6 +9,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
     using System.Linq;
     using Microsoft.AspNetCore.Authentication.AzureAD.UI;
     using Microsoft.AspNetCore.Authentication.JwtBearer;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.IdentityModel.Tokens;
@@ -28,12 +29,14 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
         /// </summary>
         /// <param name="services">IServiceCollection instance.</param>
         /// <param name="configuration">IConfiguration instance.</param>
-        public static void AddGoodReadsAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static void AddGoodReadsAuthentication(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
             configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
             // This works specifically for single tenant application.
-            AuthenticationServiceCollectionExtensions.ValidateAuthenticationConfigurationSettings(configuration);
+            ValidateAuthenticationConfigurationSettings(configuration);
 
             services.AddAuthentication(options => { options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme; })
                 .AddJwtBearer(options =>
@@ -48,6 +51,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
                         AudienceValidator = AuthenticationServiceCollectionExtensions.AudienceValidator,
                     };
                 });
+
+            RegisterAuthorizationPolicy(services);
         }
 
         /// <summary>
@@ -81,6 +86,19 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
             }
         }
 
+        private static void RegisterAuthorizationPolicy(IServiceCollection services)
+        {
+            services.AddAuthorization(options =>
+            {
+                var mustContainValidUserRequirement = new MustBeValidTeamMemberRequirement();
+                options.AddPolicy(
+                    PolicyNames.MustBePartOfTeamPolicy,
+                    policyBuilder => policyBuilder.AddRequirements(mustContainValidUserRequirement));
+            });
+
+            services.AddSingleton<IAuthorizationHandler, MustBeTeamMemberUserPolicyHandler>();
+        }
+
         /// <summary>
         /// Gets the collection of configuration settings.
         /// </summary>
@@ -94,10 +112,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
                 ?.Split(new char[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries)
                 ?.Select(p => p.Trim());
 
-            if (settings == null)
-            {
-                throw new ApplicationException($"{configurationSettingsKey} does not contain a valid value in the configuration file.");
-            }
+            settings = settings ?? throw new ApplicationException($"{configurationSettingsKey} does not contain a valid value in the configuration file.");
 
             return settings;
         }
@@ -105,8 +120,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Authentication
         /// <summary>
         /// Gets a collection of valid audience.
         /// </summary>
-        /// <param name="configuration">Represents a set of key/value application configuration properties.</param>
         /// <returns>A collection of valid audience.</returns>
+        /// <param name="configuration">Represents a set of key/value application configuration properties.</param>
         private static IEnumerable<string> GetValidAudiences(IConfiguration configuration)
         {
             var clientId = configuration[AuthenticationServiceCollectionExtensions.ClientIdConfigurationSettingsKey];

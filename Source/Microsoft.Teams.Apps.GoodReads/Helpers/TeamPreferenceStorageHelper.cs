@@ -32,64 +32,54 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         }
 
         /// <summary>
-        /// Create team preference model data.
-        /// </summary>
-        /// <param name="entity">Represents team preference entity object.</param>
-        /// <returns>Represents team preference entity model.</returns>
-        public TeamPreferenceEntity CreateTeamPreferenceModel(TeamPreferenceEntity entity)
-        {
-            try
-            {
-                entity = entity ?? throw new ArgumentNullException(nameof(entity));
-
-                entity.PreferenceId = Guid.NewGuid().ToString();
-                entity.CreatedDate = DateTime.UtcNow;
-                entity.UpdatedDate = DateTime.UtcNow;
-
-                return entity;
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "Exception occurred while preparing the team preference entity model data");
-                throw;
-            }
-        }
-
-        /// <summary>
         /// Get posts unique tags.
         /// </summary>
         /// <param name="teamPosts">Team post entities.</param>
         /// <param name="searchText">Search text for tags.</param>
         /// <returns>Represents team tags.</returns>
-        public IEnumerable<string> GetUniqueTags(IEnumerable<TeamPostEntity> teamPosts, string searchText)
+        public IEnumerable<string> GetUniqueTags(IEnumerable<PostEntity> teamPosts, string searchText)
         {
-            try
+            if (teamPosts != null)
             {
-                teamPosts = teamPosts ?? throw new ArgumentNullException(nameof(teamPosts));
-                var tags = new List<string>();
-
                 if (searchText == "*")
                 {
-                    foreach (var teamPost in teamPosts)
+                    var tagslist = new List<string>();
+
+                    foreach (var item in teamPosts)
                     {
-                        tags.AddRange(teamPost.Tags?.Split(";"));
+                        if (!string.IsNullOrEmpty(item.Tags))
+                        {
+                            tagslist.AddRange(item.Tags.Split(';'));
+                        }
                     }
+
+                    // Group tags based on number of occurrences and take top 50 tags having highest occurrences.
+                    var filteredTags = tagslist.GroupBy(tag => tag)
+                        .OrderByDescending(grouppedTags => grouppedTags.Count())
+                        .Select(grouppedTags => grouppedTags.First())
+                        .Take(50)
+                        .OrderBy(tag => tag);
+                    return filteredTags;
                 }
                 else
                 {
-                    foreach (var teamPost in teamPosts)
+                    HashSet<string> tags = new HashSet<string>();
+                    foreach (var item in teamPosts)
                     {
-                        tags.AddRange(teamPost.Tags?.Split(";").Where(tag => tag.Contains(searchText, StringComparison.InvariantCultureIgnoreCase)));
+                        if (!string.IsNullOrEmpty(item.Tags))
+                        {
+                            foreach (var tag in item.Tags.Split(';'))
+                            {
+                                tags.Add(tag);
+                            }
+                        }
                     }
-                }
 
-                return tags.Distinct().OrderBy(tag => tag);
+                    return tags.Where(tag => tag.Contains(searchText, StringComparison.CurrentCulture)).OrderBy(tag => tag).Take(20);
+                }
             }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "Exception occurred while preparing the team preference entity model data");
-                throw;
-            }
+
+            return new List<string>();
         }
     }
 }

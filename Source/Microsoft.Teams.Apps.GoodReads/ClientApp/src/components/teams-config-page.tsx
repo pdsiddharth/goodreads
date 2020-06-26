@@ -26,6 +26,7 @@ interface ITeamConfigDetailsProps extends WithTranslation {
 interface ITeamConfigDetails {
     tags: string;
     teamId: string;
+    serviceUrl: string;
 }
 
 interface ITeamConfigState {
@@ -78,6 +79,7 @@ class TeamsConfigPage extends React.Component<ITeamConfigDetailsProps, ITeamConf
             setTimeout(async () => {
                 let response = await getConfigTags(this.teamId);
                 if (response.status === 200 && response.data) {
+                    this.setState({ teamConfigDetails: response.data });
                     if (response.data.tags.length) {
                         this.setState({
                             tagsList: response.data.tags.split(";")

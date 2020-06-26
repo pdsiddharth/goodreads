@@ -12,7 +12,6 @@ import { generateColor, getInitials } from "../../helpers/helper";
 interface IUserAvatarProps extends WithTranslation {
     content: string;
     title: string;
-    postType: string;
     showFullName: boolean;
     avatarColor: string;
 }

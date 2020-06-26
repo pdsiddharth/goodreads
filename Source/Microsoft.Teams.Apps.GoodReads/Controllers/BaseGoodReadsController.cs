@@ -106,25 +106,24 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         /// <returns>Returns error response with appropriate message and status code.</returns>
         protected IActionResult GetErrorResponse(int statusCode, string errorMessage)
         {
-            switch (statusCode)
+            return statusCode switch
             {
-                case StatusCodes.Status400BadRequest:
-                    return this.StatusCode(
-                      StatusCodes.Status400BadRequest,
-                      new Error
-                      {
-                          StatusCode = "badRequest",
-                          ErrorMessage = errorMessage,
-                      });
-                default:
-                    return this.StatusCode(
-                      StatusCodes.Status500InternalServerError,
-                      new Error
-                      {
-                          StatusCode = "internalServerError",
-                          ErrorMessage = errorMessage,
-                      });
-            }
+                StatusCodes.Status400BadRequest => this.StatusCode(
+                    StatusCodes.Status400BadRequest,
+                    new Error
+                    {
+                        StatusCode = "badRequest",
+                        ErrorMessage = errorMessage,
+                    }),
+
+                _ => this.StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new Error
+                    {
+                        StatusCode = "internalServerError",
+                        ErrorMessage = errorMessage,
+                    }),
+            };
         }
     }
 }

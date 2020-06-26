@@ -19,14 +19,14 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
     public class AuthenticationMetadataController : ControllerBase
     {
         /// <summary>
-        /// Represents a set of key/value application configuration properties for Share Now bot.
+        /// Represents a set of key/value application configuration properties for bot.
         /// </summary>
         private readonly IOptions<AzureActiveDirectorySettings> options;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthenticationMetadataController"/> class.
         /// </summary>
-        /// <param name="options">A set of key/value application configuration properties for Share Now bot.</param>
+        /// <param name="options">A set of key/value application configuration properties for bot.</param>
         public AuthenticationMetadataController(IOptions<AzureActiveDirectorySettings> options)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
@@ -37,7 +37,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         /// </summary>
         /// <param name="windowLocationOriginDomain">Window location origin domain.</param>
         /// <param name="loginHint">User Principal Name value.</param>
-        /// <returns>Conset Url.</returns>
+        /// <returns>Consent Url.</returns>
         [HttpGet("consentUrl")]
         public string GetConsentUrl(
             [FromQuery]string windowLocationOriginDomain,
@@ -56,8 +56,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
             };
 
             var consentUrlComponentList = consentUrlComponentDictionary
-                .Select(p => $"{p.Key}={HttpUtility.UrlEncode(p.Value)}")
-                .ToList();
+                .Select(p => $"{p.Key}={HttpUtility.UrlEncode(p.Value)}");
 
             var consentUrlPrefix = $"https://login.microsoftonline.com/{this.options.Value.TenantId}/oauth2/v2.0/authorize?";
             var consentUrlString = consentUrlPrefix + string.Join('&', consentUrlComponentList);

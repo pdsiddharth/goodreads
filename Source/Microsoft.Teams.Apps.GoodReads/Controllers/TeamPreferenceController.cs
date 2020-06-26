@@ -24,138 +24,74 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
     public class TeamPreferenceController : BaseGoodReadsController
     {
         /// <summary>
-        /// Event name for team preference HTTP get call.
-        /// </summary>
-        private const string RecordTeamPreferencePostHTTPGetCall = "Team preferences - HTTP Get call succeeded";
-
-        /// <summary>
-        /// Event name for team preference tags HTTP get call.
-        /// </summary>
-        private const string RecordTeamPreferenceTagsHTTPGetCall = "Team preferences tags - HTTP Get call succeeded";
-
-        /// <summary>
-        /// Event name for team preference HTTP post call.
-        /// </summary>
-        private const string RecordTeamPreferenceHTTPPostCall = "Team preferences - HTTP Post call succeeded";
-
-        /// <summary>
-        /// Sends logs to the Application Insights service.
+        /// Used to perform logging of errors and information.
         /// </summary>
         private readonly ILogger logger;
 
         /// <summary>
-        /// Instance of team preference storage helper.
+        /// Helper to create model for adding team preference and filtering unique tags.
         /// </summary>
         private readonly ITeamPreferenceStorageHelper teamPreferenceStorageHelper;
 
         /// <summary>
-        /// Instance of team preference storage provider for team preferences.
+        /// Provider having methods to add and get team preferences from database.
         /// </summary>
         private readonly ITeamPreferenceStorageProvider teamPreferenceStorageProvider;
 
         /// <summary>
-        /// Instance of Search service for working with Microsoft Azure Table storage.
+        /// Search service for fetching posts as per criteria.
         /// </summary>
-        private readonly ITeamPostSearchService teamPostSearchService;
-
-        /// <summary>
-        /// Instance of user validator to check whether is valid team user or not.
-        /// </summary>
-        private readonly UserValidator userValidator;
+        private readonly IPostSearchService teamPostSearchService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TeamPreferenceController"/> class.
         /// </summary>
-        /// <param name="logger">Sends logs to the Application Insights service.</param>
+        /// <param name="logger">Used to perform logging of errors and information.</param>
         /// <param name="telemetryClient">The Application Insights telemetry client.</param>
-        /// <param name="teamPreferenceStorageHelper">Team preference storage helper dependency injection.</param>
-        /// <param name="teamPreferenceStorageProvider">Team preference storage provider dependency injection.</param>
-        /// <param name="teamPostSearchService">The team post search service dependency injection.</param>
-        /// <param name="userValidator">User validator to check whether is valid team user or not.</param>
+        /// <param name="teamPreferenceStorageHelper">Helper to create model for adding team preference and filtering unique tags.</param>
+        /// <param name="teamPreferenceStorageProvider">Provider having methods to add and get team preferences from database.</param>
+        /// <param name="teamPostSearchService">Search service for fetching posts as per criteria.</param>
         public TeamPreferenceController(
             ILogger<TeamPreferenceController> logger,
             TelemetryClient telemetryClient,
             ITeamPreferenceStorageHelper teamPreferenceStorageHelper,
             ITeamPreferenceStorageProvider teamPreferenceStorageProvider,
-            ITeamPostSearchService teamPostSearchService,
-            UserValidator userValidator)
+            IPostSearchService teamPostSearchService)
             : base(telemetryClient)
         {
             this.logger = logger;
             this.teamPreferenceStorageHelper = teamPreferenceStorageHelper;
             this.teamPreferenceStorageProvider = teamPreferenceStorageProvider;
             this.teamPostSearchService = teamPostSearchService;
-            this.userValidator = userValidator;
         }
 
         /// <summary>
         /// Get call to retrieve team preference data.
         /// </summary>
         /// <param name="teamId">Team id - unique value for each Team where preference has configured.</param>
-        /// <returns>Represents Team preference entity model.</returns>
+        /// <returns>Returns team preference details.</returns>
         [HttpGet]
+        [Authorize(PolicyNames.MustBePartOfTeamPolicy)]
         public async Task<IActionResult> GetAsync(string teamId)
         {
+            this.logger.LogInformation("Call to retrieve list of team preference.");
+
+            if (string.IsNullOrEmpty(teamId))
+            {
+                this.logger.LogError("TeamId is either null or empty");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "TeamId is either null or empty");
+            }
+
             try
             {
-                this.logger.LogInformation("Call to retrieve list of team preference.");
-
-                if (string.IsNullOrEmpty(teamId))
-                {
-                    this.logger.LogError("Error while getting the team preference from Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while getting team preference details from Microsoft Azure Table storage.");
-                }
-
-                var isUserValid = await this.userValidator.ValidateAsync(teamId, this.UserAadId);
-                if (!isUserValid)
-                {
-                    return this.Forbid();
-                }
-
-                var teamPreference = await this.teamPreferenceStorageProvider.GetTeamPreferenceDataAsync(teamId);
-                this.RecordEvent(RecordTeamPreferencePostHTTPGetCall);
+                var teamPreference = await this.teamPreferenceStorageProvider.GetTeamPreferenceAsync(teamId);
+                this.RecordEvent("Team preferences - HTTP Get call succeeded");
 
                 return this.Ok(teamPreference);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Error while making call to team preference service.");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Post call to store team preference details in Microsoft Azure Table storage.
-        /// </summary>
-        /// <param name="teamPreferenceEntity">Holds team preference detail entity data.</param>
-        /// <returns>Returns true for successful operation.</returns>
-        [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody] TeamPreferenceEntity teamPreferenceEntity)
-        {
-            try
-            {
-                this.logger.LogInformation("Call to add team preference.");
-
-                if (string.IsNullOrEmpty(teamPreferenceEntity?.TeamId))
-                {
-                    this.logger.LogError("Error while creating or updating team preference details data in Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while creating or updating team preference details in Microsoft Azure Table storage.");
-                }
-
-                var isUserValid = await this.userValidator.ValidateAsync(teamPreferenceEntity.TeamId, this.UserAadId);
-                if (!isUserValid)
-                {
-                    return this.Forbid();
-                }
-
-                this.RecordEvent(RecordTeamPreferenceHTTPPostCall);
-                var teamPreferenceDetail = this.teamPreferenceStorageHelper.CreateTeamPreferenceModel(teamPreferenceEntity);
-
-                return this.Ok(await this.teamPreferenceStorageProvider.UpsertTeamPreferenceAsync(teamPreferenceDetail));
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "Error while making call to team preference service.");
+                this.logger.LogError(ex, $"Error while fetching team preference details for team {teamId}.");
                 throw;
             }
         }
@@ -168,19 +104,19 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         [HttpGet("unique-tags")]
         public async Task<IActionResult> GetUniqueTagsAsync(string searchText)
         {
+            this.logger.LogInformation("Call to get list of unique tags to show while configuring the preference.");
+
+            if (string.IsNullOrEmpty(searchText))
+            {
+                this.logger.LogError("search text for GetUniqueTagsAsync is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "search text is either null or empty.");
+            }
+
             try
             {
-                this.logger.LogInformation("Call to get list of unique tags to show while configuring the preference.");
-
-                if (string.IsNullOrEmpty(searchText))
-                {
-                    this.logger.LogError("Error while getting the list of unique tags from Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while getting the list of unique tags from Microsoft Azure Table storage.");
-                }
-
-                var teamPosts = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.TeamPreferenceTags, searchText, userObjectId: null);
+                var teamPosts = await this.teamPostSearchService.GetPostsAsync(PostSearchScope.TeamPreferenceTags, searchText, userObjectId: null);
                 var uniqueTags = this.teamPreferenceStorageHelper.GetUniqueTags(teamPosts, searchText);
-                this.RecordEvent(RecordTeamPreferenceTagsHTTPGetCall);
+                this.RecordEvent("Team preferences tags - HTTP Get call succeeded");
 
                 return this.Ok(uniqueTags);
             }

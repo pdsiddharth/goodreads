@@ -7,19 +7,19 @@ import { Flex, RadioGroup } from "@fluentui/react-northstar";
 
 export interface IRadioGroupItem {
 	name: string;
-	key: string;
+	key: number;
 	label: string;
-	value: string;
+	value: number;
 }
 
 interface IRadioGroupProps {
 	radioItems: Array<IRadioGroupItem>,
-	selectedItem: string,
-	onChange: (value: string) => void
+	selectedItem: number,
+	onChange: (value: number) => void
 }
 
 interface IRadioGroupState {
-	selectedItem: string
+	selectedItem: number
 }
 
 class RadioGroupWrapper extends React.Component<IRadioGroupProps, IRadioGroupState> {

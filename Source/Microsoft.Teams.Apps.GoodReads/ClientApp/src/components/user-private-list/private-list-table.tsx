@@ -8,25 +8,15 @@ import { TrashCanIcon } from "@fluentui/react-icons-northstar";
 import { useTranslation } from 'react-i18next';
 import Resources from "../../constants/resources";
 import Tag from "../card-view/tag";
-import { generateColor } from "../../helpers/helper";
 import TypeLabel from "../card-view/type-label";
 import UserAvatar from "./user-avatar";
+import { IDiscoverPost } from "../card-view/discover-wrapper-page";
 
 import "../../styles/card.css";
 import "../../styles/private-list.css";
 
-interface IUserPrivatePost {
-    createdByName: string;
-    title: string;
-    description: string;
-    postId: string;
-    contentUrl: string;
-    type: string;
-    tags: string;
-}
-
 interface IPrivateListTableProps {
-    privateListData: IUserPrivatePost[],
+    privateListData: IDiscoverPost[],
     onDeleteButtonClick: (postId: string) => void;
     onTitleClick: (contentUrl: string) => void;
     screenWidth: number;
@@ -34,7 +24,6 @@ interface IPrivateListTableProps {
 
 const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props => {
     const localize = useTranslation().t;
-    const authorAvatarBackground = new Array<any>();
     const privateListTableHeader = {
         key: "header",
         items: [
@@ -47,27 +36,15 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
         ],
     };
 
-    const getAuthorColor = (userId: string) => {
-        let searchedAuthor = authorAvatarBackground.find((author) => author.id === userId);
-        if (searchedAuthor) {
-            return searchedAuthor.color;
-        }
-        else {
-            const color = generateColor();
-            authorAvatarBackground.push({ id: userId, color: color });
-            return color;
-        }
-    }
 
-
-    let privateListTableRows = props.privateListData.map((userPost: IUserPrivatePost, index: number) => (
+    let privateListTableRows = props.privateListData.map((userPost: IDiscoverPost, index: number) => (
         {
             key: index,
             items: [
                 { content: <Text className="user-heading" onClick={() => props.onTitleClick(userPost.contentUrl)} title={userPost.title} content={userPost.title} />, truncateContent: true },
                 { content: <Text content={userPost.description} title={userPost.description} />, truncateContent: true, },
                 {
-                    content: <UserAvatar avatarColor={getAuthorColor(userPost.createdByName)} showFullName={true} postType={userPost.type} content={userPost.createdByName} title={userPost.createdByName} />, truncateContent: true, className: "table-user-cell"
+                    content: <UserAvatar avatarColor={userPost.avatarBackgroundColor} showFullName={true} content={userPost.createdByName} title={userPost.createdByName} />, truncateContent: true, className: "table-user-cell"
                 },
                 {
                     content:
@@ -128,17 +105,17 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
                         </Flex>
                 },
                 {
-                    content: <TypeLabel postType={userPost.type} size="medium" />,
+                    content: <TypeLabel postType={userPost.type!} size="medium" />,
                     className: "table-posttype-cell"
                 },
                 {
                     content: <Dialog
                         className="dialog-container-private-list"
                         cancelButton={localize("cancel")}
-                        confirmButton={localize("confirm")}
+                        confirmButton={localize("Confirm")}
                         content={localize("deleteConfirmBodyText")}
                         header={localize("deleteConfirmTitleText")}
-                        trigger={<Button primary icon={<TrashCanIcon />} content={localize("confirm")} text className="delete-button" />}
+                        trigger={<Button primary icon={<TrashCanIcon />} content={localize("Confirm")} text className="delete-button" />}
                         onConfirm={() => { props.onDeleteButtonClick(userPost.postId) }}
                     />, truncateContent: true, className: "table-delete-cell"
                 },
@@ -146,14 +123,14 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
         }
     ));
 
-    let privateListListViewItems = props.privateListData.map((userPost: IUserPrivatePost, index: number) => (
+    let privateListListViewItems = props.privateListData.map((userPost: IDiscoverPost, index: number) => (
         {
             key: index,
-            header:<></>,
-            media: <UserAvatar avatarColor={getAuthorColor(userPost.createdByName)} showFullName={false} postType={userPost.type} content={userPost.createdByName} title={userPost.createdByName} />,
+            header: <></>,
+            media: <UserAvatar avatarColor={userPost.avatarBackgroundColor} showFullName={false} content={userPost.createdByName} title={userPost.createdByName} />,
             contentMedia: <></>,
             content:
-                <Flex>
+                <Flex vAlign="stretch">
                     <Flex.Item>
                         <Flex column gap="gap.small" vAlign="stretch">
                             <Flex>
@@ -168,7 +145,7 @@ const PrivateListTable: React.FunctionComponent<IPrivateListTableProps> = props 
                         <Dialog
                             className="dialog-container-private-list"
                             cancelButton={localize("cancel")}
-                            confirmButton={localize("confirm")}
+                            confirmButton={localize("Confirm")}
                             content={localize("deleteConfirmBodyText")}
                             header={localize("deleteConfirmTitleText")}
                             trigger={<Button primary icon={<TrashCanIcon />} text iconOnly className="delete-button-list" />}

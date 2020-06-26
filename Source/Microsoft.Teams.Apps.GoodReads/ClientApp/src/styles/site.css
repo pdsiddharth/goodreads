@@ -100,8 +100,10 @@
 @media only screen and (max-width: 650px) {
     .mobile-button {
         width:auto;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+    }
+
+    .ui-button__content {
+        font-size:12px !important;
     }
 }
 

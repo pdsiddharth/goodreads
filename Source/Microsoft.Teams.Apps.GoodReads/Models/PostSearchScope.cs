@@ -1,13 +1,13 @@
-﻿// <copyright file="TeamPostSearchScope.cs" company="Microsoft">
+﻿// <copyright file="PostSearchScope.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
 namespace Microsoft.Teams.Apps.GoodReads.Models
 {
     /// <summary>
-    /// A enum  that represent the search scope for search service.
+    /// A enum that represent the search scope for search service.
     /// </summary>
-    public enum TeamPostSearchScope
+    public enum PostSearchScope
     {
         /// <summary>
         /// Represents all team posts.

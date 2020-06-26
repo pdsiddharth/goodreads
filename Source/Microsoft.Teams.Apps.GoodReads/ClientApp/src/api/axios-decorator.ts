@@ -15,13 +15,10 @@ export class AxiosJWTDecorator {
 	public async post<T = any, R = AxiosResponse<T>>(
 		url: string,
 		data?: any,
-		config?: AxiosRequestConfig,
-		needAuthorizationHeader: boolean = true
+		config?: AxiosRequestConfig
 	): Promise<R> {
 		try {
-			if (needAuthorizationHeader) {
-				config = await this.setupAuthorizationHeader(config);
-			}
+			config = await this.setupAuthorizationHeader(config);
 			return await axios.post(url, data, config);
 		} catch (error) {
 			this.handleError(error);
@@ -35,13 +32,10 @@ export class AxiosJWTDecorator {
 	*/
 	public async delete<T = any, R = AxiosResponse<T>>(
 		url: string,
-		config?: AxiosRequestConfig,
-		needAuthorizationHeader: boolean = true
+		config?: AxiosRequestConfig
 	): Promise<R> {
 		try {
-			if (needAuthorizationHeader) {
-				config = await this.setupAuthorizationHeader(config);
-			}
+			config = await this.setupAuthorizationHeader(config);
 			return await axios.delete(url, config);
 		} catch (error) {
 			this.handleError(error);
@@ -54,17 +48,14 @@ export class AxiosJWTDecorator {
 	* @param  {String} url Resource URI
 	* @param  {Object} data Request body data
 	*/
-	public async put<T = any, R = AxiosResponse<T>>(
+	public async patch<T = any, R = AxiosResponse<T>>(
 		url: string,
 		data?: any,
-		config?: AxiosRequestConfig,
-		needAuthorizationHeader: boolean = true
+		config?: AxiosRequestConfig
 	): Promise<R> {
 		try {
-			if (needAuthorizationHeader) {
-				config = await this.setupAuthorizationHeader(config);
-			}
-			return await axios.put(url, data, config);
+			config = await this.setupAuthorizationHeader(config);
+			return await axios.patch(url, data, config);
 		} catch (error) {
 			this.handleError(error);
 			throw error;
@@ -77,12 +68,12 @@ export class AxiosJWTDecorator {
 	public async get<T = any, R = AxiosResponse<T>>(
 		url: string,
 		config?: AxiosRequestConfig,
-		needAuthorizationHeader: boolean = true
+		authenticationRequired: boolean = true
 	): Promise<R> {
 		try {
-			if (needAuthorizationHeader) {
+			if (authenticationRequired) {
 				config = await this.setupAuthorizationHeader(config);
-			}
+			}			
 			return await axios.get(url, config);
 		} catch (error) {
 			this.handleError(error);
@@ -96,7 +87,7 @@ export class AxiosJWTDecorator {
 	*/
 	private handleError(error: any): void {
 		if (error.hasOwnProperty("response")) {
-			const errorStatus = error.response.status;
+			const errorStatus = error.response!.status;
 			if (errorStatus === 403) {
 				window.location.href = "/errorpage/403";
 			} else if (errorStatus === 401) {
@@ -113,7 +104,6 @@ export class AxiosJWTDecorator {
 		config?: AxiosRequestConfig
 	): Promise<AxiosRequestConfig> {
 		microsoftTeams.initialize();
-
 		return new Promise<AxiosRequestConfig>((resolve, reject) => {
 			const authTokenRequest = {
 				successCallback: (token: string) => {

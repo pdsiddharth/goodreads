@@ -1,4 +1,4 @@
-﻿// <copyright file="ITeamPostSearchService.cs" company="Microsoft">
+﻿// <copyright file="IPostSearchService.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -9,9 +9,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
     using Microsoft.Teams.Apps.GoodReads.Models;
 
     /// <summary>
-    /// Interface for team post search service which helps in searching posts using Azure Search service.
+    /// Interface for post search service which helps in searching posts using Azure Search service.
     /// </summary>
-    public interface ITeamPostSearchService
+    public interface IPostSearchService
     {
         /// <summary>
         /// Provide search result for table to be used by user's based on Azure Search service.
@@ -24,13 +24,13 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Interfaces
         /// <param name="sortBy">Represents sorting type like: Popularity or Newest.</param>
         /// <param name="filterQuery">Filter bar based query.</param>
         /// <returns>List of search results.</returns>
-        Task<IEnumerable<TeamPostEntity>> GetTeamPostsAsync(
-            TeamPostSearchScope searchScope,
+        Task<IEnumerable<PostEntity>> GetPostsAsync(
+            PostSearchScope searchScope,
             string searchQuery,
             string userObjectId,
             int? count = null,
             int? skip = null,
-            string sortBy = null,
+            int? sortBy = null,
             string filterQuery = null);
 
         /// <summary>

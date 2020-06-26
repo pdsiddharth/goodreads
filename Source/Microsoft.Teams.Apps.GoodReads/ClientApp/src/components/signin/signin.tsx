@@ -1,13 +1,17 @@
-﻿import * as React from "react";
+﻿// <copyright file="signin.tsx" company="Microsoft">
+// Copyright (c) Microsoft. All rights reserved.
+// </copyright>
+
+import * as React from "react";
 import { RouteComponentProps } from "react-router-dom";
 import { Text, Button } from "@fluentui/react-northstar";
 import * as microsoftTeams from "@microsoft/teams-js";
 import { useTranslation } from 'react-i18next';
+
 import "../../styles/signin.css";
 
 const SignInPage: React.FunctionComponent<RouteComponentProps> = props => {
     const localize = useTranslation().t;
-    const errorMessage = "Please sign in to continue.";
 
     function onSignIn() {
         microsoftTeams.initialize();
@@ -29,7 +33,7 @@ const SignInPage: React.FunctionComponent<RouteComponentProps> = props => {
             <div>
             </div>
             <Text
-                content={errorMessage}
+                content={localize("signInMessage")}
                 size="medium"
             />
             <div className="space"></div>

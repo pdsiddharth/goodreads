@@ -4,6 +4,7 @@
 
 import axios from "./axios-decorator";
 import { getBaseUrl } from '../configVariables';
+import { IDiscoverPost } from "../components/card-view/discover-wrapper-page";
 
 let baseAxiosUrl = getBaseUrl() + '/api';
 
@@ -13,7 +14,7 @@ let baseAxiosUrl = getBaseUrl() + '/api';
 */
 export const getDiscoverPosts = async (pageCount: number): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/teampost?pageCount=${pageCount}`;
+    let url = `${baseAxiosUrl}/userposts?pageCount=${pageCount}`;
     return await axios.get(url);
 }
 
@@ -29,7 +30,7 @@ export const getTeamDiscoverPosts = async (teamId: string, pageCount: number): P
 }
 
 /**
-* Get filtered discover posts for tab
+* Get filtered discover posts for team tab
 * @param postTypes Selected post types separated by semicolon
 * @param sharedByNames Selected author names separated by semicolon
 * @param tags Selected tags separated by semicolon
@@ -37,9 +38,23 @@ export const getTeamDiscoverPosts = async (teamId: string, pageCount: number): P
 * @param teamId Team Id for which posts needs to be fetched
 * @param pageCount Current page count for which posts needs to be fetched
 */
-export const getFilteredPosts = async (postTypes: string, sharedByNames: string, tags: string, sortBy: string, teamId: string, pageCount: number): Promise<any> => {
-    let url = `${baseAxiosUrl}/teampost/applied-filtered-team-posts?postTypes=${postTypes}&sharedByNames=${sharedByNames}
+export const getFilteredPostsForTeam = async (postTypes: string, sharedByNames: string, tags: string, sortBy: number, teamId: string, pageCount: number): Promise<any> => {
+    let url = `${baseAxiosUrl}/teampost/filtered-team-posts?postTypes=${postTypes}&sharedByNames=${sharedByNames}
                 &tags=${tags}&sortBy=${sortBy}&teamId=${teamId}&pageCount=${pageCount}`;
+    return await axios.get(url);
+}
+
+/**
+* Get filtered discover posts for personal tab
+* @param postTypes Selected post types separated by semicolon
+* @param sharedByNames Selected author names separated by semicolon
+* @param tags Selected tags separated by semicolon
+* @param sortBy Sort post by
+* @param pageCount Current page count for which posts needs to be fetched
+*/
+export const getFilteredPosts = async (postTypes: string, sharedByNames: string, tags: string, sortBy: number, pageCount: number): Promise<any> => {
+    let url = `${baseAxiosUrl}/userposts/filtered-posts?postTypes=${postTypes}&sharedByNames=${sharedByNames}
+                &tags=${tags}&sortBy=${sortBy}&pageCount=${pageCount}`;
     return await axios.get(url);
 }
 
@@ -57,8 +72,8 @@ export const getTags = async (): Promise<any> => {
 */
 export const updatePostContent = async (postContent: any): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/teampost`;
-    return await axios.put(url, postContent);
+    let url = `${baseAxiosUrl}/userposts`;
+    return await axios.patch(url, postContent);
 }
 
 /**
@@ -67,7 +82,7 @@ export const updatePostContent = async (postContent: any): Promise<any> => {
 */
 export const addNewPostContent = async (postContent: any): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/teampost`;
+    let url = `${baseAxiosUrl}/userposts`;
     return await axios.post(url, postContent);
 }
 
@@ -77,7 +92,7 @@ export const addNewPostContent = async (postContent: any): Promise<any> => {
 */
 export const deletePost = async (post: any): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/teampost?postId=${post.postId}&userId=${post.userId}`;
+    let url = `${baseAxiosUrl}/userposts?postId=${post.postId}&userId=${post.userId}`;
     return await axios.delete(url);
 }
 
@@ -87,27 +102,27 @@ export const deletePost = async (post: any): Promise<any> => {
 */
 export const getUserVotes = async (): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/uservote/votes`;
+    let url = `${baseAxiosUrl}/uservote/user-votes`;
     return await axios.get(url);
 }
 
 /**
 * Add user vote
-* @param userVote Vote object to be added in storage
+* @param postDetails Post to vote
 */
-export const addUserVote = async (userVote: any): Promise<any> => {
+export const addUserVote = async (postDetails: any): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/uservote/vote`;
-    return await axios.post(url, userVote);
+    let url = `${baseAxiosUrl}/uservote/vote?postCreatedByuserId=${postDetails.userId}&postId=${postDetails.postId}`;
+    return await axios.get(url);
 }
 
 /**
 * delete user vote
 * @param userVote Vote object to be deleted from storage
 */
-export const deleteUserVote = async (userVote: any): Promise<any> => {
+export const deleteUserVote = async (postDetails: IDiscoverPost): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/uservote?postId=` + userVote.postId;
+    let url = `${baseAxiosUrl}/uservote?postCreatedByuserId=${postDetails.userId}&postId=${postDetails.postId}`;
     return await axios.delete(url);
 }
 
@@ -116,7 +131,7 @@ export const deleteUserVote = async (userVote: any): Promise<any> => {
 */
 export const getAuthors = async (): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/teampost/unique-user-names`;
+    let url = `${baseAxiosUrl}/userposts/unique-user-names`;
     return await axios.get(url);
 }
 
@@ -126,7 +141,7 @@ export const getAuthors = async (): Promise<any> => {
 * @param pageCount Current page count for which posts needs to be fetched
 */
 export const filterTitleAndTags = async (searchText: string, pageCount: number): Promise<any> => {
-    let url = baseAxiosUrl + `/teampost/search-team-posts?searchText=${searchText}&pageCount=${pageCount}`;
+    let url = baseAxiosUrl + `/userposts/search-posts?searchText=${searchText}&pageCount=${pageCount}`;
     return await axios.get(url);
 }
 
@@ -137,7 +152,7 @@ export const filterTitleAndTags = async (searchText: string, pageCount: number):
 * @param pageCount Current page count for which posts needs to be fetched
 */
 export const filterTitleAndTagsTeam = async (searchText: string, teamId: string, pageCount: number): Promise<any> => {
-    let url = baseAxiosUrl + `/teampost/team-search-posts?searchText=${searchText}&teamId=${teamId}&pageCount=${pageCount}`;
+    let url = baseAxiosUrl + `/teampost/search-posts?searchText=${searchText}&teamId=${teamId}&pageCount=${pageCount}`;
     return await axios.get(url);
 }
 
@@ -156,6 +171,6 @@ export const getTeamConfiguredTags = async (teamId: string): Promise<any> => {
 */
 export const getTeamAuthorsData = async (teamId: string): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/teampost/authors-for-tags?teamId=${teamId}`;
+    let url = `${baseAxiosUrl}/teampost/team-post-authors?teamId=${teamId}`;
     return await axios.get(url);
 }

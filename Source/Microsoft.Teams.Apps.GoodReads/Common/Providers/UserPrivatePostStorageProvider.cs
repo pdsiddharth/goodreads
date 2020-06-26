@@ -4,7 +4,6 @@
 
 namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
@@ -17,7 +16,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which help to create, get, update or delete team post data in user's private list in Microsoft Azure Table storage.
+    /// Implements storage provider which help to create, get, update or delete team post data in user's private list.
     /// </summary>
     public class UserPrivatePostStorageProvider : BaseStorageProvider, IUserPrivatePostStorageProvider
     {
@@ -28,33 +27,28 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserPrivatePostStorageProvider"/> class.
-        /// Handles Microsoft Azure Table storage read write operations.
+        /// Handles storage read write operations.
         /// </summary>
-        /// <param name="options">A set of key/value application configuration properties for Microsoft Azure Table storage.</param>
+        /// <param name="options">A set of key/value application configuration properties for storage.</param>
         /// <param name="logger">Sends logs to the Application Insights service.</param>
         public UserPrivatePostStorageProvider(
             IOptions<StorageSetting> options,
             ILogger<BaseStorageProvider> logger)
             : base(options?.Value.ConnectionString, UserPrivatePostEntityName, logger)
         {
-            options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         /// <summary>
-        /// Get user's private list of posts data from Microsoft Azure Table storage.
+        /// Get user's private list of posts data.
         /// </summary>
         /// <param name="userId">User id for which need to fetch data.</param>
         /// <returns>A task that represent collection to hold user's private list of posts data.</returns>
-        public async Task<IEnumerable<string>> GetUserPrivatePostsIdsAsync(string userId)
+        public async Task<IEnumerable<string>> GetUserPrivatePostsIdAsync(string userId)
         {
-            userId = userId ?? throw new ArgumentNullException(nameof(userId));
             await this.EnsureInitializedAsync();
-
             var partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, userId);
-            var userIdCondition = TableQuery.GenerateFilterCondition(nameof(UserPrivatePostEntity.UserId), QueryComparisons.Equal, userId);
-            var combinedTeamFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, userIdCondition);
 
-            TableQuery<UserPrivatePostEntity> query = new TableQuery<UserPrivatePostEntity>().Where(combinedTeamFilter);
+            TableQuery<UserPrivatePostEntity> query = new TableQuery<UserPrivatePostEntity>().Where(partitionKeyCondition);
             TableContinuationToken continuationToken = null;
             var userPrivatePostCollection = new List<UserPrivatePostEntity>();
 
@@ -73,26 +67,21 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         }
 
         /// <summary>
-        /// Delete private post from user's private list in Microsoft Azure Table storage.
+        /// Delete private post from user's private list.
         /// </summary>
         /// <param name="postId">Holds private post id.</param>
         /// <param name="userId">Azure Active Directory id of user.</param>
         /// <returns>A boolean that represents private post is successfully deleted or not.</returns>
-        public async Task<bool> DeletePrivatePostAsync(string postId, string userId)
+        public async Task<bool> DeleteUserPrivatePostAsync(string postId, string userId)
         {
-            postId = postId ?? throw new ArgumentNullException(nameof(postId));
             await this.EnsureInitializedAsync();
 
-            string partitionKeyCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, userId);
-            string rowKeyCondition = TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, postId);
-            var combinedFilter = TableQuery.CombineFilters(partitionKeyCondition, TableOperators.And, rowKeyCondition);
+            var retrieveOperation = TableOperation.Retrieve<UserPrivatePostEntity>(userId, postId);
+            var queryResult = await this.GoodReadsCloudTable.ExecuteAsync(retrieveOperation);
 
-            TableQuery<UserPrivatePostEntity> query = new TableQuery<UserPrivatePostEntity>().Where(combinedFilter);
-            var queryResult = await this.GoodReadsCloudTable.ExecuteQuerySegmentedAsync(query, null);
-
-            if (queryResult?.Count() > 0)
+            if (queryResult?.Result != null)
             {
-                TableOperation deleteOperation = TableOperation.Delete(queryResult.First());
+                TableOperation deleteOperation = TableOperation.Delete((UserPrivatePostEntity)queryResult.Result);
                 var result = await this.GoodReadsCloudTable.ExecuteAsync(deleteOperation);
 
                 return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
@@ -102,22 +91,22 @@ namespace Microsoft.Teams.Apps.GoodReads.Common.Providers
         }
 
         /// <summary>
-        /// Stores or update post data in user's private list in Microsoft Azure Table storage.
+        /// Stores or update post data in user's private list.
         /// </summary>
         /// <param name="entity">Holds user post detail.</param>
         /// <returns>A boolean that represents user private post is successfully saved/updated or not.</returns>
-        public async Task<bool> UpsertPostAsPrivateAsync(UserPrivatePostEntity entity)
+        public async Task<bool> UpsertUserPrivatPostAsync(UserPrivatePostEntity entity)
         {
-            var result = await this.StoreOrUpdateEntityAsync(entity);
+            var result = await this.StoreOrUpdatePrivatePostAsync(entity);
             return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
         }
 
         /// <summary>
-        /// Stores or update post data in user's private list in Microsoft Azure Table storage.
+        /// Stores or update post data in user's private list.
         /// </summary>
         /// <param name="entity">Represents user private post entity object.</param>
         /// <returns>A task that represents user private post is saved or updated.</returns>
-        private async Task<TableResult> StoreOrUpdateEntityAsync(UserPrivatePostEntity entity)
+        private async Task<TableResult> StoreOrUpdatePrivatePostAsync(UserPrivatePostEntity entity)
         {
             await this.EnsureInitializedAsync();
             TableOperation addOrUpdateOperation = TableOperation.InsertOrReplace(entity);

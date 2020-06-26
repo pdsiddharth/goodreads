@@ -5,6 +5,7 @@
 namespace Microsoft.Teams.Apps.GoodReads.Controllers
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
@@ -24,19 +25,14 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
     public class UserPrivatePostController : BaseGoodReadsController
     {
         /// <summary>
-        /// Event name for private post HTTP get call.
+        /// Represents maximum number of private posts per user.
         /// </summary>
-        private const string RecordPrivatePostHTTPGetCall = "Private posts - HTTP Get call succeeded";
+        private const int UserPrivatePostMaxCount = 50;
 
         /// <summary>
-        /// Event name for private post HTTP post call.
+        /// Instance of Search service for working with storage.
         /// </summary>
-        private const string RecordPrivatePostHTTPPostCall = "Private posts - HTTP Post call succeeded";
-
-        /// <summary>
-        /// Event name for private post HTTP delete call.
-        /// </summary>
-        private const string RecordPrivatePostHTTPDeleteCall = "Private posts - HTTP Delete call succeeded";
+        private readonly IPostSearchService postSearchService;
 
         /// <summary>
         /// Sends logs to the Application Insights service.
@@ -44,40 +40,27 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         private readonly ILogger logger;
 
         /// <summary>
-        /// Instance of private post storage helper to update post and get information of posts.
-        /// </summary>
-        private readonly IUserPrivatePostStorageHelper userPrivatePostStorageHelper;
-
-        /// <summary>
         /// Instance of user private post storage provider for private posts.
         /// </summary>
         private readonly IUserPrivatePostStorageProvider userPrivatePostStorageProvider;
-
-        /// <summary>
-        /// Instance of team post storage provider.
-        /// </summary>
-        private readonly ITeamPostStorageProvider teamPostStorageProvider;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="UserPrivatePostController"/> class.
         /// </summary>
         /// <param name="logger">Sends logs to the Application Insights service.</param>
         /// <param name="telemetryClient">The Application Insights telemetry client.</param>
-        /// <param name="userPrivatePostStorageHelper">Private post storage helper dependency injection.</param>
         /// <param name="userPrivatePostStorageProvider">User private post storage provider dependency injection.</param>
-        /// <param name="teamPostStorageProvider">Storage provider for team posts.</param>
+        /// <param name="postSearchService">The team post search service dependency injection.</param>
         public UserPrivatePostController(
             ILogger<UserPrivatePostController> logger,
             TelemetryClient telemetryClient,
-            IUserPrivatePostStorageHelper userPrivatePostStorageHelper,
             IUserPrivatePostStorageProvider userPrivatePostStorageProvider,
-            ITeamPostStorageProvider teamPostStorageProvider)
+            IPostSearchService postSearchService)
             : base(telemetryClient)
         {
             this.logger = logger;
-            this.userPrivatePostStorageHelper = userPrivatePostStorageHelper;
             this.userPrivatePostStorageProvider = userPrivatePostStorageProvider;
-            this.teamPostStorageProvider = teamPostStorageProvider;
+            this.postSearchService = postSearchService;
         }
 
         /// <summary>
@@ -91,24 +74,17 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
             {
                 this.logger.LogInformation("call to retrieve list of private posts.");
 
-                var postIds = await this.userPrivatePostStorageProvider.GetUserPrivatePostsIdsAsync(this.UserAadId);
-
-                if (postIds == null || !postIds.Any())
+                var postIds = await this.userPrivatePostStorageProvider.GetUserPrivatePostsIdAsync(this.UserAadId);
+                if (postIds != null || postIds.Any())
                 {
-                    return this.Ok(null);
+                    var postIdsString = string.Join(";", postIds);
+                    var filterQuery = $"search.in(PostId, '{postIdsString}', ';')";
+                    var posts = await this.postSearchService.GetPostsAsync(PostSearchScope.SearchTeamPostsForTitleText, "*", userObjectId: null, filterQuery: filterQuery);
+                    this.RecordEvent("Private posts - HTTP Get call succeeded");
+                    return this.Ok(posts);
                 }
 
-                if (postIds.Any())
-                {
-                    var teamPostsData = await this.teamPostStorageProvider.GetFilteredUserPrivatePostsAsync(postIds.Take(50));
-                    this.RecordEvent(RecordPrivatePostHTTPGetCall);
-
-                    return this.Ok(teamPostsData?.OrderByDescending(post => post.CreatedDate));
-                }
-                else
-                {
-                    return null;
-                }
+                return this.Ok(new List<PostEntity>());
             }
             catch (Exception ex)
             {
@@ -118,32 +94,44 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         }
 
         /// <summary>
-        /// Post call to store private posts details data in Microsoft Azure Table storage.
+        /// Post call to store private posts details data.
         /// </summary>
         /// <param name="userPrivatePostEntity">Represents user private post entity object.</param>
         /// <returns>Returns true for successful operation.</returns>
         [HttpPost]
         public async Task<IActionResult> PostAsync([FromBody] UserPrivatePostEntity userPrivatePostEntity)
         {
+            this.logger.LogInformation("Call to add private post.");
+
             try
             {
-                this.logger.LogInformation("call to add private post.");
+                var postIds = await this.userPrivatePostStorageProvider.GetUserPrivatePostsIdAsync(this.UserAadId);
 
-                if (string.IsNullOrEmpty(userPrivatePostEntity?.PostId))
+                if (postIds.Count() < UserPrivatePostMaxCount)
                 {
-                    this.logger.LogError("Error while adding post in user's private list.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while adding post in user's private list.");
+                    UserPrivatePostEntity userPrivatePost = new UserPrivatePostEntity
+                    {
+                        UserId = this.UserAadId,
+                        CreatedByName = this.UserName,
+#pragma warning disable CA1062 // private post details are validated by model validations for null check and is responded with bad request status
+                        PostId = userPrivatePostEntity.PostId,
+#pragma warning restore CA1062 // private post details are validated by model validations for null check and is responded with bad request status
+                        CreatedDate = DateTime.UtcNow,
+                    };
+
+                    var result = await this.userPrivatePostStorageProvider.UpsertUserPrivatPostAsync(userPrivatePost);
+
+                    if (result)
+                    {
+                        this.RecordEvent("Private posts - HTTP Post call succeeded");
+                    }
+
+                    return this.Ok(result);
                 }
-
-                var updatedPrivatePostEntity = this.userPrivatePostStorageHelper.CreateUserPrivatePostModel(userPrivatePostEntity, this.UserAadId, this.UserName);
-                var result = await this.userPrivatePostStorageProvider.UpsertPostAsPrivateAsync(updatedPrivatePostEntity);
-
-                if (result)
+                else
                 {
-                    this.RecordEvent(RecordPrivatePostHTTPPostCall);
+                    return this.Ok(false);
                 }
-
-                return this.Ok(result);
             }
             catch (Exception ex)
             {
@@ -153,26 +141,25 @@ namespace Microsoft.Teams.Apps.GoodReads.Controllers
         }
 
         /// <summary>
-        /// Delete call to delete private post details data in Microsoft Azure Table storage.
+        /// Delete call to delete private post details data.
         /// </summary>
         /// <param name="postId">Id of the post to be deleted.</param>
-        /// <param name="userId">Azure Active Directory id of user.</param>
         /// <returns>Returns true for successful operation.</returns>
         [HttpDelete]
-        public async Task<IActionResult> DeleteAsync(string postId, string userId)
+        public async Task<IActionResult> DeleteAsync(string postId)
         {
+            this.logger.LogInformation("call to delete private post.");
+
+            if (string.IsNullOrEmpty(postId))
+            {
+                this.logger.LogError("Error while deleting private post details data. PostId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while deleting private post details data. PostId is either null or empty.");
+            }
+
             try
             {
-                this.logger.LogInformation("call to delete private post.");
-
-                if (string.IsNullOrEmpty(postId))
-                {
-                    this.logger.LogError("Error while deleting private post details data in Microsoft Azure Table storage.");
-                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while deleting private post details data in Microsoft Azure Table storage.");
-                }
-
-                this.RecordEvent(RecordPrivatePostHTTPDeleteCall);
-                return this.Ok(await this.userPrivatePostStorageProvider.DeletePrivatePostAsync(postId, userId));
+                this.RecordEvent("Private posts - HTTP Delete call succeeded");
+                return this.Ok(await this.userPrivatePostStorageProvider.DeleteUserPrivatePostAsync(postId, this.UserAadId));
             }
             catch (Exception ex)
             {

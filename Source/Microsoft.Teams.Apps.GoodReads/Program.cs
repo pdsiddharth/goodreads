@@ -25,7 +25,7 @@ namespace Microsoft.Teams.Apps.GoodReads
         }
 
         /// <summary>
-        /// Build the web-host for servicing HTTP requests.
+        /// Build the web-host builder for servicing HTTP requests.
         /// </summary>
         /// <param name="args">The command line arguments.</param>
         /// <returns> The WebHostBuilder configured from the arguments with the composition root defined in <see cref="Startup" />.</returns>

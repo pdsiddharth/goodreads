@@ -3,10 +3,11 @@
 // </copyright>
 
 import * as React from "react";
-import { Loader, Alert } from "@fluentui/react-northstar";
+import { Loader } from "@fluentui/react-northstar";
 import PrivateListTable from "./private-list-table";
+import { generateColor } from "../../helpers/helper";
 import { getUserPrivateListPosts, deletePrivatePostContent } from "../../api/private-list-api";
-import NoPrivatePost from '../card-view/filter-no-post-content-page';
+import NoPrivatePosts from './no-private-posts';
 import { IDiscoverPost } from "../card-view/discover-wrapper-page";
 import { WithTranslation, withTranslation } from "react-i18next";
 import { TFunction } from "i18next";
@@ -26,11 +27,14 @@ interface IPrivateListState {
 
 class PrivateListWrapperPage extends React.Component<WithTranslation, IPrivateListState> {
     localize: TFunction;
+    authorAvatarBackground: Array<any>;
 
     constructor(props: any) {
-        super(props);
+        super(props)
+        let colors = localStorage.getItem("avatar-colors");
         this.localize = this.props.t;
         window.addEventListener("resize", this.update);
+        this.authorAvatarBackground = colors === null ? [] : JSON.parse(colors!);
 
         this.state = {
             isLoading: true,
@@ -85,10 +89,27 @@ class PrivateListWrapperPage extends React.Component<WithTranslation, IPrivateLi
     * Fetch posts for user private list tab from API
     */
     getUserPrivateListPosts = async () => {
+        let allposts = new Array<any>();
         let response = await getUserPrivateListPosts();
         if (response.status === 200 && response.data) {
+            response.data.map((post: IDiscoverPost) => {
+                let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.userId);
+                if (searchedAuthor) {
+                    post.avatarBackgroundColor = searchedAuthor.color;
+                }
+                else {
+                    let color = generateColor();
+                    this.authorAvatarBackground.push({ id: post.userId, color: color });
+                    post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
+                }
+
+                allposts.push(post)
+            });
+
             this.setState({
-                discoverPosts: response.data
+                discoverPosts: allposts
             });
         }
 
@@ -172,7 +193,7 @@ class PrivateListWrapperPage extends React.Component<WithTranslation, IPrivateLi
                     onTitleClick={this.ontitleClick}
                     privateListData={this.state.discoverPosts}
                     onDeleteButtonClick={this.handleDeletePrivatePost} />
-                : <NoPrivatePost />
+                : <NoPrivatePosts />
         }
     }
 }

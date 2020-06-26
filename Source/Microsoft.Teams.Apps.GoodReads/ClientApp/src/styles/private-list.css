@@ -29,7 +29,8 @@
 
 .dialog-container-private-list {
     width: 25% !important;
-    padding:1.5rem !important;
+    padding:3rem !important;
+    margin-left:-0.01rem !important;
 }
 
 .post-type-icon {
@@ -103,7 +104,7 @@ margin-right:-1rem;
 .dark-container .list-item {
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
-    border-bottom: 1.5px solid lightgray;
+    border-bottom: 1.5px solid #3b3a39;
     background-color: #323131;
 }
 .high-contrast-container .list-item {
@@ -115,19 +116,20 @@ margin-right:-1rem;
 .default-container .list-item {
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
-    border-bottom: 1.5px solid lightgray;
+    border-bottom: 1.5px solid #f3f2f1;
     background-color: #fff;
 }
 
 @media only screen and (max-width: 750px) {
     .dialog-container-private-list {
-        width: 100% !important;
-        height: 20% !important;
-        padding: 1rem !important;
+        width: 80% !important;
+        height: 18rem !important;
+        padding: 3rem !important;
+        align-self: center !important;
     }
 }
 
-/*@media only screen and (min-width: 651px) and (max-width: 700px) {
+@media only screen and (min-width: 651px) and (max-width: 700px) {
     .user-avatar {
         width: 4rem;
     }
@@ -149,6 +151,6 @@ margin-right:-1rem;
     .user-avatar {
         width: 2.8rem;
     }
-}*/
+}
 
 

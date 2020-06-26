@@ -15,11 +15,10 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
     using Microsoft.Bot.Schema.Teams;
     using Microsoft.Extensions.Localization;
     using Microsoft.Extensions.Options;
-    using Microsoft.Teams.Apps.GoodReads;
-    using Microsoft.Teams.Apps.GoodReads.Bot;
     using Microsoft.Teams.Apps.GoodReads.Common;
     using Microsoft.Teams.Apps.GoodReads.Common.Interfaces;
     using Microsoft.Teams.Apps.GoodReads.Models;
+    using Microsoft.Teams.Apps.GoodReads.Models.Configuration;
 
     /// <summary>
     /// A class that handles the search activities for Messaging Extension.
@@ -32,9 +31,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         private const string SearchTextParameterName = "searchText";
 
         /// <summary>
-        /// Instance of Search service for working with Microsoft Azure Table storage.
+        /// Instance of Search service for working with storage.
         /// </summary>
-        private readonly ITeamPostSearchService teamPostSearchService;
+        private readonly IPostSearchService teamPostSearchService;
 
         /// <summary>
         /// The current cultures' string localizer.
@@ -47,32 +46,27 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         private readonly IOptions<GoodReadsActivityHandlerOptions> options;
 
         /// <summary>
-        /// Card post type images pair.
+        /// Handles the post types based on the post type id.
         /// </summary>
-        private readonly Dictionary<string, string> cardPostTypePair = new Dictionary<string, string>();
+        private readonly PostTypeHelper postTypeHelper;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MessagingExtensionHelper"/> class.
         /// </summary>
         /// <param name="localizer">The current cultures' string localizer.</param>
         /// <param name="teamPostSearchService">The team post search service dependency injection.</param>
-        /// <param name="options">>A set of key/value application configuration properties for activity handler.</param>
+        /// <param name="options">A set of key/value application configuration properties for activity handler.</param>
+        /// <param name="postTypeHelper">Handles the post types based on the post type id.</param>
         public MessagingExtensionHelper(
             IStringLocalizer<Strings> localizer,
-            ITeamPostSearchService teamPostSearchService,
-            IOptions<GoodReadsActivityHandlerOptions> options)
+            IPostSearchService teamPostSearchService,
+            IOptions<GoodReadsActivityHandlerOptions> options,
+            PostTypeHelper postTypeHelper)
         {
             this.localizer = localizer;
             this.teamPostSearchService = teamPostSearchService;
+            this.postTypeHelper = postTypeHelper;
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.cardPostTypePair = new Dictionary<string, string>()
-            {
-                { "1", $"{this.options.Value.AppBaseUri}/Artifacts/blogTypeDot.png" },
-                { "2", $"{this.options.Value.AppBaseUri}/Artifacts/otherTypeDot.png" },
-                { "3", $"{this.options.Value.AppBaseUri}/Artifacts/podcastTypeDot.png" },
-                { "4", $"{this.options.Value.AppBaseUri}/Artifacts/videoTypeDot.png" },
-                { "5", $"{this.options.Value.AppBaseUri}/Artifacts/bookTypeDot.png" },
-            };
         }
 
         /// <summary>
@@ -98,23 +92,23 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                 Attachments = new List<MessagingExtensionAttachment>(),
             };
 
-            IEnumerable<TeamPostEntity> teamPostResults;
+            IEnumerable<PostEntity> teamPostResults;
 
             // commandId should be equal to Id mentioned in Manifest file under composeExtensions section.
             switch (commandId)
             {
                 case Constants.AllItemsPostCommandId: // Get all posts
-                    teamPostResults = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.AllItems, query, userObjectId, count, skip);
+                    teamPostResults = await this.teamPostSearchService.GetPostsAsync(PostSearchScope.AllItems, query, userObjectId, count, skip);
                     composeExtensionResult = this.GetTeamPostResult(teamPostResults);
                     break;
 
                 case Constants.PostedByMePostCommandId: // Get current author posts.
-                    teamPostResults = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.PostedByMe, query, userObjectId, count, skip);
+                    teamPostResults = await this.teamPostSearchService.GetPostsAsync(PostSearchScope.PostedByMe, query, userObjectId, count, skip);
                     composeExtensionResult = this.GetTeamPostResult(teamPostResults);
                     break;
 
                 case Constants.PopularPostCommandId: // Get popular posts based on the maximum votes provided for posts.
-                    teamPostResults = await this.teamPostSearchService.GetTeamPostsAsync(TeamPostSearchScope.Popular, query, userObjectId, count, skip);
+                    teamPostResults = await this.teamPostSearchService.GetPostsAsync(PostSearchScope.Popular, query, userObjectId, count, skip);
                     composeExtensionResult = this.GetTeamPostResult(teamPostResults);
                     break;
             }
@@ -137,7 +131,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         /// </summary>
         /// <param name="teamPostResults">List of user search result.</param>
         /// <returns><see cref="Task"/>Returns Messaging Extension result object, which will be used for providing the card.</returns>
-        private MessagingExtensionResult GetTeamPostResult(IEnumerable<TeamPostEntity> teamPostResults)
+        private MessagingExtensionResult GetTeamPostResult(IEnumerable<PostEntity> teamPostResults)
         {
             MessagingExtensionResult composeExtensionResult = new MessagingExtensionResult
             {
@@ -153,6 +147,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
 
             foreach (var teamPost in teamPostResults)
             {
+                var selectedPostType = this.postTypeHelper.GetPostType(teamPost.Type);
                 var card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 2))
                 {
                     Body = new List<AdaptiveElement>
@@ -182,7 +177,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                         Url = new Uri(teamPost.ContentUrl),
                     });
 
-                var voteIcon = $"<img src='{this.options.Value.AppBaseUri}/Artifacts/voteIcon.png' alt='vote logo' width='18' height='18'";
+                var voteIcon = $"<img src='{this.options.Value.AppBaseUri}/Artifacts/voteIconME.png' alt='vote logo' width='15' height='16'";
                 var nameString = teamPost.CreatedByName.Length < 25
                     ? HttpUtility.HtmlEncode(teamPost.CreatedByName)
                     : $"{HttpUtility.HtmlEncode(teamPost.CreatedByName.Substring(0, 24))} {"..."}";
@@ -190,7 +185,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                 ThumbnailCard previewCard = new ThumbnailCard
                 {
                     Title = $"<p style='font-weight: 600;'>{teamPost.Title}</p>",
-                    Text = $"{nameString} {"|"} {PostTypeHelper.GetPostType(Convert.ToInt32(teamPost.Type, CultureInfo.InvariantCulture))} {"|"} {teamPost.TotalVotes} {voteIcon}",
+                    Text = $"{nameString} {"|"} {selectedPostType.PostTypeName} {"|"} {teamPost.TotalVotes} {voteIcon}",
                 };
 
                 composeExtensionResult.Attachments.Add(new Attachment
@@ -208,10 +203,10 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         /// </summary>
         /// <param name="teamPost">Team post entity object.</param>
         /// <returns>Return a container for team post.</returns>
-        private AdaptiveContainer GetPostTypeContainer(TeamPostEntity teamPost)
+        private AdaptiveContainer GetPostTypeContainer(PostEntity teamPost)
         {
             string applicationBasePath = this.options.Value.AppBaseUri;
-            this.cardPostTypePair.TryGetValue(teamPost.Type, out string typeIconUrl);
+            var selectedPostType = this.postTypeHelper.GetPostType(teamPost.Type);
 
             var postTypeContainer = new AdaptiveContainer
             {
@@ -229,7 +224,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                                     new AdaptiveImage
                                     {
                                         Url = new Uri($"{applicationBasePath}/Artifacts/peopleAvatar.png"),
-                                        Size = AdaptiveImageSize.Auto,
+                                        PixelWidth = 20,
+                                        PixelHeight = 20,
                                         Style = AdaptiveImageStyle.Person,
                                         AltText = "User Image",
                                     },
@@ -244,7 +240,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                                 {
                                     new AdaptiveTextBlock
                                     {
-                                        Text = teamPost.CreatedByName.Length > 19 ? $"{teamPost.CreatedByName.Substring(0, 18)} {"..."}" : teamPost.CreatedByName,
+                                        Text = teamPost.CreatedByName.Length > 19 ? $"{teamPost.CreatedByName.Substring(0, 18)}..." : teamPost.CreatedByName,
                                         Wrap = true,
                                     },
                                 },
@@ -258,8 +254,9 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                                 {
                                     new AdaptiveImage
                                     {
-                                        Url = new Uri(typeIconUrl),
-                                        Size = AdaptiveImageSize.Stretch,
+                                        Url = new Uri($"{this.options.Value.AppBaseUri}/Artifacts/{selectedPostType.IconName}"),
+                                        PixelHeight = 9,
+                                        PixelWidth = 9,
                                         Style = AdaptiveImageStyle.Default,
                                         Height = AdaptiveHeight.Auto,
                                     },
@@ -274,7 +271,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                                 {
                                     new AdaptiveTextBlock
                                     {
-                                        Text = $"{PostTypeHelper.GetPostType(Convert.ToInt32(teamPost.Type, CultureInfo.InvariantCulture))}",
+                                        Text = selectedPostType.PostTypeName,
                                         Spacing = AdaptiveSpacing.None,
                                         IsSubtle = true,
                                         Wrap = true,
@@ -306,7 +303,8 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
                                     new AdaptiveImage
                                     {
                                         Url = new Uri($"{applicationBasePath}/Artifacts/voteIcon.png"),
-                                        Size = AdaptiveImageSize.Stretch,
+                                        PixelWidth = 15,
+                                        PixelHeight = 16,
                                         Style = AdaptiveImageStyle.Default,
                                     },
                                 },
@@ -325,7 +323,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Helpers
         /// </summary>
         /// <param name="teamPost">Team post entity object.</param>
         /// <returns>Return a container for team post tags.</returns>
-        private AdaptiveContainer GetTagsContainer(TeamPostEntity teamPost)
+        private AdaptiveContainer GetTagsContainer(PostEntity teamPost)
         {
             var tagsContainer = new AdaptiveContainer
             {

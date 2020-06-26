@@ -7,7 +7,7 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
     using System;
     using Microsoft.Bot.Builder;
     using Microsoft.Bot.Builder.Integration.AspNet.Core;
-    using Microsoft.Extensions.Configuration;
+    using Microsoft.Bot.Connector.Authentication;
     using Microsoft.Extensions.Localization;
     using Microsoft.Extensions.Logging;
 
@@ -19,18 +19,20 @@ namespace Microsoft.Teams.Apps.GoodReads.Bot
         /// <summary>
         /// Initializes a new instance of the <see cref="GoodReadsAdapterWithErrorHandler"/> class.
         /// </summary>
-        /// <param name="configuration">Application configurations.</param>
+        /// <param name="credentialProvider">Credential provider for bot.</param>
         /// <param name="logger">Instance to send logs to the Application Insights service.</param>
+        /// <param name="channelProvider">Framework channel service.</param>
         /// <param name="goodReadsActivityMiddleware">Represents middleware that can operate on incoming activities.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
         /// <param name="conversationState">A state management object for conversation state.</param>
         public GoodReadsAdapterWithErrorHandler(
-            IConfiguration configuration,
-            ILogger<IBotFrameworkHttpAdapter> logger,
+            ICredentialProvider credentialProvider,
+            ILogger<BotFrameworkHttpAdapter> logger,
+            IChannelProvider channelProvider,
             GoodReadsActivityMiddleware goodReadsActivityMiddleware,
             IStringLocalizer<Strings> localizer,
             ConversationState conversationState = null)
-            : base(configuration)
+            : base(credentialProvider, channelProvider: channelProvider, logger: logger)
         {
             goodReadsActivityMiddleware = goodReadsActivityMiddleware ?? throw new ArgumentNullException(nameof(goodReadsActivityMiddleware));
 

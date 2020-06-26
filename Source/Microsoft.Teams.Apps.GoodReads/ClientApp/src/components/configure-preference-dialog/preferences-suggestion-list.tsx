@@ -9,7 +9,6 @@ import { TFunction } from "i18next";
 import "../../styles/configure-preferences.css";
 import "../../styles/teams-config-tab.css";
 
-
 interface IPreferencesSuggestionListProps extends WithTranslation {
     digestFrequency: string;
     savedTagItems: Array<string>;

@@ -9,7 +9,7 @@ import { IPostType } from "../../constants/resources";
 import { getLocalizedPostTypes } from "../../helpers/helper";
 
 interface ITypeLabelProps {
-    postType: string;
+    postType: number;
     size: "small" | "smaller" | "smallest" | "medium" | "large" | "larger" | "largest";
 }
 

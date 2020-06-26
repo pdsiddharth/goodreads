@@ -10,11 +10,12 @@ namespace Microsoft.Teams.Apps.GoodReads
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
     using Microsoft.Bot.Builder;
-    using Microsoft.Bot.Builder.BotFramework;
     using Microsoft.Bot.Builder.Integration.AspNet.Core;
     using Microsoft.Bot.Connector.Authentication;
+    using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.IdentityModel.Logging;
     using Microsoft.Teams.Apps.GoodReads.Authentication;
     using Microsoft.Teams.Apps.GoodReads.Bot;
 
@@ -43,6 +44,7 @@ namespace Microsoft.Teams.Apps.GoodReads
         /// </remarks>
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
             services.AddCredentialProviders(this.configuration);
             services.AddConfigurationSettings(this.configuration);
             services.AddHelpers(this.configuration);
@@ -53,13 +55,13 @@ namespace Microsoft.Teams.Apps.GoodReads
                 configuration.RootPath = "ClientApp/build";
             });
 
+            IdentityModelEventSource.ShowPII = false;
             services.AddGoodReadsAuthentication(this.configuration);
+            services.AddSingleton<IChannelProvider, SimpleChannelProvider>();
+            services.AddSingleton<IMemoryCache, MemoryCache>();
 
             // Create the Bot Framework Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, GoodReadsAdapterWithErrorHandler>();
-
-            // Create the Bot Framework Adapter with error handling enabled.
-            services.AddTransient<ICredentialProvider, ConfigurationCredentialProvider>();
 
             services.AddTransient<IBot, GoodReadsActivityHandler>();
 
@@ -78,8 +80,8 @@ namespace Microsoft.Teams.Apps.GoodReads
         /// <param name="env">Hosting Environment.</param>
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseRequestLocalization();
             app.UseAuthentication();
+            app.UseRequestLocalization();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
             app.UseMvc();
