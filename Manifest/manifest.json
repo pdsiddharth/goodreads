@@ -2,8 +2,8 @@
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.5/MicrosoftTeams.schema.json",
   "manifestVersion": "1.5",
   "version": "1.0.0",
-  "id": "c1b50ba4-a9fc-46ed-ae5c-c4060461f88b",
-  "packageName": "com.microsoft.teams.apptemplates.sharenow",
+  "id": "94ef83a1-f72e-4fff-8358-0dd0465eae55",
+  "packageName": "com.microsoft.teams.apptemplates.grow",
   "developer": {
     "name": "<company name>",
     "websiteUrl": "<appDomain>",
@@ -15,14 +15,14 @@
     "outline": "outline.png"
   },
   "name": {
-    "short": "Share Now",
-    "full": "Share Now"
+    "short": "Grow Your Skills",
+    "full": "Grow Your Skills"
   },
   "description": {
-    "short": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics.",
-    "full": "Encourage and introduce your co-workers to a widespread knowledge-based sharing of posts, videos, or topics with a bite-sized information on how it influenced them and learn together in Teams."
+    "short": "Grow Your Skills",
+    "full": "Grow Your Skills"
   },
-  "accentColor": "#BDBDE6",
+  "accentColor": "#B8FF4A",
   "configurableTabs": [
     {
       "configurationUrl": "<appDomain>/configtab",
@@ -32,17 +32,31 @@
   ],
   "staticTabs": [
     {
-      "entityId": "PersonalDiscoverTab",
+      "entityId": "e644c67f-fe77-4469-9161-f6860323982f",
       "name": "Discover",
       "contentUrl": "<appDomain>",
       "websiteUrl": "<appDomain>",
       "scopes": [ "personal" ]
     },
     {
-      "entityId": "PrivateList",
-      "name": "Private list",
-      "contentUrl": "<appDomain>/user-private-list",
-      "websiteUrl": "<appDomain>/user-private-list",
+      "entityId": "3a243f23-cd08-45f8-af5c-1e5fc456bf29",
+      "name": "Your projects",
+      "contentUrl": "<appDomain>/my-joined-projects",
+      "websiteUrl": "<appDomain>/my-joined-projects",
+      "scopes": [ "personal" ]
+    },
+    {
+      "entityId": "42765c29-b028-4dbf-9af4-1f98bf4b4040",
+      "name": "Created by you",
+      "contentUrl": "<appDomain>/my-created-projects",
+      "websiteUrl": "<appDomain>/my-created-projects",
+      "scopes": [ "personal" ]
+    },
+    {
+      "entityId": "bec1540e-3fef-4328-b795-37973e671603",
+      "name": "Skills acquired",
+      "contentUrl": "<appDomain>/skill-acquired",
+      "websiteUrl": "<appDomain>/skill-acquired",
       "scopes": [ "personal" ]
     }
   ],
@@ -59,15 +73,6 @@
               "description": "Display commands and what they do."
             }
           ]
-        },
-        {
-          "scopes": [ "team" ],
-          "commands": [
-            {
-              "title": "Settings",
-              "description": "Configure topics and frequency of digest."
-            }
-          ]
         }
       ],
       "supportsFiles": false,
@@ -80,39 +85,39 @@
       "canUpdateConfiguration": false,
       "commands": [
         {
-          "id": "allItems",
+          "id": "allProjects",
           "title": "All",
-          "description": "Show all created posts.",
+          "description": "Show all created projects.",
           "parameters": [
             {
               "name": "searchText",
-              "title": "allItems",
+              "title": "allProjects",
               "description": "Enter a keyword or category"
             }
           ],
           "initialRun": true
         },
         {
-          "id": "postedByMe",
-          "title": "Posted by me",
-          "description": "Show all posts created by me.",
+          "id": "joinedProjects",
+          "title": "Joined projects",
+          "description": "Show current user joined projects.",
           "parameters": [
             {
               "name": "searchText",
-              "title": "postedByMe",
+              "title": "joinedProjects",
               "description": "Enter a keyword or category"
             }
           ],
           "initialRun": true
         },
         {
-          "id": "popularReads",
-          "title": "Popular",
-          "description": "Show popular posts.",
+          "id": "createdProjectsByMe",
+          "title": "Created projects",
+          "description": "Show projects created by current user.",
           "parameters": [
             {
               "name": "searchText",
-              "title": "popularReads",
+              "title": "createdProjectsByMe",
               "description": "Enter a keyword or category"
             }
           ],

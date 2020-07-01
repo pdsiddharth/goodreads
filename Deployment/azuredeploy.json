@@ -27,9 +27,9 @@
     "appDisplayName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "ShareNow",
+      "defaultValue": "Grow Your Skills",
       "metadata": {
-        "description": "Application name"
+        "description": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics."
       }
     },
     "appDescription": {
@@ -37,7 +37,7 @@
       "minLength": 1,
       "defaultValue": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics.",
       "metadata": {
-        "description": "Application description"
+        "description": "Encourage and introduce your co-workers to a widespread knowledge-based sharing of posts, videos, or topics with a bite-sized information on how it influenced them and learn together in Teams."
       }
     },
     "customDomainOption": {
@@ -54,7 +54,7 @@
     "appIconUrl": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "https://raw.githubusercontent.com/OfficeDev/microsoft-teams-apps-sharenow/master/Manifest/color.png",
+      "defaultValue": "https://raw.githubusercontent.com/OfficeDev/microsoft-teams-apps-<<TO DO>>/master/Manifest/color.png",
       "metadata": {
         "description": "The link to the icon for the app. It must resolve to a PNG file."
       }
@@ -65,7 +65,7 @@
       "maxLength": 36,
       "defaultValue": "c1b50ba4-a9fc-46ed-ae5c-c4060461f88b",
       "metadata": {
-        "description": "Manifest Id (Must be same as manifest Id used while creating package for sideload)"
+        "description": "Manifest Id (Required for deeplinking)"
       }
     },
     "tenantId": {
@@ -75,6 +75,13 @@
       "maxLength": 36,
       "metadata": {
         "description": "The ID of the tenant to which the app will be deployed."
+      }
+    },
+    "tenantId": {
+      "type": "int",
+      "defaultValue": 60,
+      "metadata": {
+        "description": "Number of minutes to cache user presence information in memory."
       }
     },
     "defaultCulture": {
@@ -134,7 +141,7 @@
       "metadata": {
         "description": "The URL to the GitHub repository to deploy."
       },
-      "defaultValue": "https://github.com/OfficeDev/microsoft-teams-apps-sharenow.git"
+      "defaultValue": "https://github.com/OfficeDev/microsoft-teams-apps-<<TO DO>>.git"
     },
     "gitBranch": {
       "type": "string",
@@ -163,7 +170,8 @@
     "skuFamily": "[if(equals(parameters('sku'), 'Shared'), 'D', take(parameters('sku'), 1))]",
     "useFrontDoor": "[equals(parameters('customDomainOption'), 'Azure Front Door')]",
     "frontDoorName": "[parameters('baseResourceName')]",
-    "frontDoorDomain": "[toLower(concat(variables('frontDoorName'), '.azurefd.net'))]"
+    "frontDoorDomain": "[toLower(concat(variables('frontDoorName'), '.azurefd.net'))]",
+    "discoverTabEntityId": "c1b50ba4-a9fc-46ed-ae5c-c4060461f88a"
   },
   "resources": [
     {
@@ -265,7 +273,7 @@
             },
             {
               "name": "DiscoverTabEntityId",
-              "value": "PersonalDiscoverTab"
+              "value": "[variables('discoverTabEntityId')]"
             },
             {
               "name": "Logging:LogLevel:Default",
@@ -302,6 +310,10 @@
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
               "value": "10.15.2"
+            },
+            {
+              "name": "App:CacheInterval",
+              "value": "[parameters('CacheInterval')]"
             }
           ],
           "cors": {
@@ -385,7 +397,7 @@
       },
       "type": "Microsoft.BotService/botServices"
     },
-    
+
     {
       "name": "[variables('azureSearchName')]",
       "type": "Microsoft.Search/searchServices",

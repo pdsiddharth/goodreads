@@ -435,7 +435,14 @@ local.settings.json
 !.vscode/launch.json
 !.vscode/extensions.json
 .ionide/*
-/Source/Microsoft.Teams.Apps.GoodReads/ClientApp/src/components/*.js
-/Source/Microsoft.Teams.Apps.GoodReads/ClientApp/src/components/*js.map
-/Source/Microsoft.Teams.Apps.GoodReads/ClientApp/src/*.js
-/Source/Microsoft.Teams.Apps.GoodReads/ClientApp/src/*.js.map
+/Source/Microsoft.Teams.Apps.Grow/ClientApp/src/components/*.js
+/Source/Microsoft.Teams.Apps.Grow/ClientApp/src/components/*js.map
+/Source/Microsoft.Teams.Apps.Grow/ClientApp/src/*.js
+/Source/Microsoft.Teams.Apps.Grow/ClientApp/src/*.js.map
+
+# bin obj node module files
+/Source/Microsoft.Teams.Apps.Grow/bin/Debug
+/Source/Microsoft.Teams.Apps.Grow/obj
+/Source/.vs
+/.vs
+/Source/Microsoft.Teams.Apps.Grow/ClientApp/node_modules
