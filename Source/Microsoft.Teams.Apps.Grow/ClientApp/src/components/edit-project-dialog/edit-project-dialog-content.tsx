@@ -491,9 +491,9 @@ class EditProjectDialogContent extends React.Component<IEditProjectDialogContent
         }
 
         if (parseInt(this.state.teamSizeText) <= 0 ||
-            parseInt(this.state.teamSizeText) > 10 ||
+            parseInt(this.state.teamSizeText) > 20 ||
             this.state.teamSizeText === "" ||
-            this.state.teamMember.split(';').length > parseInt(this.state.teamSizeText)) {
+            this.state.teamMember.split(';').filter((member) => member).length > parseInt(this.state.teamSizeText)) {
             projectValidationStatus.isTeamSizeValid = false;
         }
         else {
@@ -562,7 +562,7 @@ class EditProjectDialogContent extends React.Component<IEditProjectDialogContent
             else if (!this.state.teamSizeText.toString().match(regex)) {
                 return (<Text content={this.localize("teamSizeNumberError")} className="field-error-message" error size="medium" />);
             }
-            else if (parseInt(this.state.teamSizeText) > 10) {
+            else if (parseInt(this.state.teamSizeText) > 20) {
                 return (<Text content={this.localize("maxTeamSizeError")} className="field-error-message" error size="medium" />);
             }
             else if (this.state.teamSizeText === "") {

@@ -15,8 +15,8 @@ namespace Microsoft.Teams.Apps.Grow.Common.Interfaces
         /// <summary>
         /// Stores or updates team skills.
         /// </summary>
-        /// <param name="teamSkillEntity">Holds team skills detail entity data.</param>
-        /// <returns>A task that represents team skills entity data is saved or updated.</returns>
+        /// <param name="teamSkillEntity">Holds team preference detail entity data.</param>
+        /// <returns>A task that represents team preference entity data is saved or updated.</returns>
         Task<bool> UpsertTeamSkillsAsync(TeamSkillEntity teamSkillEntity);
 
         /// <summary>

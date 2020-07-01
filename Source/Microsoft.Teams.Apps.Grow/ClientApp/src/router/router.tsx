@@ -11,6 +11,8 @@ import TeamsConfigPage from "../components/teams-config-page"
 import SignInPage from "../components/signin/signin";
 import SignInSimpleStart from "../components/signin/signin-start";
 import SignInSimpleEnd from "../components/signin/signin-end";
+import PrivateListWrapperPage from "../components/user-private-list/private-list";
+import configurepreference from "../components/configure-preference-dialog/configure-preference";
 import ProjectClosure from "../components/close-project/close-project-wrapper";
 import CloseProjectDialog from "../components/close-project/CloseProjectDialog";
 import SkillsAquiredTab from "../components/skills-aquired-tab/skills-aquired-wrapper";
@@ -38,6 +40,8 @@ export const AppRoute: React.FunctionComponent<{}> = () => {
                     <Route exact path="/signin" component={SignInPage} />
                     <Route exact path="/signin-simple-start" component={SignInSimpleStart} />
                     <Route exact path="/signin-simple-end" component={SignInSimpleEnd} />
+                    <Route exact path="/user-private-list" component={PrivateListWrapperPage} />
+                    <Route exact path="/configurepreferences" component={configurepreference} />
                     <Route exact path="/error" component={ErrorPage} />
                     <Route exact path="/project-closure" component={ProjectClosure} />
                     <Route exact path="/project-dialog" component={CloseProjectDialog} />

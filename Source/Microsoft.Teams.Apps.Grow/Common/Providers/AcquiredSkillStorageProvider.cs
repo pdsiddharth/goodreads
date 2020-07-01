@@ -42,11 +42,11 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
         /// </summary>
         /// <param name="entity">Holds acquired skill detail.</param>
         /// <returns>A task that represents acquired skills is saved or updated.</returns>
-        public async Task<bool> UpsertAcquiredSkillAsync(AcquiredSkillsEntity entity)
+        public async Task<bool> UpsertAcquiredSkillAsync(AcquiredSkillEntity entity)
         {
             await this.EnsureInitializedAsync();
             TableOperation addOrUpdateOperation = TableOperation.InsertOrReplace(entity);
-            var result = await this.CloudTable.ExecuteAsync(addOrUpdateOperation);
+            var result = await this.GrowCloudTable.ExecuteAsync(addOrUpdateOperation);
             return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
         }
 
@@ -55,20 +55,20 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
         /// </summary>
         /// <param name="userId">Azure Active Directory id of user.</param>
         /// <returns>A task that represents a collection of acquired skills.</returns>
-        public async Task<IEnumerable<AcquiredSkillsEntity>> GetAcquiredSkillsAsync(string userId)
+        public async Task<IEnumerable<AcquiredSkillEntity>> GetAcquiredSkillsAsync(string userId)
         {
             userId = userId ?? throw new NullReferenceException(nameof(userId));
 
             await this.EnsureInitializedAsync();
             string userIdCondition = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, userId);
 
-            TableQuery<AcquiredSkillsEntity> query = new TableQuery<AcquiredSkillsEntity>().Where(userIdCondition);
+            TableQuery<AcquiredSkillEntity> query = new TableQuery<AcquiredSkillEntity>().Where(userIdCondition);
             TableContinuationToken continuationToken = null;
-            var acquiredSkills = new List<AcquiredSkillsEntity>();
+            var acquiredSkills = new List<AcquiredSkillEntity>();
 
             do
             {
-                var queryResult = await this.CloudTable.ExecuteQuerySegmentedAsync(query, continuationToken);
+                var queryResult = await this.GrowCloudTable.ExecuteQuerySegmentedAsync(query, continuationToken);
                 if (queryResult?.Results != null)
                 {
                     acquiredSkills.AddRange(queryResult.Results);

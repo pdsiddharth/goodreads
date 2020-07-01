@@ -37,6 +37,16 @@ class CloseProjectTable extends React.Component<ICloseProjectTableProps, ICloseP
     }
 
     /**
+    * Used to initialize Microsoft Teams sdk
+    */
+    async componentDidMount() {
+        microsoftTeams.initialize();
+        microsoftTeams.getContext((context: microsoftTeams.Context) => {
+
+        });
+    }
+
+    /**
     *Changes dialog open state to show and hide dialog.
     *@param isOpen Boolean indication whether to show dialog
     */

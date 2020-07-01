@@ -11,7 +11,7 @@ namespace Microsoft.Teams.Apps.Grow.Authentication.AuthenticationPolicy
     {
         /// <summary>
         /// The name of the authorization policy, MustBeTeamMemberUserPolicy.
-        /// Indicates that user is a part of team and has permission to edit created project.
+        /// Indicates that user is a part of team and has permission to nominate and endorse team members.
         /// </summary>
         public const string MustBeTeamMemberUserPolicy = "MustBeTeamMemberUserPolicy";
     }

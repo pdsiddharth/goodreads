@@ -18,13 +18,13 @@ namespace Microsoft.Teams.Apps.Grow.Common.Interfaces
         /// </summary>
         /// <param name="entity">Holds acquired skill detail.</param>
         /// <returns>A task that represents acquired skill is saved or updated.</returns>
-        Task<bool> UpsertAcquiredSkillAsync(AcquiredSkillsEntity entity);
+        Task<bool> UpsertAcquiredSkillAsync(AcquiredSkillEntity entity);
 
         /// <summary>
         /// Get acquired skills of a user.
         /// </summary>
         /// <param name="userId">Azure Active Directory id of user.</param>
         /// <returns>A task that represents a collection of acquired skills.</returns>
-        Task<IEnumerable<AcquiredSkillsEntity>> GetAcquiredSkillsAsync(string userId);
+        Task<IEnumerable<AcquiredSkillEntity>> GetAcquiredSkillsAsync(string userId);
     }
 }

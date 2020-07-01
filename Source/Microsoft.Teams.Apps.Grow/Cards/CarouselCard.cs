@@ -7,7 +7,7 @@ namespace Microsoft.Teams.Apps.Grow.Cards
     using System.Collections.Generic;
     using System.Globalization;
     using Microsoft.Bot.Schema;
-    using Microsoft.Teams.Apps.Grow.Resources;
+    using Microsoft.Teams.Apps.Grow;
 
     /// <summary>
     /// Carousal card for help command.

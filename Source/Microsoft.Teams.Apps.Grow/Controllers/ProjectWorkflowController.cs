@@ -10,6 +10,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using Microsoft.Teams.Apps.Grow.Common.Interfaces;
@@ -75,37 +76,6 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
         }
 
         /// <summary>
-        /// Valid post types.
-        /// </summary>
-        public enum StatusEnum
-        {
-            /// <summary>
-            /// No status.
-            /// </summary>
-            None = 0,
-
-            /// <summary>
-            /// Project not yet started.
-            /// </summary>
-            NotStarted = 1,
-
-            /// <summary>
-            /// Project is active.
-            /// </summary>
-            Active = 2,
-
-            /// <summary>
-            /// Project is blocked.
-            /// </summary>
-            Blocked = 3,
-
-            /// <summary>
-            /// Project is closed.
-            /// </summary>
-            Closed = 4,
-        }
-
-        /// <summary>
         /// Post call to join a project.
         /// </summary>
         /// <param name="projectEntity">Represents project entity.</param>
@@ -126,7 +96,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 var projectDetails = await this.projectStorageProvider.GetProjectAsync(projectEntity.CreatedByUserId, projectEntity.ProjectId);
 
                 // Allow user to join project which has status 'Active' and 'Not started'.
-                if (projectDetails != null && !projectDetails.IsRemoved && (projectDetails.Status == (int)StatusEnum.NotStarted || projectDetails.Status == (int)StatusEnum.Active))
+                if (projectDetails != null && !projectDetails.IsRemoved && (projectDetails.Status == 1 || projectDetails.Status == 2))
                 {
                     // If there no existing participants
                     if (string.IsNullOrEmpty(projectDetails.ProjectParticipantsUserIds))
@@ -137,10 +107,10 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                     else
                     {
                         // Get number of people who already joined the project.
-                        var joinedUsers = projectDetails.ProjectParticipantsUserIds.Split(';');
+                        var joinedUsers = projectDetails.ProjectParticipantsUserIds.Split(';').Where(participant => !string.IsNullOrEmpty(participant));
 
                         // Check if user's joined project count is reached to maximum team size.
-                        if (projectDetails.TeamSize == joinedUsers.Length)
+                        if (projectDetails.TeamSize == joinedUsers.Count())
                         {
                             this.logger.LogError($"Project max member count reached for {projectDetails.ProjectId}.");
                             return this.BadRequest("Project max member count reached.");
@@ -153,7 +123,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                         }
 
                         projectDetails.ProjectParticipantsUserIds += $";{this.UserAadId}";
-                        projectDetails.ProjectParticipantsUserMapping = $";{this.UserAadId}:{this.UserName}";
+                        projectDetails.ProjectParticipantsUserMapping += $";{this.UserAadId}:{this.UserName}";
                     }
 
                     // Update the project status.
@@ -169,9 +139,9 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                         {
                             // Send Notification to owner when any user joins project.
                             await this.notificationHelper.SendProjectJoinedNotificationAsync(
-                                projectEntity,
-                                this.UserName,
-                                this.UserPrincipalName);
+                                        projectEntity,
+                                        this.UserName,
+                                        this.UserPrincipalName);
 
                             this.RecordEvent("Notification to project owner has sent successfully.");
                         }
@@ -216,7 +186,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 var projectDetails = await this.projectStorageProvider.GetProjectAsync(this.UserAadId, closeProjectModel.ProjectId);
 
                 // Only projects with 'Active' status are allowed to close.
-                if (projectDetails == null && projectDetails.IsRemoved && projectDetails.Status == (int)StatusEnum.Active)
+                if (projectDetails == null && projectDetails.IsRemoved && projectDetails.Status == 2)
                 {
                     this.logger.LogError($"Project {closeProjectModel.ProjectId} does not exists.");
                     this.RecordEvent("Close project - HTTP Post call failed");
@@ -237,7 +207,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                     if (closeProjectModel.ProjectParticipantDetails == null)
                     {
                         this.logger.LogInformation($"Project participants for project {projectDetails.ProjectId} does not match while changing status to closed.");
-                        return this.BadRequest("Project participants does not match.");
+                        return this.BadRequest(new { message = "Project participants does not match." });
                     }
 
                     // Verify if participants sent by client app matches with participants in storage.
@@ -246,14 +216,14 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                     if (!verifyMembers)
                     {
                         this.logger.LogInformation($"Project participants for project {projectDetails.ProjectId} does not match while changing status to closed.");
-                        return this.BadRequest("Project participants does not match.");
+                        return this.BadRequest(new { message = "Project participants does not match." });
                     }
 
                     // Save user acquired skills for a project in storage for all user's who joined this project.
                     foreach (var participant in closeProjectModel.ProjectParticipantDetails)
                     {
                         var user = projectMemberNames.Where(member => member.Split(':')[0] == participant.UserId).First();
-                        var acquiredSkillEntity = new AcquiredSkillsEntity()
+                        var acquiredSkillEntity = new AcquiredSkillEntity()
                         {
                             ProjectId = projectDetails.ProjectId,
                             UserId = participant.UserId,
@@ -281,7 +251,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 }
 
                 projectDetails.ProjectClosedDate = DateTime.UtcNow;
-                projectDetails.Status = (int)StatusEnum.Closed;
+                projectDetails.Status = 4; // Project status as 'Closed'.
 
                 // Update the project status as closed.
                 var isProjectClosed = await this.projectStorageProvider.UpsertProjectAsync(projectDetails);
@@ -315,38 +285,38 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
         /// Call to leave a particular project joined by user.
         /// </summary>
         /// <param name="projectId">Id of the project to be deleted.</param>
-        /// <param name="createdByUserId">Azure Active Directory id of project owner.</param>
+        /// <param name="createdByuserId">Azure Active Directory id of project owner.</param>
         /// <returns>Returns true for successful operation.</returns>
         [HttpDelete("leave-project")]
-        public async Task<IActionResult> LeaveProjectAsync(string projectId, string createdByUserId)
+        public async Task<IActionResult> LeaveProjectAsync(string projectId, string createdByuserId)
         {
             this.logger.LogInformation("Call to leave a project already joined by participant.");
 
             if (string.IsNullOrEmpty(projectId))
             {
                 this.logger.LogError("Argument projectId is either null or empty.");
-                return this.BadRequest("Argument projectId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Argument projectId is either null or empty.");
             }
 
-            if (string.IsNullOrEmpty(createdByUserId))
+            if (string.IsNullOrEmpty(createdByuserId))
             {
-                this.logger.LogError("Argument createdByUserId is either null or empty.");
-                return this.BadRequest("Argument createdByUserId is either null or empty.");
+                this.logger.LogError("Argument createdByuserId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Argument createdByuserId is either null or empty.");
             }
 
             try
             {
-                var projectEntity = await this.projectStorageProvider.GetProjectAsync(createdByUserId, projectId);
+                var projectEntity = await this.projectStorageProvider.GetProjectAsync(createdByuserId, projectId);
 
                 if (projectEntity == null && projectEntity.IsRemoved)
                 {
-                    this.logger.LogInformation($"Project {projectId} not found for user {createdByUserId}.");
-                    return this.BadRequest($"Project not found.");
+                    this.logger.LogInformation($"Project {projectId} not found for user {createdByuserId}.");
+                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, $"Project not found.");
                 }
 
                 if (string.IsNullOrEmpty(projectEntity.ProjectParticipantsUserIds))
                 {
-                    this.logger.LogInformation($"Leave project operation failed for user {createdByUserId} and project {projectId}.");
+                    this.logger.LogInformation($"Leave project operation failed for user {createdByuserId} and project {projectId}.");
                     return this.NotFound(new { message = "Project not found" });
                 }
 

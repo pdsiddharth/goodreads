@@ -117,6 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ActiveStatusType" xml:space="preserve">
+    <value>Active</value>
+    <comment>Active project status</comment>
+  </data>
   <data name="ApplicationName" xml:space="preserve">
     <value>Grow Your Skills</value>
     <comment>Application name to show on carousel card content.</comment>
@@ -125,26 +129,34 @@
     <value>Project owner</value>
     <comment>Label text to show on Messaging Extension attachment card.</comment>
   </data>
+  <data name="BlockedStatusType" xml:space="preserve">
+    <value>Blocked</value>
+    <comment>Blocked project status</comment>
+  </data>
   <data name="CarouselCard1Text" xml:space="preserve">
-    <value>&lt;b&gt;Discover&lt;/b&gt; content by Skills, Status and Suggested by based on your interest. &lt;br /&gt;
-&lt;b&gt;Add content&lt;/b&gt; to your private list and visit later to learn and grow.
+    <value>&lt;b&gt;Discover and join&lt;/b&gt; projects/opportunities that interests you to learn and acquire new skills. &lt;br /&gt;
+&lt;b&gt;View the skills&lt;/b&gt; acquired across multiple projects at one place.
  &lt;br /&gt;
-&lt;b&gt;Share&lt;/b&gt; content that influenced or inspired you with your co-workers.</value>
+&lt;b&gt;Create projects&lt;/b&gt; to give opportunity for your co-workers to grow.</value>
     <comment>Carousel Card text.</comment>
   </data>
   <data name="CarouselCard2Text" xml:space="preserve">
-    <value>Get a &lt;b&gt;digest of content&lt;/b&gt; that are added based on your preference in a channel to stay updated on the topics.</value>
+    <value>&lt;b&gt;Endorse&lt;/b&gt; team members and send a personal note during project closure.&lt;br /&gt;&lt;b&gt;Get notified&lt;/b&gt; on project related updates to manage effectively.</value>
     <comment>Carousel Card text.</comment>
   </data>
   <data name="CarouselCard3Text" xml:space="preserve">
-    <value>&lt;b&gt;Add&lt;/b&gt; {0} to the Channel Tab based on tags to learn together with your team.
+    <value>&lt;b&gt;Add the app&lt;/b&gt; to the Channel Tab based on skills to learn together with your team.
 &lt;br /&gt;
-&lt;b&gt;Share&lt;/b&gt; your favorite reads in a channel or chat to help your Peers grow.</value>
+&lt;b&gt;Share the projects&lt;/b&gt; that you have created or part of in a channel or chat to learn together.</value>
     <comment>Carousel Card text.</comment>
   </data>
   <data name="ChatButton" xml:space="preserve">
     <value>Chat</value>
     <comment>Text for chat button</comment>
+  </data>
+  <data name="ClosedStatusType" xml:space="preserve">
+    <value>Closed</value>
+    <comment>Closed project status</comment>
   </data>
   <data name="CongratulationsMessage" xml:space="preserve">
     <value>Congratulations!</value>
@@ -158,9 +170,21 @@
     <value>{0} {1}</value>
     <comment>Used in date string format for adaptive card. {0} is for date and {1} is for time.</comment>
   </data>
+  <data name="DigestPreferenceCardContent" xml:space="preserve">
+    <value>You can set digest preference by selecting the frequency and tab you wants to follow.</value>
+    <comment>Digest preference card content.</comment>
+  </data>
+  <data name="DigestPreferenceCardHeaderText" xml:space="preserve">
+    <value>You can configure more topics or different ones as well as change how often the digest is posted.</value>
+    <comment>Digest preference card header text.</comment>
+  </data>
   <data name="ErrorMessage" xml:space="preserve">
     <value>Something went wrong. Try again in a few minutes.</value>
     <comment>Error message when bot throws exception or unable to perform a task (Generic error message).</comment>
+  </data>
+  <data name="GoToSkillsCardButton" xml:space="preserve">
+    <value>Go to skills</value>
+    <comment>Button text in notification card sent to participants after project closure</comment>
   </data>
   <data name="joinProjectAfterDelete" xml:space="preserve">
     <value>Want to join a different project?</value>
@@ -180,6 +204,10 @@
   <data name="NotificationListCardViewMoreButtonText" xml:space="preserve">
     <value>View more</value>
     <comment>Digest frequency list card view more button text.</comment>
+  </data>
+  <data name="NotStartedStatusType" xml:space="preserve">
+    <value>Not started</value>
+    <comment>Not started project status</comment>
   </data>
   <data name="OpenItem" xml:space="preserve">
     <value>Open item</value>
@@ -213,10 +241,6 @@
     <value>**{0}** has removed you from the project '**{1}**'</value>
     <comment>Message to team members when removed from project.</comment>
   </data>
-  <data name="ProjectStatusIcon" xml:space="preserve">
-    <value>Project status icon</value>
-    <comment>Project status icon</comment>
-  </data>
   <data name="SkillsEndorsedMessage" xml:space="preserve">
     <value>Here are some of the skills {0} has endorsed you.</value>
     <comment>Message to team members for skills endorsement</comment>
@@ -232,6 +256,10 @@
   <data name="TabName" xml:space="preserve">
     <value>All projects</value>
     <comment>All projects tab name</comment>
+  </data>
+  <data name="TeamPreferenceCardConfigureButtonText" xml:space="preserve">
+    <value>Configure</value>
+    <comment>Team configure preference card configure button text.</comment>
   </data>
   <data name="TeamSizeText" xml:space="preserve">
     <value>Team size</value>

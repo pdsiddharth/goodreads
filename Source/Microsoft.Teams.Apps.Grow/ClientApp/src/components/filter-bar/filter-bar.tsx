@@ -198,8 +198,8 @@ class FilterBar extends React.Component<IFilterBarProps, IFilterBarState> {
                             <Flex.Item>
                                 <>
                                     <div className="filter-bar-item-container">
-                                        <PopupMenuWrapper title={this.localize("tagsLabel")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.tagsList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
                                         <PopupMenuWrapper title={this.localize("type")} showSearchBar={false} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.typeList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTypeCheckboxStateChange} />
+                                        <PopupMenuWrapper title={this.localize("tagsLabel")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.tagsList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
                                         <PopupMenuWrapper title={this.localize("sharedBy")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.sharedByList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onSharedByCheckboxStateChange} />
                                     </div>
                                     <div>
@@ -218,9 +218,8 @@ class FilterBar extends React.Component<IFilterBarProps, IFilterBarState> {
                                 </div>
                                 <Flex className="mobile-filterbar-wrapper">
                                     <PopupMenuWrapper title={this.localize("type")} showSearchBar={false} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.typeList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTypeCheckboxStateChange} />
-                                    <PopupMenuWrapper title={this.localize("sharedBy")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.sharedByList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onSharedByCheckboxStateChange} />
                                     <PopupMenuWrapper title={this.localize("tagsLabel")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.tagsList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
-                                    <PopupMenuWrapper title={this.localize("sortBy")} selectedSortBy={this.state.selectedSortBy} radioGroup={this.state.sortBy} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onTagsCheckboxStateChange} />
+                                    <PopupMenuWrapper title={this.localize("sharedBy")} showSearchBar={true} selectedSortBy={this.state.selectedSortBy} checkboxes={this.state.sharedByList} onRadiogroupStateChange={this.onSortByStateChange} onCheckboxStateChange={this.onSharedByCheckboxStateChange} />
                                 </Flex>
                             </Flex>
                         </Flex.Item>

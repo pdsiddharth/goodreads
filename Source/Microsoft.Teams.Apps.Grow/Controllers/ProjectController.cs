@@ -10,13 +10,13 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using Microsoft.Teams.Apps.Grow.Common;
     using Microsoft.Teams.Apps.Grow.Common.Interfaces;
     using Microsoft.Teams.Apps.Grow.Helpers;
     using Microsoft.Teams.Apps.Grow.Models;
-    using static Microsoft.Teams.Apps.Grow.Helpers.ProjectStatusHelper;
 
     /// <summary>
     /// Controller to handle project API operations.
@@ -89,7 +89,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid value for argument pageCount.");
-                return this.BadRequest("Invalid value for argument pageCount.");
+                return this.BadRequest(new { message = "Invalid value for argument pageCount." });
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;
@@ -128,7 +128,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (projectDetail.ProjectStartDate > projectDetail.ProjectEndDate)
 #pragma warning restore CA1062 // project details are validated by model validations for null check and is responded with bad request status
             {
-                return this.BadRequest("Project start date must be less than end date.");
+                return this.BadRequest(new { message = "Project start date must be less than end date." });
             }
 
             try
@@ -136,7 +136,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 var projectEntity = new ProjectEntity
                 {
                     ProjectId = Guid.NewGuid().ToString(),
-                    Status = (int)StatusEnum.NotStarted, // Project status as 'Not Started'.
+                    Status = 1, // Project status as 'Not Started'.
                     CreatedByUserId = this.UserAadId,
                     CreatedByName = this.UserName,
                     CreatedDate = DateTime.UtcNow,
@@ -193,7 +193,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 this.logger.LogError($"Project Id is either null or empty.");
                 this.RecordEvent("Update project - HTTP Patch call failed");
 
-                return this.BadRequest("Project Id cannot be null or empty.");
+                return this.BadRequest(new { message = "Project Id cannot be null or empty." });
             }
 
             try
@@ -208,6 +208,10 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                     return this.NotFound(new { message = $"Could not find project for user." });
                 }
 
+                var updatedProjectParticipants = projectDetails.ProjectParticipantsUserIds.Split(';');
+                var currentProjectParticipants = currentProject.ProjectParticipantsUserIds.Split(';');
+                List<string> removedProjectParticipants = currentProjectParticipants.Except(updatedProjectParticipants).ToList();
+
                 currentProject.Status = projectDetails.Status;
                 currentProject.Title = projectDetails.Title;
                 currentProject.Description = projectDetails.Description;
@@ -218,10 +222,6 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 currentProject.TeamSize = projectDetails.TeamSize;
                 currentProject.ProjectParticipantsUserIds = projectDetails.ProjectParticipantsUserIds;
                 currentProject.ProjectParticipantsUserMapping = projectDetails.ProjectParticipantsUserMapping;
-
-                var updatedProjectParticipants = projectDetails.ProjectParticipantsUserIds.Split(';');
-                var currentProjectParticipants = currentProject.ProjectParticipantsUserIds.Split(';');
-                List<string> removedProjectParticipants = currentProjectParticipants.Except(updatedProjectParticipants).ToList();
 
                 var upsertResult = await this.projectStorageProvider.UpsertProjectAsync(currentProject);
 
@@ -276,7 +276,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 var projectDetails = await this.projectStorageProvider.GetProjectAsync(this.UserAadId, projectId);
 
                 // Only projects with 'Not started' status are allowed to delete.
-                if (projectDetails == null && projectDetails.IsRemoved && projectDetails.Status == (int)StatusEnum.NotStarted)
+                if (projectDetails == null && projectDetails.IsRemoved && projectDetails.Status == 1)
                 {
                     this.logger.LogError($"Project {projectId} created by user {this.UserAadId} not found for deletion.");
                     return this.NotFound($"Cannot find project {projectId} created by user {this.UserAadId} for deletion.");
@@ -324,7 +324,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (string.IsNullOrEmpty(projectId))
             {
                 this.logger.LogError("ProjectId is either null or empty.");
-                return this.BadRequest("ProjectId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "ProjectId is either null or empty.");
             }
 
             try
@@ -437,7 +437,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid argument value for pageCount.");
-                return this.BadRequest("Invalid argument value for pageCount.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Invalid argument value for pageCount.");
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;
@@ -480,7 +480,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (string.IsNullOrEmpty(searchText))
             {
                 this.logger.LogError("Search text is either null or empty.");
-                return this.BadRequest("Search text is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Search text is either null or empty.");
             }
 
             try
@@ -521,7 +521,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid parameter value for pageCount.");
-                return this.BadRequest("Invalid parameter value for pageCount.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Invalid parameter value for pageCount.");
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;
@@ -569,7 +569,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid parameter value for pageCount.");
-                return this.BadRequest("Invalid parameter value for pageCount.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Invalid parameter value for pageCount.");
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;

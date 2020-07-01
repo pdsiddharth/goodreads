@@ -69,7 +69,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (acquiredSkills == null || !acquiredSkills.Any())
                 {
                     this.logger.LogInformation($"No acquired skills found for user {this.UserAadId}.");
-                    return this.Ok(new List<AcquiredSkillsEntity>());
+                    return this.Ok(new List<AcquiredSkillEntity>());
                 }
 
                 return this.Ok(acquiredSkills.OrderByDescending(skill => skill.ProjectClosedDate));

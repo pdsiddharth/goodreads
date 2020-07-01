@@ -8,7 +8,7 @@ namespace Microsoft.Teams.Apps.Grow.Models
     using System.ComponentModel.DataAnnotations;
 
     /// <summary>
-    /// Class that represents a model for closing project.
+    /// Class that represents a close project model.
     /// </summary>
     public class CloseProjectModel
     {

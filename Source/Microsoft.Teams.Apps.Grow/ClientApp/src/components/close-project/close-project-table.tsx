@@ -155,11 +155,12 @@ class CloseProjectTable extends React.Component<ICloseProjectTableProps, ICloseP
 
         return (
             <>
-                {this.props.memberDetails.projectParticipantsUserIds !== ""
-                    ? <Table variables={{
-                        cellContentOverflow: 'wrap',
-                    }} rows={privateListTableRows}
-                        header={privateListTableHeader} className="nonmobile-endorse-skill-list table-cell-content" />
+                {this.props.memberDetails.projectParticipantsUserIds
+                    ? <Table
+                        variables={{ cellContentOverflow: 'wrap' }}
+                        rows={privateListTableRows}
+                        header={privateListTableHeader}
+                        className="nonmobile-endorse-skill-list table-cell-content" />
                     : <Flex className="no-participant-joined"><Text content={this.localize("noParticpantJoinedProject")} /></Flex>}
             </>
         );

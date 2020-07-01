@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Teams.Apps.Grow.Resources {
+namespace Microsoft.Teams.Apps.Grow {
     using System;
     
     
@@ -61,6 +61,15 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Active.
+        /// </summary>
+        public static string ActiveStatusType {
+            get {
+                return ResourceManager.GetString("ActiveStatusType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Grow Your Skills.
         /// </summary>
         public static string ApplicationName {
@@ -79,10 +88,19 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;b&gt;Discover&lt;/b&gt; content by Skills, Status and Suggested by based on your interest. &lt;br /&gt;
-        ///&lt;b&gt;Add content&lt;/b&gt; to your private list and visit later to learn and grow.
+        ///   Looks up a localized string similar to Blocked.
+        /// </summary>
+        public static string BlockedStatusType {
+            get {
+                return ResourceManager.GetString("BlockedStatusType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;b&gt;Discover and join&lt;/b&gt; projects/opportunities that interests you to learn and acquire new skills. &lt;br /&gt;
+        ///&lt;b&gt;View the skills&lt;/b&gt; acquired across multiple projects at one place.
         /// &lt;br /&gt;
-        ///&lt;b&gt;Share&lt;/b&gt; content that influenced or inspired you with your co-workers..
+        ///&lt;b&gt;Create projects&lt;/b&gt; to give opportunity for your co-workers to grow..
         /// </summary>
         public static string CarouselCard1Text {
             get {
@@ -91,7 +109,7 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Get a &lt;b&gt;digest of content&lt;/b&gt; that are added based on your preference in a channel to stay updated on the topics..
+        ///   Looks up a localized string similar to &lt;b&gt;Endorse&lt;/b&gt; team members and send a personal note during project closure.&lt;br /&gt;&lt;b&gt;Get notified&lt;/b&gt; on project related updates to manage effectively..
         /// </summary>
         public static string CarouselCard2Text {
             get {
@@ -100,9 +118,9 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;b&gt;Add&lt;/b&gt; {0} to the Channel Tab based on tags to learn together with your team.
+        ///   Looks up a localized string similar to &lt;b&gt;Add the app&lt;/b&gt; to the Channel Tab based on skills to learn together with your team.
         ///&lt;br /&gt;
-        ///&lt;b&gt;Share&lt;/b&gt; your favorite reads in a channel or chat to help your Peers grow..
+        ///&lt;b&gt;Share the projects&lt;/b&gt; that you have created or part of in a channel or chat to learn together..
         /// </summary>
         public static string CarouselCard3Text {
             get {
@@ -116,6 +134,15 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         public static string ChatButton {
             get {
                 return ResourceManager.GetString("ChatButton", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Closed.
+        /// </summary>
+        public static string ClosedStatusType {
+            get {
+                return ResourceManager.GetString("ClosedStatusType", resourceCulture);
             }
         }
         
@@ -147,11 +174,38 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to You can set digest preference by selecting the frequency and tab you wants to follow..
+        /// </summary>
+        public static string DigestPreferenceCardContent {
+            get {
+                return ResourceManager.GetString("DigestPreferenceCardContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You can configure more topics or different ones as well as change how often the digest is posted..
+        /// </summary>
+        public static string DigestPreferenceCardHeaderText {
+            get {
+                return ResourceManager.GetString("DigestPreferenceCardHeaderText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Something went wrong. Try again in a few minutes..
         /// </summary>
         public static string ErrorMessage {
             get {
                 return ResourceManager.GetString("ErrorMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go to skills.
+        /// </summary>
+        public static string GoToSkillsCardButton {
+            get {
+                return ResourceManager.GetString("GoToSkillsCardButton", resourceCulture);
             }
         }
         
@@ -197,6 +251,15 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         public static string NotificationListCardViewMoreButtonText {
             get {
                 return ResourceManager.GetString("NotificationListCardViewMoreButtonText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Not started.
+        /// </summary>
+        public static string NotStartedStatusType {
+            get {
+                return ResourceManager.GetString("NotStartedStatusType", resourceCulture);
             }
         }
         
@@ -273,15 +336,6 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Project status icon.
-        /// </summary>
-        public static string ProjectStatusIcon {
-            get {
-                return ResourceManager.GetString("ProjectStatusIcon", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Here are some of the skills {0} has endorsed you..
         /// </summary>
         public static string SkillsEndorsedMessage {
@@ -314,6 +368,15 @@ namespace Microsoft.Teams.Apps.Grow.Resources {
         public static string TabName {
             get {
                 return ResourceManager.GetString("TabName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configure.
+        /// </summary>
+        public static string TeamPreferenceCardConfigureButtonText {
+            get {
+                return ResourceManager.GetString("TeamPreferenceCardConfigureButtonText", resourceCulture);
             }
         }
         

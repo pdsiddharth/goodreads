@@ -85,6 +85,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     constructor(props: any) {
         super(props);
         this.localize = this.props.t;
+        let colors = localStorage.getItem("avatar-colors");
         this.selectedSharedBy = [];
         this.selectedPostprojectStatus = [];
         this.selectedskills = [];
@@ -94,7 +95,7 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
         this.loggedInUserObjectId = "";
         this.loggedInUserName = "";
         this.teamId = "";
-        this.authorAvatarBackground = [];
+        this.authorAvatarBackground = colors === null ? [] : JSON.parse(colors!);
 
         this.state = {
             loader: true,
@@ -177,6 +178,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.createdByUserId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.createdByUserId === this.loggedInUserObjectId) {
@@ -238,6 +241,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.createdByUserId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.createdByUserId === this.loggedInUserObjectId) {
@@ -288,32 +293,6 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
     hideAlert = () => {
         this.setState({ showAlert: false })
     }
-
-    ///**
-    //* Fetch user votes from API
-    //*/
-    //getUserVotes = async () => {
-    //    let response = await getUserVotes();
-    //    if (response.status === 200 && response.data) {
-    //        for (let i = 0; i < response.data.length; i++) {
-    //            this.allPosts.map((post: IProjectDetails) => {
-    //                if (post.projectId === response.data[i].projectId) {
-    //                    post.isJoinedByUser = true;
-
-    //                    if (post.teamSize === 0) {
-    //                        post.teamSize = 1;
-    //                    }
-    //                }
-    //            })
-    //        }
-
-    //        this.onFilterSearchTextChange(this.filterSearchText);
-    //    }
-
-    //    this.setState({
-    //        loader: false
-    //    });
-    //}
 
     /**
     *Removes selected blog post from page
@@ -436,6 +415,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                         let color = generateColor();
                         this.authorAvatarBackground.push({ id: post.createdByUserId, color: color });
                         post.avatarBackgroundColor = color;
+
+                        localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                     }
 
                     if (post.createdByUserId === this.loggedInUserObjectId) {
@@ -593,6 +574,8 @@ class DiscoverWrapperPage extends React.Component<WithTranslation, ICardViewStat
                 let color = generateColor();
                 this.authorAvatarBackground.push({ id: getSubmittedPost.createdByUserId, color: color });
                 getSubmittedPost.avatarBackgroundColor = color;
+
+                localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
             }
 
             let submittedPost = this.state.projectDetails;

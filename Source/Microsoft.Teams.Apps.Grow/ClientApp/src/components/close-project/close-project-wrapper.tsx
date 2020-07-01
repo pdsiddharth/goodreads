@@ -10,6 +10,7 @@ import { getBaseUrl } from '../../configVariables';
 import { IProjectDetails } from "../card-view/discover-wrapper-page";
 import CloseProjectTable from './close-project-table';
 import { WithTranslation, withTranslation } from "react-i18next";
+import Skill from "./skills";
 import { TFunction } from "i18next";
 import Resources from "../../constants/resources";
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -53,6 +54,7 @@ class CloseProjectWrapper extends React.Component<ICloseProjectProps, ICloseProj
 
     localize: TFunction;
     imageUrl = getBaseUrl() + "/Artifact/applicationLogo.png";
+    onSkillRemoveClick: any;
     constructor(props: any) {
         super(props);
         this.localize = this.props.t;
@@ -233,45 +235,46 @@ class CloseProjectWrapper extends React.Component<ICloseProjectProps, ICloseProj
                     </Flex.Item>
                     <CloseIcon onClick={() => this.props.closeDialog(false)} className="icon-hover" />
                 </Flex>
+                <Flex>
+                    <div className="dialog-body">
+                        {
+                            this.props.cardDetails.projectParticipantsUserIds &&
+                            <>
+                                <Text content={this.localize("projectClosureCongrats")} weight="bold" size="large" /><br/>
+                                <Text content={this.localize("projectCloseSubHeading")} weight="semibold" /><br />
+                            </>
+                        }
+                        <Flex gap="gap.smaller" className="skills-flex skills-new-project input-fields-margin-between-add-post" vAlign="center">
+                            <Text content={this.localize("requiredSkillsLabel")} />
+                            <Text content={this.props.cardDetails.requiredSkills.trim().split(';').join(', ')} />
+                        </Flex>
+                        <div className="input-fields-margin-between-add-post">
+                            <CloseProjectTable
+                                skillChangeIndex={this.state.skillChangeIndex}
+                                errorMessage={this.state.errorMessage}
+                                errorIndex={this.state.errorIndex}
+                                showSkillCountError={this.state.showSkillCountError}
+                                projectMemberDetails={this.state.projectParticipantDetails}
+                                memberDetails={this.props.cardDetails}
+                                onSkillKeyDown={this.onTagKeyDown}
+                                onSkillChange={this.onTagChange}
+                                onSkillRemoveClick={this.onTagRemoveClick}
+                                inputValue={this.state.skillText}
+                                emptySkillsCheck={this.state.emptySkillsCheck}
+                                onDescriptionChange={this.onDescriptionChange} />
+                        </div>
+                    </div>
+                </Flex>
                 {
-                    this.props.cardDetails.projectParticipantsUserIds !== ""
-                        ?
-                        <Flex>
-                            <Flex.Item grow>
-                                <ItemLayout
-                                    className="project-closure-heading"
-                                    media={<Image className="project-closure-image" src="/Artifacts/applicationLogo.png" />}
-                                    header={<Text className="project-closure-heading-content" content={this.localize("projectClosureCongrats")} weight="bold" />}
-                                    content={<Text className="project-closure-content" content={this.localize("projectCloseSubHeading")} weight="semibold" size="small" />}
-                                />
+                    this.props.cardDetails.projectParticipantsUserIds &&
+                    <Flex className="dialog-footer-wrapper">
+                        <Flex gap="gap.smaller" className="dialog-footer input-fields-margin-between-add-post">
+                            <Flex.Item push>
+                                <div></div>
                             </Flex.Item>
+                            <Button content={this.localize("closeButton")} onClick={this.onCloseProjectButtonClick} loading={this.state.showLoader} disabled={this.state.showLoader} primary />
                         </Flex>
-                        :
-                        <></>
-                }
-                <CloseProjectTable
-                    skillChangeIndex={this.state.skillChangeIndex}
-                    errorMessage={this.state.errorMessage}
-                    errorIndex={this.state.errorIndex}
-                    showSkillCountError={this.state.showSkillCountError}
-                    projectMemberDetails={this.state.projectParticipantDetails}
-                    memberDetails={this.props.cardDetails}
-                    onSkillKeyDown={this.onTagKeyDown}
-                    onSkillChange={this.onTagChange}
-                    onSkillRemoveClick={this.onTagRemoveClick}
-                    inputValue={this.state.skillText}
-                    emptySkillsCheck={this.state.emptySkillsCheck}
-                    onDescriptionChange={this.onDescriptionChange} />
-                {
-                    this.props.cardDetails.projectParticipantsUserIds !== ""
-                        ?
-                        <Flex className="dialog-footer-wrapper">
-                            <Flex gap="gap.smaller" className="dialog-footer input-fields-margin-between-close-project">
-                                <Button content={this.localize("closeButton")} onClick={this.onCloseProjectButtonClick} loading={this.state.showLoader} disabled={this.state.showLoader} primary />
-                            </Flex>
-                        </Flex>
-                        :
-                        <></>
+                    </Flex>
                 }
             </div>
         );

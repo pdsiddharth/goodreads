@@ -20,16 +20,8 @@ namespace Microsoft.Teams.Apps.Grow.Models
         [Required]
         public string TeamId
         {
-            get
-            {
-                return this.PartitionKey;
-            }
-
-            set
-            {
-                this.PartitionKey = value;
-                this.RowKey = value;
-            }
+            get { return this.PartitionKey; }
+            set { this.PartitionKey = value; }
         }
 
         /// <summary>

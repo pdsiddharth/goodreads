@@ -15,16 +15,16 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
         /// <summary>
         /// Initializes a new instance of the <see cref="DocumentLinksValidationAttribute"/> class.
         /// </summary>
-        /// <param name="maximumCount">Maximum count of document links for validation.</param>
-        public DocumentLinksValidationAttribute(int maximumCount)
+        /// <param name="linksMaximumCount">Maximum count of document links for validation.</param>
+        public DocumentLinksValidationAttribute(int linksMaximumCount)
         {
-            this.MaximumCount = maximumCount;
+            this.LinksMaximumCount = linksMaximumCount;
         }
 
         /// <summary>
         /// Gets maximum count of links for validation.
         /// </summary>
-        public int MaximumCount { get; }
+        public int LinksMaximumCount { get; }
 
         /// <summary>
         /// Validate document link based on link length and number of links separated by comma.
@@ -41,7 +41,7 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
                 {
                     var documentLinksList = documentLinks.Split(';');
 
-                    if (documentLinksList.Length > this.MaximumCount)
+                    if (documentLinksList.Length > this.LinksMaximumCount)
                     {
                         return new ValidationResult("Maximum document links count exceeded");
                     }
@@ -63,14 +63,11 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
                             return new ValidationResult("Document link doesn't match URL format.");
                         }
                     }
-
-                    return ValidationResult.Success;
                 }
-
-                return new ValidationResult("At least one document link should be provided.");
             }
 
-            return new ValidationResult("Document link should be in string format.");
+            // Document links are not mandatory for adding/updating project.
+            return ValidationResult.Success;
         }
 
         /// <summary>

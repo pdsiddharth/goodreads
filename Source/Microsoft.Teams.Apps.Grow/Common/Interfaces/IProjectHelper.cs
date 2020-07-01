@@ -13,7 +13,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Interfaces
     public interface IProjectHelper
     {
         /// <summary>
-        /// Get filtered projects as per the configured skills.
+        /// Get filtered team posts as per the configured skills.
         /// </summary>
         /// <param name="projects">A collection of projects.</param>
         /// <param name="searchText">Search text for skills.</param>

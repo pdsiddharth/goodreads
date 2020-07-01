@@ -48,7 +48,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
             await this.EnsureInitializedAsync();
 
             var retrieveOperation = TableOperation.Retrieve<TeamSkillEntity>(teamId, teamId);
-            var queryResult = await this.CloudTable.ExecuteAsync(retrieveOperation);
+            var queryResult = await this.GrowCloudTable.ExecuteAsync(retrieveOperation);
 
             if (queryResult?.Result != null)
             {
@@ -69,12 +69,12 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
             await this.EnsureInitializedAsync();
 
             var retrieveOperation = TableOperation.Retrieve<TeamSkillEntity>(teamId, teamId);
-            var queryResult = await this.CloudTable.ExecuteAsync(retrieveOperation);
+            var queryResult = await this.GrowCloudTable.ExecuteAsync(retrieveOperation);
 
             if (queryResult?.Result != null)
             {
                 TableOperation deleteOperation = TableOperation.Delete((TeamSkillEntity)queryResult?.Result);
-                var result = await this.CloudTable.ExecuteAsync(deleteOperation);
+                var result = await this.GrowCloudTable.ExecuteAsync(deleteOperation);
                 return result.HttpStatusCode == (int)HttpStatusCode.OK;
             }
 
@@ -101,7 +101,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
         {
             await this.EnsureInitializedAsync();
             TableOperation addOrUpdateOperation = TableOperation.InsertOrReplace(teamSkillEntity);
-            return await this.CloudTable.ExecuteAsync(addOrUpdateOperation);
+            return await this.GrowCloudTable.ExecuteAsync(addOrUpdateOperation);
         }
     }
 }

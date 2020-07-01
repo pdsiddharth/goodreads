@@ -44,7 +44,13 @@ namespace Microsoft.Teams.Apps.Grow
             string appBaseUrl = configuration.GetValue<string>("App:AppBaseUri");
             string discoverTabEntityId = configuration.GetValue<string>("DiscoverTabEntityId");
 
-            services.Configure<BotSettings>(options =>
+            services.Configure<GrowActivityHandlerOptions>(options =>
+            {
+                options.AppBaseUri = appBaseUrl;
+                options.DiscoverTabEntityId = discoverTabEntityId;
+            });
+
+            services.Configure<BotSetting>(options =>
             {
                 options.SecurityKey = configuration.GetValue<string>("App:SecurityKey");
                 options.AppBaseUri = appBaseUrl;
@@ -52,7 +58,6 @@ namespace Microsoft.Teams.Apps.Grow
                 options.MedianFirstRetryDelay = configuration.GetValue<double>("RetryPolicy:medianFirstRetryDelay");
                 options.RetryCount = configuration.GetValue<int>("RetryPolicy:retryCount");
                 options.ManifestId = configuration.GetValue<string>("App:ManifestId");
-                options.CacheInterval = configuration.GetValue<double>("App:CacheInterval");
             });
 
             services.Configure<AzureActiveDirectorySettings>(options =>
@@ -91,7 +96,7 @@ namespace Microsoft.Teams.Apps.Grow
 
             services.AddSingleton<IProjectStorageProvider, ProjectStorageProvider>();
             services.AddSingleton<IAcquiredSkillStorageProvider, AcquiredSkillStorageProvider>();
-            services.AddSingleton<IUserDetailProvider, UserDetailProvider>();
+            services.AddSingleton<IUserMembershipProvider, UserMembershipProvider>();
 
             services.AddSingleton<IProjectSearchService, ProjectSearchService>();
 

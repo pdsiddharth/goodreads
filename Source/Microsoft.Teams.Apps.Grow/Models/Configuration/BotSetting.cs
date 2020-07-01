@@ -1,4 +1,4 @@
-﻿// <copyright file="BotSettings.cs" company="Microsoft">
+﻿// <copyright file="BotSetting.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,7 +7,7 @@ namespace Microsoft.Teams.Apps.Grow.Models
     /// <summary>
     /// Class which will help to provide Bot settings for Grow application.
     /// </summary>
-    public class BotSettings
+    public class BotSetting
     {
         /// <summary>
         /// Gets or sets application base Uri which helps in generating Customer Token.
@@ -38,10 +38,5 @@ namespace Microsoft.Teams.Apps.Grow.Models
         /// Gets or sets application manifest id.
         /// </summary>
         public string ManifestId { get; set; }
-
-        /// <summary>
-        /// Gets or sets cache interval.
-        /// </summary>
-        public double CacheInterval { get; set; }
     }
 }

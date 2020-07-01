@@ -3,7 +3,7 @@
 // </copyright>
 
 import * as React from "react";
-import { Flex, Text, Loader, Label } from "@fluentui/react-northstar";
+import { Flex, Text, Loader, Label, EditIcon } from "@fluentui/react-northstar";
 import PopupMoreMenu from "./popup-more-menu";
 import Tag from "./tag";
 import { IProjectDetails } from "./discover-wrapper-page";
@@ -225,12 +225,36 @@ class Card extends React.Component<ICardProps, ICardState> {
                 <div className="card-body">
                     <Flex gap="gap.smaller" column vAlign="start">
                         <Flex gap="gap.smaller" className="title-flex">
-                            {this.props.cardDetails.isCurrentUserProject &&
+                            {this.props.cardDetails.isCurrentUserProject && this.props.cardDetails.status != 4 &&
+                                <>
+                                <Flex.Item grow>
+                                    <EditItemDialog
+                                        projectDetails={this.props.projectDetails}
+                                        triggerComponent={<Text className="title-text" size="large" weight="bold" content={this.props.cardDetails.title} />}
+                                        index={this.props.index}
+                                        cardDetails={this.state.cardDetails}
+                                        onSubmit={this.onUpdateCard}
+                                        onCancel={() => { }}
+                                    />
+                                </Flex.Item>
+                                <Flex.Item push>
+                                    <div></div>
+                                </Flex.Item>
                                 <EditItemDialog
                                     projectDetails={this.props.projectDetails}
+                                    triggerComponent={<EditIcon className="icon-hover" outline title="Edit project" />}
                                     index={this.props.index}
                                     cardDetails={this.state.cardDetails}
                                     onSubmit={this.onUpdateCard}
+                                    onCancel={() => { }}
+                                />
+                                </>
+                            }
+                            {this.props.cardDetails.isCurrentUserProject && this.props.cardDetails.status == 4 &&
+                                <JoinProjectDialogTitle
+                                    index={this.props.index}
+                                    cardDetails={this.props.cardDetails}
+                                    onSubmit={this.props.onJoinMenuItemClick}
                                     onCancel={() => { }}
                                 />
                             }

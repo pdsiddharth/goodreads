@@ -382,18 +382,18 @@ class NewProjectDialogContent extends React.Component<INewProjectDialogContentPr
             projectValidationStatus.isDescriptionValid = false;
         }
 
-        if (parseInt(this.state.teamSizeText) <= 0 || parseInt(this.state.teamSizeText) > 10 || this.state.teamSizeText === "") {
-            projectValidationStatus.isTeamSizeValid = false;
-        }
-        else {
-            let expression = "^[0-9]*$";
-            let regex = new RegExp(expression);
-            if (this.state.teamSizeText.match(regex)) {
-                projectValidationStatus.isTeamSizeValid = true;
-            }
-            else {
+        let expression = "^[0-9]*$";
+        let regex = new RegExp(expression);
+        if (this.state.teamSizeText.match(regex)) {
+            if (parseInt(this.state.teamSizeText) <= 0 || parseInt(this.state.teamSizeText) > 20 || this.state.teamSizeText === "") {
                 projectValidationStatus.isTeamSizeValid = false;
             }
+            else {
+                projectValidationStatus.isTeamSizeValid = true;
+            }
+        }
+        else {
+            projectValidationStatus.isTeamSizeValid = false;
         }
 
         if (this.state.projectDetails.projectEndDate === "") {
@@ -463,7 +463,7 @@ class NewProjectDialogContent extends React.Component<INewProjectDialogContentPr
             else if (!this.state.teamSizeText.toString().match(regex)) {
                 return (<Text content={this.localize("teamSizeNumberError")} className="field-error-message" error size="medium" />);
             }
-            else if (parseInt(this.state.teamSizeText) > 10) {
+            else if (parseInt(this.state.teamSizeText) > 20) {
                 return (<Text content={this.localize("maxTeamSizeError")} className="field-error-message" error size="medium" />);
             }
             else if (this.state.teamSizeText === "") {

@@ -194,7 +194,6 @@ export const closeProject = async (participantDetails: any): Promise<any> => {
 /**
 * Get project details.
 * @param projectId Project id to fetch details.
-* @param createdByUserId User Id who created project.
 */
 export const getProjectDetailToJoin = async (projectId: string, createdByUserId: string): Promise<any> => {
 

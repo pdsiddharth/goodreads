@@ -12,7 +12,6 @@ namespace Microsoft.Teams.Apps.Grow
     using Microsoft.Bot.Builder;
     using Microsoft.Bot.Builder.Integration.AspNet.Core;
     using Microsoft.Bot.Connector.Authentication;
-    using Microsoft.Extensions.Caching.Memory;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Teams.Apps.Grow.Authentication;
@@ -55,7 +54,6 @@ namespace Microsoft.Teams.Apps.Grow
 
             services.AddGrowAuthentication(this.configuration);
             services.AddSingleton<IChannelProvider, SimpleChannelProvider>();
-            services.AddSingleton<IMemoryCache, MemoryCache>();
 
             // Create the Bot Framework Adapter with error handling enabled.
             services.AddSingleton<IBotFrameworkHttpAdapter, GrowAdapterWithErrorHandler>();

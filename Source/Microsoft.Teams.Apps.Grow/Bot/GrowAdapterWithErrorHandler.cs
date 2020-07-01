@@ -10,7 +10,7 @@ namespace Microsoft.Teams.Apps.Grow.Bot
     using Microsoft.Bot.Connector.Authentication;
     using Microsoft.Extensions.Localization;
     using Microsoft.Extensions.Logging;
-    using Microsoft.Teams.Apps.Grow.Resources;
+    using Microsoft.Teams.Apps.Grow;
 
     /// <summary>
     /// Class that implements error handler.

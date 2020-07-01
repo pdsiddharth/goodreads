@@ -5,7 +5,6 @@
 namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
 {
     using System.ComponentModel.DataAnnotations;
-    using System.Linq;
 
     /// <summary>
     /// Validate skill based on length and skill count for project.
@@ -15,30 +14,23 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
         /// <summary>
         /// Initializes a new instance of the <see cref="ProjectSkillsValidationAttribute"/> class.
         /// </summary>
-        /// <param name="minimumCount">Minimum count of skills for validation.</param>
-        /// <param name="maximumCount">Maximum count of skills for validation.</param>
-        /// <param name="maximumLength">Maximum length of skills for validation.</param>
-        public ProjectSkillsValidationAttribute(int minimumCount, int maximumCount, int maximumLength = 20)
+        /// <param name="skillsMinimumCount">Minimum count of skills for validation.</param>
+        /// <param name="skillsMaximumCount">Maximum count of skills for validation.</param>
+        public ProjectSkillsValidationAttribute(int skillsMinimumCount, int skillsMaximumCount)
         {
-            this.MinimumCount = minimumCount;
-            this.MaximumCount = maximumCount;
-            this.MaximumLength = maximumLength;
+            this.SkillsMinimumCount = skillsMinimumCount;
+            this.SkillsMaximumCount = skillsMaximumCount;
         }
 
         /// <summary>
         /// Gets minimum count of skills for validation.
         /// </summary>
-        public int MinimumCount { get; }
+        public int SkillsMinimumCount { get; }
 
         /// <summary>
         /// Gets maximum count of skills for validation.
         /// </summary>
-        public int MaximumCount { get; }
-
-        /// <summary>
-        /// Gets maximum length of skills for validation.
-        /// </summary>
-        public int MaximumLength { get; }
+        public int SkillsMaximumCount { get; }
 
         /// <summary>
         /// Validate skill based on skill length and number of skills separated by comma.
@@ -48,11 +40,6 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
         /// <returns>Validation result (either error message for failed validation or success).</returns>
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            char[] invalidCharacters = new char[]
-            {
-                '|', '"', '(', ')', '\'', '\\',
-            };
-
             if (value != null && value.GetType() == typeof(string))
             {
                 var skills = (string)value;
@@ -61,7 +48,7 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
                 {
                     var skillsList = skills.Split(';');
 
-                    if (skillsList.Length < this.MinimumCount || skillsList.Length > this.MaximumCount)
+                    if (skillsList.Length < this.SkillsMinimumCount || skillsList.Length > this.SkillsMaximumCount)
                     {
                         return new ValidationResult("Minimum 2 and Maximum 5 skills can be added.");
                     }
@@ -73,14 +60,9 @@ namespace Microsoft.Teams.Apps.Grow.Helpers.CustomValidations
                             return new ValidationResult("Skill cannot be null or empty.");
                         }
 
-                        if (skill.Length > this.MaximumLength)
+                        if (skill.Length > 20)
                         {
                             return new ValidationResult("Maximum skill length exceeded.");
-                        }
-
-                        if (skill.ToCharArray().Where(skill => invalidCharacters.Contains(skill)).Any())
-                        {
-                            return new ValidationResult("Special characters are not allowed in skill.");
                         }
                     }
                 }

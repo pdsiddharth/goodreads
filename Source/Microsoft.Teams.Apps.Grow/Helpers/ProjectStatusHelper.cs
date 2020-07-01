@@ -6,7 +6,6 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
 {
     using Microsoft.Extensions.Localization;
     using Microsoft.Teams.Apps.Grow.Models;
-    using Microsoft.Teams.Apps.Grow.Resources;
 
     /// <summary>
     ///  Class that handles the project status.

@@ -13,7 +13,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Interfaces
     public interface IProjectStorageProvider
     {
         /// <summary>
-        /// Get all projects.
+        /// Get all projects from storage.
         /// </summary>
         /// <param name="isRemoved">Represent whether a project is deleted or not.</param>
         /// <returns>A task that represent collection to hold projects.</returns>

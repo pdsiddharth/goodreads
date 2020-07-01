@@ -1,4 +1,4 @@
-﻿// <copyright file="UserDetailEntity.cs" company="Microsoft">
+﻿// <copyright file="UserMembershipEntity.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -7,27 +7,19 @@ namespace Microsoft.Teams.Apps.Grow.Models
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// User detail entity class.
+    /// User membership data entity class.
     /// It is responsible for storing Azure Active Directory id of user and conversation id for sending notification to users.
     /// The value will be added when bot is installed by user/in a team.
     /// </summary>
-    public class UserDetailEntity : TableEntity
+    public class UserMembershipEntity : TableEntity
     {
         /// <summary>
         /// Gets or sets Azure Active Directory id of user.
         /// </summary>
         public string UserAadObjectId
         {
-            get
-            {
-                return this.PartitionKey;
-            }
-
-            set
-            {
-                this.PartitionKey = value;
-                this.RowKey = value;
-            }
+            get { return this.PartitionKey; }
+            set { this.PartitionKey = value; }
         }
 
         /// <summary>

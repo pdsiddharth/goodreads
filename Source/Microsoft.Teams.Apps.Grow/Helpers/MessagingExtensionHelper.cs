@@ -15,11 +15,11 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
     using Microsoft.Bot.Schema.Teams;
     using Microsoft.Extensions.Localization;
     using Microsoft.Extensions.Options;
+    using Microsoft.Teams.Apps.Grow.Bot;
     using Microsoft.Teams.Apps.Grow.Common;
     using Microsoft.Teams.Apps.Grow.Common.Interfaces;
     using Microsoft.Teams.Apps.Grow.Models;
     using Microsoft.Teams.Apps.Grow.Models.Card;
-    using Microsoft.Teams.Apps.Grow.Resources;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -53,7 +53,7 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
         /// <summary>
         /// A set of key/value application configuration properties for Activity settings.
         /// </summary>
-        private readonly IOptions<BotSettings> options;
+        private readonly IOptions<GrowActivityHandlerOptions> options;
 
         /// <summary>
         /// Instance of project helper.
@@ -76,7 +76,7 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
         public MessagingExtensionHelper(
             IStringLocalizer<Strings> localizer,
             IProjectSearchService projectSearchService,
-            IOptions<BotSettings> options,
+            IOptions<GrowActivityHandlerOptions> options,
             IProjectHelper projectHelper,
             ProjectStatusHelper projectStatusHelper)
         {
@@ -215,18 +215,18 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
                         Title = this.localizer.GetString("MessagingExtensionCardViewProjectDetailButtonText"),
                         Data = new AdaptiveSubmitActionData
                         {
-                            Msteams = new TaskModuleAction(Constants.ViewProjectDetail, JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.ViewProjectDetail, ProjectId = project.ProjectId, CreatedByUserId = project.CreatedByUserId })),
+                            Msteams = new TaskModuleAction(Constants.ViewProjectDetail, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.ViewProjectDetail, ProjectId = project.ProjectId, CreatedByUserId = project.CreatedByUserId }) }),
                         },
                     });
 
-                var projectStatusIcon = $"<img src='{this.options.Value.AppBaseUri}/Artifacts/{status.IconName}' alt={this.localizer.GetString("ProjectStatusIcon")} width='12px' height='12px'>";
+                var projectStatusIcon = $"<img src='{this.options.Value.AppBaseUri}/Artifacts/{status.IconName}' alt='project status icon' width='12px' height='12px'>";
                 var nameString = project.CreatedByName.Length < 25 ? HttpUtility.HtmlEncode(project.CreatedByName) :
                     $"{HttpUtility.HtmlEncode(project.CreatedByName.Substring(0, 24))}...";
 
                 ThumbnailCard previewCard = new ThumbnailCard
                 {
                     Title = $"<p style='font-weight: 600;'>{project.Title}</p>",
-                    Text = $"{nameString} | {projectStatusIcon} {this.projectStatusHelper.GetStatus(project.Status)}",
+                    Text = $"{nameString} {"|"} {projectStatusIcon} {status.StatusName}",
                 };
 
                 composeExtensionResult.Attachments.Add(new Attachment

@@ -56,7 +56,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
         /// <summary>
         /// Gets or sets a table in the Microsoft Azure Table storage.
         /// </summary>
-        protected CloudTable CloudTable { get; set; }
+        protected CloudTable GrowCloudTable { get; set; }
 
         /// <summary>
         /// Ensures Microsoft Azure Table storage should be created before working on table.
@@ -101,8 +101,8 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
             {
                 CloudStorageAccount storageAccount = CloudStorageAccount.Parse(this.connectionString);
                 CloudTableClient cloudTableClient = storageAccount.CreateCloudTableClient();
-                this.CloudTable = cloudTableClient.GetTableReference(this.TableName);
-                await this.CloudTable.CreateIfNotExistsAsync();
+                this.GrowCloudTable = cloudTableClient.GetTableReference(this.TableName);
+                await this.GrowCloudTable.CreateIfNotExistsAsync();
             }
             catch (Exception ex)
             {

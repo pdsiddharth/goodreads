@@ -9,12 +9,12 @@ namespace Microsoft.Teams.Apps.Grow.Common.Interfaces
     using Microsoft.Teams.Apps.Grow.Models;
 
     /// <summary>
-    /// Interface for team project search service which helps in searching projects.
+    /// Interface for team post search service which helps in searching posts using Azure Search service.
     /// </summary>
     public interface IProjectSearchService
     {
         /// <summary>
-        /// Provide search result for table to be used by user.
+        /// Provide search result for table to be used by user's based on Azure Search service.
         /// </summary>
         /// <param name="searchScope">Scope of the search.</param>
         /// <param name="searchQuery">Query which the user had typed in Messaging Extension search field.</param>

@@ -108,7 +108,7 @@ namespace Microsoft.Teams.Apps.Grow.Models
         /// Gets or sets maximum team size of a project.
         /// </summary>
         [Required]
-        [Range(1, 10)]
+        [Range(1, 20)]
         public int TeamSize { get; set; }
 
         /// <summary>

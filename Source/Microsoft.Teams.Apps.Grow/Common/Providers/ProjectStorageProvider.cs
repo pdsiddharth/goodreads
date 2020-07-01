@@ -59,7 +59,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
 
             do
             {
-                var queryResult = await this.CloudTable.ExecuteQuerySegmentedAsync(query, continuationToken);
+                var queryResult = await this.GrowCloudTable.ExecuteQuerySegmentedAsync(query, continuationToken);
                 if (queryResult?.Results != null)
                 {
                     projects.AddRange(queryResult.Results);
@@ -95,7 +95,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
             var combinedFilter = TableQuery.CombineFilters(combinedPartitionFilter, TableOperators.And, isRemovedCondition);
 
             TableQuery<ProjectEntity> query = new TableQuery<ProjectEntity>().Where(combinedFilter);
-            var queryResult = await this.CloudTable.ExecuteQuerySegmentedAsync(query, null);
+            var queryResult = await this.GrowCloudTable.ExecuteQuerySegmentedAsync(query, null);
 
             return queryResult?.FirstOrDefault();
         }
@@ -120,7 +120,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
             var combinedFilter = TableQuery.CombineFilters(projectIdCondition, TableOperators.And, isRemovedCondition);
 
             TableQuery<ProjectEntity> query = new TableQuery<ProjectEntity>().Where(combinedFilter);
-            var queryResult = await this.CloudTable.ExecuteQuerySegmentedAsync(query, null);
+            var queryResult = await this.GrowCloudTable.ExecuteQuerySegmentedAsync(query, null);
 
             return queryResult?.FirstOrDefault();
         }
@@ -145,7 +145,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
         {
             await this.EnsureInitializedAsync();
             TableOperation addOrUpdateOperation = TableOperation.InsertOrReplace(entity);
-            return await this.CloudTable.ExecuteAsync(addOrUpdateOperation);
+            return await this.GrowCloudTable.ExecuteAsync(addOrUpdateOperation);
         }
     }
 }

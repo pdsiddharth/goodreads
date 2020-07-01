@@ -64,7 +64,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError($"Error while getting the team skills. TeamId:{teamId}");
-                    return this.BadRequest($"Error while getting configured skills for team {teamId}");
+                    return this.BadRequest(new { message = $"Error while getting configured skills for team {teamId}" });
                 }
 
                 var teamSkillEntity = await this.teamSkillStorageProvider.GetTeamSkillsDataAsync(teamId);
@@ -144,7 +144,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (string.IsNullOrEmpty(teamId))
                 {
                     this.logger.LogError("Team Id is either null or empty.");
-                    return this.BadRequest("Team Id is either null or empty.");
+                    return this.BadRequest(new { message = "Team Id is either null or empty." });
                 }
 
                 var teamSkillDetail = await this.teamSkillStorageProvider.GetTeamSkillsDataAsync(teamId);
@@ -152,7 +152,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (teamSkillDetail != null)
                 {
                     this.RecordEvent("Team skills - HTTP Get call succeeded");
-                    return this.Ok(teamSkillDetail.Skills?.Split(";"));
+                    return this.Ok(teamSkillDetail?.Skills?.Split(";"));
                 }
                 else
                 {

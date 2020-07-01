@@ -17,12 +17,13 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
     using Microsoft.Extensions.Localization;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
+    using Microsoft.Teams.Apps.Grow;
+    using Microsoft.Teams.Apps.Grow.Bot;
     using Microsoft.Teams.Apps.Grow.Cards;
     using Microsoft.Teams.Apps.Grow.Common;
     using Microsoft.Teams.Apps.Grow.Common.Interfaces;
     using Microsoft.Teams.Apps.Grow.Models;
     using Microsoft.Teams.Apps.Grow.Models.Configuration;
-    using Microsoft.Teams.Apps.Grow.Resources;
     using Polly;
     using Polly.Contrib.WaitAndRetry;
     using Polly.Retry;
@@ -60,12 +61,17 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
         /// <summary>
         /// A set of key/value application configuration properties.
         /// </summary>
-        private readonly IOptions<BotSettings> botOptions;
+        private readonly IOptions<GrowActivityHandlerOptions> tabOptions;
 
         /// <summary>
-        /// Instance of user storage provider.
+        /// A set of key/value application configuration properties.
         /// </summary>
-        private readonly IUserDetailProvider userDetailProvider;
+        private readonly IOptions<BotSetting> botOptions;
+
+        /// <summary>
+        /// Instance of user membership storage provider.
+        /// </summary>
+        private readonly IUserMembershipProvider userMembershipProvider;
 
         /// <summary>
         /// Retry policy with jitter, retry twice with a jitter delay of up to 1 sec. Retry for HTTP 429(transient error)/502 bad gateway.
@@ -88,22 +94,25 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
         /// <param name="logger">Sends logs to the Application Insights service.</param>
         /// <param name="botFrameworkHttpAdapter">Instance of bot framework HTTP adapter</param>
         /// <param name="aadOptions">A set of key/value application configuration properties with AAD settings.</param>
+        /// <param name="tabOptions">A set of key/value application configuration properties with tab settings.</param>
         /// <param name="botOptions">A set of key/value application configuration properties with bot settings.</param>
-        /// <param name="userDetailProvider">Provider instance to work with user data.</param>
+        /// <param name="userMembershipProvider">Provider instance to work with user team membership data.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
         public NotificationHelper(
             ILogger<NotificationHelper> logger,
             IBotFrameworkHttpAdapter botFrameworkHttpAdapter,
             IOptions<AzureActiveDirectorySettings> aadOptions,
-            IOptions<BotSettings> botOptions,
-            IUserDetailProvider userDetailProvider,
+            IOptions<GrowActivityHandlerOptions> tabOptions,
+            IOptions<BotSetting> botOptions,
+            IUserMembershipProvider userMembershipProvider,
             IStringLocalizer<Strings> localizer)
         {
             this.logger = logger;
             this.botFrameworkHttpAdapter = botFrameworkHttpAdapter;
             this.aadOptions = aadOptions;
+            this.tabOptions = tabOptions;
             this.botOptions = botOptions;
-            this.userDetailProvider = userDetailProvider;
+            this.userMembershipProvider = userMembershipProvider;
             this.localizer = localizer;
         }
 
@@ -126,16 +135,17 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
                 projectEntity.Title,
                 userName,
                 userPrincipalName,
+                projectEntity.CreatedByUserId,
                 this.localizer));
 
-            var userDetails = await this.userDetailProvider.GetUserDetailsAsync(projectEntity.CreatedByUserId);
+            var userMembershipDetails = await this.userMembershipProvider.GetUserMembershipDataAsync(projectEntity.CreatedByUserId);
 
-            if (userDetails != null)
+            if (userMembershipDetails != null)
             {
                 await this.SendNotificationAsync(
-                    userDetails.UserConversationId,
+                    userMembershipDetails.UserConversationId,
                     adaptiveCard,
-                    userDetails.ServiceUrl);
+                    userMembershipDetails.ServiceUrl);
             }
         }
 
@@ -155,18 +165,20 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
                 var adaptiveCard = MessageFactory.Attachment(UserNotificationCard.SendProjectClosureCard(
                     closeProjectModel.ProjectTitle,
                     closeProjectModel.ProjectOwnerName,
+                    this.tabOptions,
+                    this.botOptions.Value.ManifestId,
                     participant.Feedback,
                     acquiredSkills,
                     this.localizer));
 
-                var userDetails = await this.userDetailProvider.GetUserDetailsAsync(participant.UserId);
+                var userMembershipDetails = await this.userMembershipProvider.GetUserMembershipDataAsync(participant.UserId);
 
-                if (userDetails != null)
+                if (userMembershipDetails != null)
                 {
                     await this.SendNotificationAsync(
-                        userDetails.UserConversationId,
+                        userMembershipDetails.UserConversationId,
                         adaptiveCard,
-                        userDetails.ServiceUrl);
+                        userMembershipDetails.ServiceUrl);
                 }
             }
         }
@@ -187,17 +199,18 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
                 var adaptiveCard = MessageFactory.Attachment(UserNotificationCard.SendProjectDeletionCard(
                     projectEntity.Title,
                     projectEntity.CreatedByName,
+                    this.tabOptions,
                     this.botOptions.Value.ManifestId,
                     this.localizer));
 
-                var userDetails = await this.userDetailProvider.GetUserDetailsAsync(userId);
+                var userMembershipDetails = await this.userMembershipProvider.GetUserMembershipDataAsync(userId);
 
-                if (userDetails != null)
+                if (userMembershipDetails != null)
                 {
                     await this.SendNotificationAsync(
-                        userDetails.UserConversationId,
+                        userMembershipDetails.UserConversationId,
                         adaptiveCard,
-                        userDetails.ServiceUrl);
+                        userMembershipDetails.ServiceUrl);
                 }
             }
         }
@@ -219,17 +232,17 @@ namespace Microsoft.Teams.Apps.Grow.Helpers
                 var adaptiveCard = MessageFactory.Attachment(UserNotificationCard.SendProjectRemovalCard(
                     projectTitle.Trim(),
                     projectOwner,
+                    this.tabOptions,
                     this.botOptions.Value.ManifestId,
                     this.localizer));
+                var userMembershipDetails = await this.userMembershipProvider.GetUserMembershipDataAsync(userId);
 
-                var userDetails = await this.userDetailProvider.GetUserDetailsAsync(userId);
-
-                if (userDetails != null)
+                if (userMembershipDetails != null)
                 {
                     await this.SendNotificationAsync(
-                        userDetails.UserConversationId,
+                        userMembershipDetails.UserConversationId,
                         adaptiveCard,
-                        userDetails.ServiceUrl);
+                        userMembershipDetails.ServiceUrl);
                 }
             }
         }

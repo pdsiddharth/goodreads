@@ -41,7 +41,7 @@ export const deletePrivatePostContent = async (post: any): Promise<any> => {
 */
 export const leaveProject = async (project: any): Promise<any> => {
 
-    let url = `${baseAxiosUrl}/project-workflow/leave-project?projectId=${project.projectId}&createdByUserId=${project.createdByUserId}`;
+    let url = `${baseAxiosUrl}/project-workflow/leave-project?projectId=${project.projectId}&createdByuserId=${project.createdByUserId}`;
     return await axios.delete(url);
 }
 

@@ -231,7 +231,8 @@ class JoinProjectDialogContent extends React.Component<IJoinProjectDialogContent
                 {
                     (this.state.projectDetails.status === 1 || this.state.projectDetails.status === 2) &&
                         !this.state.projectDetails.projectParticipantsUserIds.split(';').includes(this.props.loggedInUserId) &&
-                        this.state.projectDetails.projectParticipantsUserIds.split(';').length < this.state.projectDetails.teamSize
+                        this.state.projectDetails.createdByUserId !== this.loggedInUserId &&
+                        this.state.projectDetails.projectParticipantsUserIds.split(';').filter((userId) => userId).length < this.state.projectDetails.teamSize
                             ? <Flex className="join-project-dialog-footer-wrapper">
                                 <Flex gap="gap.smaller" className="join-project-dialog-footer input-fields-margin-between-add-post">
                                     <Flex.Item push>

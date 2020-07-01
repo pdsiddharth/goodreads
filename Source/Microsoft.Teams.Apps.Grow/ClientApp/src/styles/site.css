@@ -97,6 +97,10 @@
     padding-right: 1.4rem;
 }
 
+.icon-hover:hover {
+    cursor: pointer;
+}
+
 @media only screen and (max-width: 650px) {
     .mobile-button {
         padding-left: 1rem !important;

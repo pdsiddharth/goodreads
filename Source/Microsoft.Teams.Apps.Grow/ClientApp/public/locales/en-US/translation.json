@@ -95,11 +95,12 @@
   "skillsFormLabel": "Skills needed",
   "skillsPlaceholder": "Type two or more skills",
   "docLinkFormLabel": "Supporting documents",
-  "docLinkPlaceholder": "Paste one or more links. Use semicolons to separate multiple links.",
+  "docLinkPlaceholder": "Paste one or more links and press enter.",
   "teamSizeLabel": "Team size",
   "teamSizePlaceholder": "Type your ideal number of team members",
   "dateLabel": "Date",
   "skillsAcquiredLabel": "Skills acquired",
+  "requiredSkillsLabel": "Skills required for project:",
   "notStartedStatus": "Not started",
   "activeStatus": "Active",
   "blockedStatus": "On hold",
@@ -144,7 +145,7 @@
   "maxSkillSelected": "Only 5 skills can be added",
   "maxDocumentLinkError": "Only 3 URL's can be added",
   "sameLinkError": "Same link already exist",
-  "maxTeamSizeError": "Team size cannot be more than 10",
+  "maxTeamSizeError": "Team size cannot be more than 20",
   "teamSizeLessThanParticipant": "Team size must be greater or equal to team members count",
   "minimumSkillsSelected": "Minimum two skills needs to be selected",
   "titleExistError": "Title already exist",
@@ -159,5 +160,7 @@
   "projectsJoined": "Projects joined",
   "project": "Project",
   "endorsedOn": "Endorsed on",
-  "endorsedBy": "Endorsed by"
+  "endorsedBy": "Endorsed by",
+  "createdByMe": "Created by me",
+  "joinedProjects": "Joined projects"
 }

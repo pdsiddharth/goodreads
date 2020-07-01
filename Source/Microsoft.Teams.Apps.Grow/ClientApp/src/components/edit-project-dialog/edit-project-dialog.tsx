@@ -13,6 +13,7 @@ import "../../styles/new-project-dialog.css";
 
 interface IEditProjectProps extends WithTranslation {
     index: number;
+    triggerComponent: JSX.Element;
     projectDetails: Array<IProjectDetails>
     onSubmit: (editedCardDetails: IProjectDetails, isSuccess: boolean) => void;
     cardDetails: IProjectDetails;
@@ -61,9 +62,7 @@ class AddNewProjectDialog extends React.Component<IEditProjectProps, IEditProjec
                 }
                 open={this.state.editDialogOpen}
                 onOpen={() => this.setState({ editDialogOpen: true })}
-                trigger={
-                    <Text className="title-text" size="large" content={this.props.cardDetails.title} title={this.props.cardDetails.title} weight="bold" />
-                }
+                trigger={this.props.triggerComponent}
             />
         );
     }

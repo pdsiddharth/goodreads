@@ -1,4 +1,4 @@
-﻿// <copyright file="AcquiredSkillsEntity.cs" company="Microsoft">
+﻿// <copyright file="AcquiredSkillEntity.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -13,7 +13,7 @@ namespace Microsoft.Teams.Apps.Grow.Models
     /// Class which represents acquired skill entity.
     /// It is responsible for storing acquired skills of participants.
     /// </summary>
-    public class AcquiredSkillsEntity : TableEntity
+    public class AcquiredSkillEntity : TableEntity
     {
         /// <summary>
         /// Gets or sets Azure Active Directory id of user.

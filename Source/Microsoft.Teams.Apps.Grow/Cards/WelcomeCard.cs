@@ -8,14 +8,20 @@ namespace Microsoft.Teams.Apps.Grow.Cards
     using System.Collections.Generic;
     using AdaptiveCards;
     using Microsoft.Bot.Schema;
+    using Microsoft.Bot.Schema.Teams;
     using Microsoft.Extensions.Localization;
-    using Microsoft.Teams.Apps.Grow.Resources;
+    using Microsoft.Teams.Apps.Grow;
+    using Microsoft.Teams.Apps.Grow.Common;
+    using Microsoft.Teams.Apps.Grow.Models.Card;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Class that helps to return welcome card as attachment.
     /// </summary>
     public static class WelcomeCard
     {
+        // TODO: Change this card with content.
+
         /// <summary>
         /// Get welcome card attachment to show on Microsoft Teams channel scope.
         /// </summary>
@@ -103,6 +109,8 @@ namespace Microsoft.Teams.Apps.Grow.Cards
             string applicationManifestId,
             string discoverTabEntityId)
         {
+            var allProjects = "Discover";
+
             AdaptiveCard card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 2))
             {
                 Body = new List<AdaptiveElement>
@@ -169,6 +177,65 @@ namespace Microsoft.Teams.Apps.Grow.Cards
                 Content = card,
             };
 
+            return adaptiveCardAttachment;
+        }
+
+        /// <summary>
+        /// Get preference card as attachment.
+        /// </summary>
+        /// <param name="localizer">The current cultures' string localizer.</param>
+        /// <returns>Set preference card attachment.</returns>
+        public static Attachment GetPreferenceCard(IStringLocalizer<Strings> localizer)
+        {
+            AdaptiveCard card = new AdaptiveCard(new AdaptiveSchemaVersion(1, 2))
+            {
+                Body = new List<AdaptiveElement>
+                {
+                    new AdaptiveColumnSet
+                    {
+                        Columns = new List<AdaptiveColumn>
+                        {
+                            new AdaptiveColumn
+                            {
+                                Items = new List<AdaptiveElement>
+                                {
+                                    new AdaptiveTextBlock
+                                    {
+                                        Spacing = AdaptiveSpacing.None,
+                                        Text = localizer.GetString("DigestPreferenceCardHeaderText"),
+                                        Wrap = true,
+                                        IsSubtle = true,
+                                    },
+                                    new AdaptiveTextBlock
+                                    {
+                                        Spacing = AdaptiveSpacing.None,
+                                        Text = localizer.GetString("DigestPreferenceCardContent"),
+                                        Wrap = true,
+                                        IsSubtle = true,
+                                    },
+                                },
+                                Width = AdaptiveColumnWidth.Stretch,
+                            },
+                        },
+                    },
+                },
+                Actions = new List<AdaptiveAction>
+                {
+                    new AdaptiveSubmitAction
+                    {
+                        Title = localizer.GetString("TeamPreferenceCardConfigureButtonText"),
+                        Data = new AdaptiveSubmitActionData
+                        {
+                            Msteams = new TaskModuleAction(Constants.ViewProjectDetail, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.ViewProjectDetail }) }),
+                        },
+                    },
+                },
+            };
+            var adaptiveCardAttachment = new Attachment()
+            {
+                ContentType = AdaptiveCard.ContentType,
+                Content = card,
+            };
             return adaptiveCardAttachment;
         }
     }

@@ -13,7 +13,7 @@ namespace Microsoft.Teams.Apps.Grow.Common.Interfaces
     public interface IMessagingExtensionHelper
     {
         /// <summary>
-        /// Get the results using search query and populate the result (card + preview).
+        /// Get the results from Azure Search service and populate the result (card + preview).
         /// </summary>
         /// <param name="query">Query which the user had typed in Messaging Extension search field.</param>
         /// <param name="commandId">Command id to determine which tab in Messaging Extension has been invoked.</param>

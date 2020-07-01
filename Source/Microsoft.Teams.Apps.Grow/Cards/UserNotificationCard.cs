@@ -10,9 +10,10 @@ namespace Microsoft.Teams.Apps.Grow.Cards
     using Microsoft.Bot.Schema;
     using Microsoft.Bot.Schema.Teams;
     using Microsoft.Extensions.Localization;
+    using Microsoft.Extensions.Options;
+    using Microsoft.Teams.Apps.Grow.Bot;
     using Microsoft.Teams.Apps.Grow.Common;
     using Microsoft.Teams.Apps.Grow.Models.Card;
-    using Microsoft.Teams.Apps.Grow.Resources;
     using Newtonsoft.Json;
 
     /// <summary>
@@ -21,10 +22,12 @@ namespace Microsoft.Teams.Apps.Grow.Cards
     public static class UserNotificationCard
     {
         /// <summary>
-        /// Create project closure card for team members.
+        /// Send project closure card to team members.
         /// </summary>
         /// <param name="projectTitle">Title of project to be closed.</param>
         /// <param name="ownerName">Owner of project to be closed.</param>
+        /// <param name="tabOptions">Activity handler options object for getting discover tab ID and app url.</param>
+        /// <param name="applicationManifestId">Tab's manifest Id.</param>
         /// <param name="feedback">Feedback of participant.</param>
         /// <param name="acquiredSkills">Skills acquired by participant.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
@@ -32,6 +35,8 @@ namespace Microsoft.Teams.Apps.Grow.Cards
         public static Attachment SendProjectClosureCard(
             string projectTitle,
             string ownerName,
+            IOptions<GrowActivityHandlerOptions> tabOptions,
+            string applicationManifestId,
             string feedback,
             List<string> acquiredSkills,
             IStringLocalizer<Strings> localizer)
@@ -72,10 +77,10 @@ namespace Microsoft.Teams.Apps.Grow.Cards
                     Text = localizer.GetString("SkillsEndorsedMessage", ownerName),
                     Spacing = AdaptiveSpacing.Medium,
                 });
-
+                List<AdaptiveTextBlock> skillsTextBlocks = new List<AdaptiveTextBlock>();
                 for (int i = 0; i < acquiredSkills.Count; i++)
                 {
-                    projectClosureCard.Body.Add(new AdaptiveTextBlock
+                    skillsTextBlocks.Add(new AdaptiveTextBlock
                     {
                         Text = $"- {acquiredSkills[i]}",
                         HorizontalAlignment = AdaptiveHorizontalAlignment.Left,
@@ -83,7 +88,18 @@ namespace Microsoft.Teams.Apps.Grow.Cards
                         Spacing = AdaptiveSpacing.Small,
                     });
                 }
+
+                projectClosureCard.Body.AddRange(skillsTextBlocks);
             }
+
+            projectClosureCard.Actions = new List<AdaptiveAction>
+            {
+                new AdaptiveOpenUrlAction
+                {
+                    Title = localizer.GetString("GoToSkillsCardButton"),
+                    Url = new Uri($"https://teams.microsoft.com/l/entity/{applicationManifestId}/AcquiredSkillsTab"),
+                },
+            };
 
             return new Attachment
             {
@@ -93,16 +109,18 @@ namespace Microsoft.Teams.Apps.Grow.Cards
         }
 
         /// <summary>
-        /// Create project deletion card for team members.
+        /// Send project deletion card to team members.
         /// </summary>
         /// <param name="projectTitle">Title of project to be deleted.</param>
         /// <param name="ownerName">Owner of project to be deleted.</param>
+        /// <param name="tabOptions">Activity handler options object for getting discover tab ID and app url.</param>
         /// <param name="applicationManifestId">Tab's manifest Id.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
         /// <returns>Adaptive card with deletion message.</returns>
         public static Attachment SendProjectDeletionCard(
             string projectTitle,
             string ownerName,
+            IOptions<GrowActivityHandlerOptions> tabOptions,
             string applicationManifestId,
             IStringLocalizer<Strings> localizer)
         {
@@ -138,7 +156,7 @@ namespace Microsoft.Teams.Apps.Grow.Cards
                 new AdaptiveOpenUrlAction
                 {
                     Title = localizer.GetString("TabName"),
-                    Url = new Uri($"https://teams.microsoft.com/l/entity/{applicationManifestId}/{Constants.DiscoverTabEntityId}"),
+                    Url = new Uri($"https://teams.microsoft.com/l/entity/{applicationManifestId}/{tabOptions.Value.DiscoverTabEntityId}"),
                 },
             };
 
@@ -150,16 +168,18 @@ namespace Microsoft.Teams.Apps.Grow.Cards
         }
 
         /// <summary>
-        /// Create project deletion card for team members.
+        /// Send project deletion card to team members.
         /// </summary>
         /// <param name="projectTitle">Title of project to be deleted.</param>
         /// <param name="ownerName">Owner of project to be deleted.</param>
+        /// <param name="tabOptions">Activity handler options object for getting discover tab ID and app url.</param>
         /// <param name="applicationManifestId">Tab's manifest Id.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
         /// <returns>Adaptive card with deletion message.</returns>
         public static Attachment SendProjectRemovalCard(
             string projectTitle,
             string ownerName,
+            IOptions<GrowActivityHandlerOptions> tabOptions,
             string applicationManifestId,
             IStringLocalizer<Strings> localizer)
         {
@@ -195,7 +215,7 @@ namespace Microsoft.Teams.Apps.Grow.Cards
                 new AdaptiveOpenUrlAction
                 {
                     Title = localizer.GetString("TabName"),
-                    Url = new Uri($"https://teams.microsoft.com/l/entity/{applicationManifestId}/{Constants.DiscoverTabEntityId}"),
+                    Url = new Uri($"https://teams.microsoft.com/l/entity/{applicationManifestId}/{tabOptions.Value.DiscoverTabEntityId}"),
                 },
             };
 
@@ -207,12 +227,13 @@ namespace Microsoft.Teams.Apps.Grow.Cards
         }
 
         /// <summary>
-        /// Create project joined card for team members.
+        /// Send project joined card to team members.
         /// </summary>
         /// <param name="projectId">Id of joined project.</param>
         /// <param name="projectTitle">Title of joined project.</param>
         /// <param name="userName">Owner of joined project.</param>
         /// <param name="userPrincipalName">User principal name.</param>
+        /// <param name="createdByUserId">User Id who created project.</param>
         /// <param name="localizer">The current cultures' string localizer.</param>
         /// <returns>Adaptive card with deletion message.</returns>
         public static Attachment SendProjectJoinedCard(
@@ -220,6 +241,7 @@ namespace Microsoft.Teams.Apps.Grow.Cards
             string projectTitle,
             string userName,
             string userPrincipalName,
+            string createdByUserId,
             IStringLocalizer<Strings> localizer)
         {
             AdaptiveCard projectJoinedCard = new AdaptiveCard(Constants.AdaptiveCardVersion)
@@ -261,7 +283,7 @@ namespace Microsoft.Teams.Apps.Grow.Cards
                     Title = localizer.GetString("ProjectDetails"),
                     Data = new AdaptiveSubmitActionData
                     {
-                        Msteams = new TaskModuleAction(Constants.ViewProjectDetail, JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.ViewProjectDetail, ProjectId = projectId })),
+                        Msteams = new TaskModuleAction(Constants.ViewProjectDetail, new { data = JsonConvert.SerializeObject(new AdaptiveTaskModuleCardAction { Text = Constants.ViewProjectDetail, ProjectId = projectId, CreatedByUserId = createdByUserId }) }),
                     },
                 },
             };

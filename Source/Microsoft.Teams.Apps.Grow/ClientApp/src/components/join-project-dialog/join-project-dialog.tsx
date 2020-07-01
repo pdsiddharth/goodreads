@@ -89,23 +89,15 @@ class JoinProjectDialogContent extends React.Component<WithTranslation
         let response = await getProjectDetailToJoin(this.projectId, this.createdByUserId);
 
         if (response.status == 200 && response.data) {
-            let skillList = new Array<any>();
-            let documents = new Array<any>();
-            if (!response.data.supportDocuments) {
-                skillList = response.data.requiredSkills.split(";")
-            }
-            else {
-                skillList = response.data.requiredSkills.split(";");
-                documents = response.data.supportDocuments.split(";");
-            }
             this.setState({
-                projectDetails: response.data,
-                skillList: skillList,
-                documentUrlList: documents
+                projectDetails: response.data
             });
         }
 
-        
+        this.setState({
+            skillList: this.state.projectDetails.requiredSkills.split(";"),
+            documentUrlList: this.state.projectDetails.supportDocuments.split(";")
+        })
 
         this.setState({
             isLoading: false
@@ -252,7 +244,7 @@ class JoinProjectDialogContent extends React.Component<WithTranslation
                         (this.state.projectDetails.status === 1 || this.state.projectDetails.status === 2) &&
                             !this.state.projectDetails.projectParticipantsUserIds.split(';').includes(this.currentUserId) &&
                             this.state.projectDetails.createdByUserId !== this.currentUserId &&
-                            this.state.projectDetails.projectParticipantsUserIds.split(';').length < this.state.projectDetails.teamSize
+                            this.state.projectDetails.projectParticipantsUserIds.split(';').filter((userId) => userId).length < this.state.projectDetails.teamSize
                             ? <Flex className="join-project-dialog-footer-wrapper-taskview">
                                 <Flex gap="gap.smaller" className="join-project-dialog-footer-taskview input-fields-margin-between-add-post-taskview">
                                     <Flex.Item push>

@@ -10,6 +10,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
     using System.Threading.Tasks;
     using Microsoft.ApplicationInsights;
     using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
     using Microsoft.Teams.Apps.Grow.Authentication.AuthenticationPolicy;
@@ -82,13 +83,13 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (string.IsNullOrEmpty(teamId))
             {
                 this.logger.LogError("TeamId is either null or empty.");
-                return this.BadRequest("TeamId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "TeamId is either null or empty.");
             }
 
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid parameter value for pageCount.");
-                return this.BadRequest("Invalid parameter value for pageCount.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Invalid parameter value for pageCount.");
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;
@@ -150,13 +151,13 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid argument value for pageCount.");
-                return this.BadRequest("Invalid argument value for pageCount.");
+                return this.BadRequest(new { message = "Invalid argument value for pageCount." });
             }
 
             if (string.IsNullOrEmpty(teamId))
             {
                 this.logger.LogError("Argument teamId cannot be null or empty.");
-                return this.BadRequest("Argument teamId cannot be null or empty.");
+                return this.BadRequest(new { message = "Argument teamId cannot be null or empty." });
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;
@@ -168,7 +169,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (teamSkillEntity == null || string.IsNullOrEmpty(teamSkillEntity.Skills))
                 {
                     this.logger.LogInformation($"Skills are not configured for team {teamId}.");
-                    return this.NotFound($"Skills are not configured for team {teamId}.");
+                    return this.BadRequest(new { message = $"Skills are not configured for team {teamId}." });
                 }
 
                 // If none of tags are selected for filtering, assign all configured tags for team to get posts which are intended for team.
@@ -222,13 +223,13 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (string.IsNullOrEmpty(teamId))
             {
                 this.logger.LogError("Error while fetching projects as per configured skills and search text.");
-                return this.BadRequest("Error while fetching projects as per configured skills and search text.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Error while fetching projects as per configured skills and search text.");
             }
 
             if (pageCount < 0)
             {
                 this.logger.LogError("Invalid argument value for pageCount.");
-                return this.BadRequest("Invalid argument value for pageCount.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "Invalid argument value for pageCount.");
             }
 
             var skipRecords = pageCount * Constants.LazyLoadPerPageProjectCount;
@@ -240,7 +241,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (teamSkillEntity == null || string.IsNullOrEmpty(teamSkillEntity.Skills))
                 {
                     this.logger.LogInformation($"Skills are not configured for team {teamId}.");
-                    return this.NotFound($"Skills are not configured for team {teamId}.");
+                    return this.GetErrorResponse(StatusCodes.Status400BadRequest, $"Skills are not configured for team {teamId}.");
                 }
 
                 var skillsQuery = this.projectHelper.CreateSkillsQuery(teamSkillEntity.Skills);
@@ -279,7 +280,7 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             if (string.IsNullOrEmpty(teamId))
             {
                 this.logger.LogError("TeamId is either null or empty.");
-                return this.BadRequest("TeamId is either null or empty.");
+                return this.GetErrorResponse(StatusCodes.Status400BadRequest, "TeamId is either null or empty.");
             }
 
             try
@@ -301,10 +302,10 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
                 if (projects != null)
                 {
                     projectOwnerNames = projects
-                        .GroupBy(projects => projects.CreatedByUserId)
+                        .GroupBy(project => project.CreatedByUserId)
                         .OrderByDescending(groupedProject => groupedProject.Count())
                         .Take(50)
-                        .Select(projects => projects.First().CreatedByName)
+                        .Select(project => project.First().CreatedByName)
                         .OrderBy(createdByName => createdByName).ToList();
 
                     this.RecordEvent("Team Project unique owner names - HTTP Get call succeeded.");

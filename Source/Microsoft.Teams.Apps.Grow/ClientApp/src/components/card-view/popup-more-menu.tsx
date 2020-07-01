@@ -78,7 +78,7 @@ const PopupMoreMenu: React.FunctionComponent<IPopupMoreMenu> = props => {
             }
             
         }
-        else if (props.showJoinProjectMenu && (props.cardDetails.projectParticipantsUserIds.split(';').includes(props.loggedInUserId) || props.cardDetails.projectParticipantsUserIds.split(';').length === props.cardDetails.teamSize))
+        else if (props.showJoinProjectMenu && (props.cardDetails.projectParticipantsUserIds.split(';').includes(props.loggedInUserId) || props.cardDetails.projectParticipantsUserIds.split(';').filter((userId) => userId !== "").length === props.cardDetails.teamSize))
         {
             return (
                 <MoreIcon className="more-menu-icon-disabled" disabled />

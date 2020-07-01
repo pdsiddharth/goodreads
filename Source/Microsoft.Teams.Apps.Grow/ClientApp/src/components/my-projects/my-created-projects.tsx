@@ -25,7 +25,7 @@ import "../../styles/site.css";
 import "../../styles/card.css";
 
 export interface ICardViewStateProps extends WithTranslation {
-    showProjectCount: (count : number) => void;
+    showProjectCount: () => void;
 }
 
 interface ICardViewState {
@@ -61,6 +61,7 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
 
     constructor(props: any) {
         super(props);
+        let colors = localStorage.getItem("avatar-colors");
         this.localize = this.props.t;
         this.selectedSharedBy = [];
         this.selectedPostprojectStatus = [];
@@ -70,10 +71,10 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
         this.allPosts = [];
         this.loggedInUserObjectId = "";
         this.teamId = "";
-        this.authorAvatarBackground = [];
+        this.authorAvatarBackground = colors === null ? [] : JSON.parse(colors!);
 
         this.state = {
-            loader: true,
+            loader: false,
             projectDetails: [],
             projectSearchDetails: [],
             resourceStrings: {},
@@ -95,25 +96,10 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
     * Used to initialize Microsoft Teams sdk
     */
     async componentDidMount() {
-        this.initprojectDetails();
         microsoftTeams.initialize();
         microsoftTeams.getContext((context: microsoftTeams.Context) => {
             this.loggedInUserObjectId = context.userObjectId!;
         });
-    }
-
-    /**
-    * Fetch posts for initializing grid
-    */
-    initprojectDetails = async () => {
-        let response = await getMyCreatedProjects(0);
-        if (response.status === 200 && response.data) {
-            this.setState({
-                initialProjects: response.data,
-                loader: false
-            });
-            this.props.showProjectCount(response.data.length);
-        }
     }
 
     /**
@@ -128,20 +114,15 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
     * Get filtered posts based on selected checkboxes.
     * @param pageCount Page count for which next set of posts needs to be fetched
     */
-    getFilteredprojectDetails = async (pageCount: number) => {
-        let postprojectStatuss = this.selectedPostprojectStatus.map((postprojectStatus: ICheckBoxItem) => { return postprojectStatus.key.toString().trim() });
-        let postprojectStatussString = encodeURI(this.getFilterString(postprojectStatuss));
-        let authors = this.selectedSharedBy.map((authors: ICheckBoxItem) => { return authors.title.trim() });
-        let authorsString = encodeURI(this.getFilterString(authors));
-        let skills = this.selectedskills.map((tag: ICheckBoxItem) => { return tag.title.trim() });
-        let skillsString = encodeURI(this.getFilterString(skills));
-
-        let response = await getFilteredPosts(postprojectStatussString, authorsString, skillsString, pageCount);
+    getMyProjects = async (pageCount: number) => {
+        let hasMoreProjects = this.state.hasMoreProjects;
+        let response = await getMyCreatedProjects(pageCount);
         if (response.status === 200 && response.data) {
             if (response.data.length < 50) {
-                this.setState({
-                    hasMoreProjects: false,
-                });
+                hasMoreProjects = false;
+            }
+            else {
+                hasMoreProjects = true;
             }
 
             response.data.map((post: IProjectDetails) => {
@@ -153,6 +134,8 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
                     let color = generateColor();
                     this.authorAvatarBackground.push({ id: post.createdByUserId, color: color });
                     post.avatarBackgroundColor = color;
+
+                    localStorage.setItem("avatar-colors", JSON.stringify(this.authorAvatarBackground));
                 }
 
                 if (post.createdByUserId === this.loggedInUserObjectId) {
@@ -170,13 +153,11 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
                     isPageInitialLoad: false,
                 });
             }
-            else {
-                this.setState({
-                    showNoProjectPage: true,
-                    isPageInitialLoad: false
-                })
-            }
-            //this.getUserVotes();
+            this.setState({
+                projectDetails: this.allPosts,
+                hasMoreProjects: hasMoreProjects,
+                loader:false
+            });
         }
     }
 
@@ -189,57 +170,6 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
         this.selectedPostprojectStatus = [];
         this.selectedskills = [];
         this.filterSearchText = "";
-    }
-
-    /**
-    * Fetch posts for Team tab from API
-    * @param pageCount Page count for which next set of posts needs to be fetched
-    */
-    getprojectDetails = async (pageCount: number) => {
-        this.resetAllFilters();
-        let response = await getMyCreatedProjects(pageCount);
-        if (response.status === 200 && response.data) {
-            if (response.data.length < 50) {
-                this.setState({
-                    hasMoreProjects: false,
-                });
-            }
-            response.data.map((post: IProjectDetails) => {
-                let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.createdByUserId);
-                if (searchedAuthor) {
-                    post.avatarBackgroundColor = searchedAuthor.color;
-                }
-                else {
-                    let color = generateColor();
-                    this.authorAvatarBackground.push({ id: post.createdByUserId, color: color });
-                    post.avatarBackgroundColor = color;
-                }
-
-                if (post.createdByUserId === this.loggedInUserObjectId) {
-                    post.isCurrentUserProject = true;
-                }
-                else {
-                    post.isCurrentUserProject = false;
-                }
-
-                this.allPosts.push(post);
-            });
-
-            this.setState({
-                projectDetails: this.allPosts
-            })
-            if (response.data.count === 0) {
-                this.setState({
-                    showNoProjectPage: true
-                })
-            }
-            //this.getUserVotes();
-        }
-
-        this.setState({
-            searchText: "",
-            isPageInitialLoad: false
-        });
     }
 
     /**
@@ -262,32 +192,6 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
         this.setState({ showAlert: false })
     }
 
-    ///**
-    //* Fetch user votes from API
-    //*/
-    //getUserVotes = async () => {
-    //    let response = await getUserVotes();
-    //    if (response.status === 200 && response.data) {
-    //        for (let i = 0; i < response.data.length; i++) {
-    //            this.allPosts.map((post: IProjectDetails) => {
-    //                if (post.projectId === response.data[i].projectId) {
-    //                    post.isJoinedByUser = true;
-
-    //                    if (post.teamSize === 0) {
-    //                        post.teamSize = 1;
-    //                    }
-    //                }
-    //            })
-    //        }
-
-    //        this.onFilterSearchTextChange(this.filterSearchText);
-    //    }
-
-    //    this.setState({
-    //        loader: false
-    //    });
-    //}
-
     /**
     *Removes selected blog post from page
     *@param projectId Id of post which needs to be deleted
@@ -302,6 +206,7 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
             });
             this.showAlert(this.localize("projectDeletedSuccess"), 1);
             this.onFilterSearchTextChange(this.filterSearchText);
+            this.props.showProjectCount();
         }
         else {
             this.showAlert(this.localize("postDeletedError"), 2);
@@ -332,17 +237,7 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
     *@param pageCount Page count for which next set of posts needs to be fetched
     */
     loadMorePosts = (pageCount: number) => {
-        if (!this.filterSearchText.trim().length) {
-            if (this.state.searchText.trim().length) {
-                this.searchFilterPostUsingAPI(pageCount);
-            }
-            else if (this.state.isFilterApplied) {
-                this.getFilteredprojectDetails(pageCount);
-            }
-            else {
-                this.getprojectDetails(pageCount);
-            }
-        }
+        this.getMyProjects(pageCount);
     }
 
     /**
@@ -365,48 +260,6 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
             this.allPosts = [];
         }
     }
-
-    /**
-    *Filter cards based on user input after clicking search icon in search bar.
-    */
-    searchFilterPostUsingAPI = async (pageCount: number) => {
-        this.resetAllFilters();
-        if (this.state.searchText.trim().length) {
-            let response = await filterTitleAndTags(this.state.searchText, pageCount);
-
-            if (response.status === 200 && response.data) {
-                if (response.data.length < 50) {
-                    this.setState({
-                        hasMoreProjects: false,
-                    });
-                }
-                response.data.map((post: IProjectDetails) => {
-                    let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === post.createdByUserId);
-                    if (searchedAuthor) {
-                        post.avatarBackgroundColor = searchedAuthor.color;
-                    }
-                    else {
-                        let color = generateColor();
-                        this.authorAvatarBackground.push({ id: post.createdByUserId, color: color });
-                        post.avatarBackgroundColor = color;
-                    }
-
-                    if (post.createdByUserId === this.loggedInUserObjectId) {
-                        post.isCurrentUserProject = true;
-                    }
-                    else {
-                        post.isCurrentUserProject = false;
-                    }
-
-                    this.allPosts.push(post)
-                });
-
-                this.setState({ isPageInitialLoad: false });
-                //this.getUserVotes();
-            }
-        }
-    }
-
 
     /**
     *Filter cards based on 'shared by' checkbox selection.
@@ -525,40 +378,6 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
     }
 
     /**
-    * Invoked when new post is added. Shows notification alert.
-    * @param isSuccess Boolean indicating whether add new post operation is successful.
-    * @param getSubmittedPost Post details which needs to be added.
-    */
-    onNewPost = (isSuccess: boolean, getSubmittedPost: IProjectDetails) => {
-        if (isSuccess) {
-            let searchedAuthor = this.authorAvatarBackground.find((author) => author.id === getSubmittedPost.createdByUserId);
-            if (searchedAuthor) {
-                getSubmittedPost.avatarBackgroundColor = searchedAuthor.color;
-            }
-            else {
-                let color = generateColor();
-                this.authorAvatarBackground.push({ id: getSubmittedPost.createdByUserId, color: color });
-                getSubmittedPost.avatarBackgroundColor = color;
-            }
-
-            let submittedPost = this.state.projectDetails;
-            if (getSubmittedPost.createdByUserId === this.loggedInUserObjectId) {
-                getSubmittedPost.isCurrentUserProject = true;
-            }
-            else {
-                getSubmittedPost.isCurrentUserProject = false;
-            }
-            submittedPost.unshift(getSubmittedPost);
-            this.setState({ projectDetails: submittedPost, initialProjects: submittedPost });
-            this.allPosts = this.state.projectDetails;
-            this.showAlert(this.localize("addNewPostSuccess"), 1)
-        }
-        else {
-            this.showAlert(this.localize("addNewPostError"), 2)
-        }
-    }
-
-    /**
     * Filters posts inline by user search text
     * @param searchText Search text entered by user.
     */
@@ -642,8 +461,19 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
         );
     }
 
-    handleCloseProjectButtonClick = (isSuccess: boolean) => {
-        console.log("a");
+    handleCloseProjectButtonClick = (isSuccess: boolean, projectId: string) => {
+        if (isSuccess) {
+            this.allPosts.map((post: IProjectDetails) => {
+                if (post.projectId === projectId) {
+                    post.status = 4;
+                }
+            });
+            this.showAlert(this.localize("projectCloseSuccess"), 1);
+            this.onFilterSearchTextChange(this.filterSearchText);
+        }
+        else {
+            this.showAlert(this.localize("projectCloseFailure"), 2);
+        }
     }
 
     /**
@@ -673,16 +503,6 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
                 }
             });
 
-            if (this.state.initialProjects.length === 0) {
-                return (
-                    <div className="container-div">
-                        <div className="container-subdiv">
-                            <NotificationMessage onClose={this.hideAlert} showAlert={this.state.showAlert} content={this.state.alertMessage} notificationType={this.state.alertprojectStatus} />
-                            <FilterNoPostContentPage />
-                        </div>
-                    </div>
-                )
-            }
             let scrollViewStyle = { height: this.state.isFilterApplied === true ? "84vh" : "92vh" };
             return (
                 <div className="container-div">
@@ -693,22 +513,6 @@ class MyCreatedProjects extends React.Component<ICardViewStateProps, ICardViewSt
                                 showAlert={this.state.showAlert}
                                 content={this.state.alertMessage}
                                 notificationType={this.state.alertprojectStatus}
-                            />
-                            <TitleBar
-                                projectDetails={this.state.projectDetails}
-                                showFilter={false}
-                                teamId={this.teamId}
-                                commandBarSearchText={this.state.searchText}
-                                searchFilterPostsUsingAPI={this.invokeApiSearch}
-                                onFilterClear={this.handleFilterClear}
-                                hideFilterbar={!this.state.isFilterApplied}
-                                onSortByChange={this.onSortByChange}
-                                onFilterSearchChange={this.onFilterSearchTextChange}
-                                onSearchInputChange={this.handleSearchInputChange}
-                                onNewPostSubmit={this.onNewPost}
-                                onSharedByCheckboxStateChange={this.onSharedByCheckboxStateChange}
-                                onTypeCheckboxStateChange={this.onprojectStatusCheckboxStateChange}
-                                onTagsStateChange={this.onskillsStateChange}
                             />
                             <div key={this.state.infiniteScrollParentKey} className="scroll-view scroll-view-mobile" style={scrollViewStyle}>
                                 <InfiniteScroll

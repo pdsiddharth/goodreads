@@ -27,7 +27,7 @@
     "appDisplayName": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "Grow Your Skills",
+      "defaultValue": "ShareNow",
       "metadata": {
         "description": "Encourage co-workers to knowledge-based sharing of posts, videos, or topics."
       }
@@ -54,7 +54,7 @@
     "appIconUrl": {
       "type": "string",
       "minLength": 1,
-      "defaultValue": "https://raw.githubusercontent.com/OfficeDev/microsoft-teams-apps-<<TO DO>>/master/Manifest/color.png",
+      "defaultValue": "https://raw.githubusercontent.com/OfficeDev/microsoft-teams-apps-sharenow/master/Manifest/color.png",
       "metadata": {
         "description": "The link to the icon for the app. It must resolve to a PNG file."
       }
@@ -75,13 +75,6 @@
       "maxLength": 36,
       "metadata": {
         "description": "The ID of the tenant to which the app will be deployed."
-      }
-    },
-    "tenantId": {
-      "type": "int",
-      "defaultValue": 60,
-      "metadata": {
-        "description": "Number of minutes to cache user presence information in memory."
       }
     },
     "defaultCulture": {
@@ -141,7 +134,7 @@
       "metadata": {
         "description": "The URL to the GitHub repository to deploy."
       },
-      "defaultValue": "https://github.com/OfficeDev/microsoft-teams-apps-<<TO DO>>.git"
+      "defaultValue": "https://github.com/OfficeDev/microsoft-teams-apps-sharenow.git"
     },
     "gitBranch": {
       "type": "string",
@@ -310,10 +303,6 @@
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
               "value": "10.15.2"
-            },
-            {
-              "name": "App:CacheInterval",
-              "value": "[parameters('CacheInterval')]"
             }
           ],
           "cors": {
@@ -397,7 +386,7 @@
       },
       "type": "Microsoft.BotService/botServices"
     },
-
+    
     {
       "name": "[variables('azureSearchName')]",
       "type": "Microsoft.Search/searchServices",

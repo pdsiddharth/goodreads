@@ -27,7 +27,7 @@ namespace Microsoft.Teams.Apps.Grow.Bot
         /// <summary>
         /// Represents a set of key/value application configuration properties for Grow Bot.
         /// </summary>
-        private readonly IOptions<BotSettings> options;
+        private readonly IOptions<BotSetting> options;
 
         /// <summary>
         /// Sends logs to the Application Insights service.
@@ -39,7 +39,7 @@ namespace Microsoft.Teams.Apps.Grow.Bot
         /// </summary>
         /// <param name="options"> A set of key/value application configuration properties.</param>
         /// <param name="logger">Sends logs to the Application Insights service.</param>
-        public GrowActivityMiddleware(IOptions<BotSettings> options, ILogger<GrowActivityMiddleware> logger)
+        public GrowActivityMiddleware(IOptions<BotSetting> options, ILogger<GrowActivityMiddleware> logger)
         {
             this.options = options ?? throw new ArgumentNullException(nameof(options));
             this.logger = logger;
@@ -67,7 +67,7 @@ namespace Microsoft.Teams.Apps.Grow.Bot
 
             if (turnContext != null && turnContext.Activity.Type != ActivityTypes.Event && !this.IsActivityFromExpectedTenant(turnContext))
             {
-                this.logger.LogWarning($"Unexpected tenant id {turnContext?.Activity.Conversation.TenantId}", SeverityLevel.Warning);
+                this.logger.LogInformation($"Unexpected tenant id {turnContext?.Activity.Conversation.TenantId}", SeverityLevel.Warning);
             }
             else
             {
@@ -82,9 +82,7 @@ namespace Microsoft.Teams.Apps.Grow.Bot
         /// <returns>True if context is from expected tenant else false.</returns>
         private bool IsActivityFromExpectedTenant(ITurnContext turnContext)
         {
-            turnContext = turnContext ?? throw new ArgumentNullException(nameof(turnContext));
-
-            return turnContext.Activity?.Conversation?.TenantId == this.tenantId;
+            return turnContext.Activity.Conversation.TenantId == this.tenantId;
         }
     }
 }

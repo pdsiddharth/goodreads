@@ -1,4 +1,4 @@
-﻿// <copyright file="UserDetailProvider.cs" company="Microsoft">
+﻿// <copyright file="UserMembershipProvider.cs" company="Microsoft">
 // Copyright (c) Microsoft. All rights reserved.
 // </copyright>
 
@@ -15,41 +15,41 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
     using Microsoft.WindowsAzure.Storage.Table;
 
     /// <summary>
-    /// Implements storage provider which stores user data in storage.
+    /// Implements storage provider which stores user membership data in storage.
     /// </summary>
-    public class UserDetailProvider : BaseStorageProvider, IUserDetailProvider
+    public class UserMembershipProvider : BaseStorageProvider, IUserMembershipProvider
     {
         /// <summary>
-        /// Represents user entity name.
+        /// Represents user membership entity name.
         /// </summary>
-        private const string UserDetailEntityName = "UserDetailEntity";
+        private const string UserMembershipEntityName = "UserMembershipEntity";
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UserDetailProvider"/> class.
+        /// Initializes a new instance of the <see cref="UserMembershipProvider"/> class.
         /// Handles storage read write operations.
         /// </summary>
         /// <param name="options">A set of key/value application configuration properties for Microsoft Azure Table storage.</param>
         /// <param name="logger">Sends logs to the Application Insights service.</param>
-        public UserDetailProvider(
+        public UserMembershipProvider(
             IOptions<StorageSetting> options,
             ILogger<BaseStorageProvider> logger)
-            : base(options?.Value.ConnectionString, UserDetailEntityName, logger)
+            : base(options?.Value.ConnectionString, UserMembershipEntityName, logger)
         {
         }
 
         /// <summary>
-        /// Adds a user entity in storage.
+        /// Adds a user membership entity in storage.
         /// </summary>
         /// <param name="userConversationId">User conversation id.</param>
         /// <param name="userAadObjectId">Azure Active Directory id of the user.</param>
         /// <param name="servicePath">Service URL for a tenant.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task AddUserDetailAsync(
+        public async Task AddUserMembershipAsync(
             string userConversationId,
             string userAadObjectId,
             string servicePath)
         {
-            var userDetailEntity = new UserDetailEntity
+            var userMembershipEntity = new UserMembershipEntity
             {
                 UserAadObjectId = userAadObjectId,
                 RowKey = userAadObjectId,
@@ -57,51 +57,51 @@ namespace Microsoft.Teams.Apps.Grow.Common.Providers
                 ServiceUrl = servicePath,
             };
 
-            await this.UpsertUserDetailAsync(userDetailEntity);
+            await this.UpsertUserMembershipAsync(userMembershipEntity);
         }
 
         /// <summary>
-        /// Get user data from storage.
+        /// Get user membership data from storage.
         /// </summary>
         /// <param name="userAadObjectId">Azure Active Directory id of the user.</param>
-        /// <returns>A task that represents an object to hold user data.</returns>
-        public async Task<UserDetailEntity> GetUserDetailsAsync(string userAadObjectId)
+        /// <returns>A task that represents an object to hold user membership data.</returns>
+        public async Task<UserMembershipEntity> GetUserMembershipDataAsync(string userAadObjectId)
         {
             userAadObjectId = userAadObjectId ?? throw new ArgumentNullException(nameof(userAadObjectId));
 
             await this.EnsureInitializedAsync();
-            var retrieveOperation = TableOperation.Retrieve<UserDetailEntity>(userAadObjectId, userAadObjectId);
-            var queryResult = await this.CloudTable.ExecuteAsync(retrieveOperation);
+            var retrieveOperation = TableOperation.Retrieve<UserMembershipEntity>(userAadObjectId, userAadObjectId);
+            var queryResult = await this.GrowCloudTable.ExecuteAsync(retrieveOperation);
 
             if (queryResult?.Result != null)
             {
-                return (UserDetailEntity)queryResult.Result;
+                return (UserMembershipEntity)queryResult.Result;
             }
 
             return null;
         }
 
         /// <summary>
-        /// Stores or update user details data in storage.
+        /// Stores or update user membership details data in storage.
         /// </summary>
-        /// <param name="entity">Holds user entity data.</param>
-        /// <returns>A task that represents user entity data is saved or updated.</returns>
-        private async Task<bool> UpsertUserDetailAsync(UserDetailEntity entity)
+        /// <param name="entity">Holds user membership entity data.</param>
+        /// <returns>A task that represents user membership entity data is saved or updated.</returns>
+        private async Task<bool> UpsertUserMembershipAsync(UserMembershipEntity entity)
         {
             var result = await this.StoreOrUpdateEntityAsync(entity);
             return result.HttpStatusCode == (int)HttpStatusCode.NoContent;
         }
 
         /// <summary>
-        /// Stores or update user detail in storage.
+        /// Stores or update user membership detail in storage.
         /// </summary>
-        /// <param name="entity">Holds user entity data.</param>
-        /// <returns>A task that represents user entity data is saved or updated.</returns>
-        private async Task<TableResult> StoreOrUpdateEntityAsync(UserDetailEntity entity)
+        /// <param name="entity">Holds user membership entity data.</param>
+        /// <returns>A task that represents user membership entity data is saved or updated.</returns>
+        private async Task<TableResult> StoreOrUpdateEntityAsync(UserMembershipEntity entity)
         {
             await this.EnsureInitializedAsync();
             TableOperation addOrUpdateOperation = TableOperation.InsertOrReplace(entity);
-            return await this.CloudTable.ExecuteAsync(addOrUpdateOperation);
+            return await this.GrowCloudTable.ExecuteAsync(addOrUpdateOperation);
         }
     }
 }

@@ -9,10 +9,12 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
     using System.Linq;
     using System.Security.Claims;
     using Microsoft.ApplicationInsights;
+    using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Error = Microsoft.Teams.Apps.Grow.Models.ErrorResponse;
 
     /// <summary>
-    /// Base controller to handle grow projects API operations.
+    /// Base controller to handle good read posts API operations.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -106,6 +108,35 @@ namespace Microsoft.Teams.Apps.Grow.Controllers
             {
                 { "userId", this.UserAadId },
             });
+        }
+
+        /// <summary>
+        /// Creates the error response as per the status codes.
+        /// </summary>
+        /// <param name="statusCode">Describes the type of error.</param>
+        /// <param name="errorMessage">Describes the error message.</param>
+        /// <returns>Returns error response with appropriate message and status code.</returns>
+        protected IActionResult GetErrorResponse(int statusCode, string errorMessage)
+        {
+            switch (statusCode)
+            {
+                case StatusCodes.Status400BadRequest:
+                    return this.StatusCode(
+                      StatusCodes.Status400BadRequest,
+                      new Error
+                      {
+                          StatusCode = "badRequest",
+                          ErrorMessage = errorMessage,
+                      });
+                default:
+                    return this.StatusCode(
+                      StatusCodes.Status500InternalServerError,
+                      new Error
+                      {
+                          StatusCode = "internalServerError",
+                          ErrorMessage = errorMessage,
+                      });
+            }
         }
     }
 }
